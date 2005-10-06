@@ -1,0 +1,565 @@
+# Italian translations for gtkPacman 
+# Traduzioni italiane per gtkPacman.
+# Copyright (C) 2005 Stefano Esposito
+# This file is distributed under the same license as gtkPacman.
+# Stefano Esposito <ragnarok@email.it>, 2005.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-09-15 14:44+0200\n"
+"PO-Revision-Date: 2005-08-19 12:30+0200\n"
+"Last-Translator: Stefano Esposito <ragnarok@email.it>\n"
+"Language-Team: Italian <tp@lists.linux.it>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: Gui.py:120
+msgid ""
+"You're not root. You won't be able to edit configuration. If you want to "
+"manage packages you'll be asked for root password time by time"
+msgstr ""
+"Non sei root. Non potrai mdificare la configurazione. Se vuoi gestire "
+"ipacchetti, ti verrà richiesta la password di root ogni volta"
+
+#: Gui.py:145
+msgid "Clearing cache"
+msgstr "Pulizia cache in corso"
+
+#: Gui.py:150
+msgid "Emptying cache"
+msgstr "Svutamento cache in corso"
+
+#: Gui.py:207
+msgid "Refreshing Database"
+msgstr "Aggiornamento database in corso"
+
+#: Gui.py:215
+msgid "Upgrading System"
+msgstr "Aggiornamento sistema in corso"
+
+#: Gui.py:248
+#, python-format
+msgid "Package %s isn't installed"
+msgstr "Il pacchetto %s non è installato"
+
+#: Gui.py:288 Gui.py:301
+msgid "Please, insert a package name"
+msgstr "Inserisci il nome di un pacchetto"
+
+#: Gui.py:290 Gui.py:303
+#, python-format
+msgid "Package %s doesn't exist in the database"
+msgstr "Il pacchetto %s non esiste nel database"
+
+#: Gui.py:309
+#, python-format
+msgid "Package %s is not installed"
+msgstr "Il pacchetto %s non è installato"
+
+#: Gui.py:320
+#, python-format
+msgid "No package find with this keyword: %s"
+msgstr "Nessun pacchetto corrispondente alla parola-chiave %s trovato"
+
+#: Gui.py:389
+msgid ""
+"This is probably a bug.\n"
+"            Plaese report it at http://gna.org/projects/gtkpacman"
+msgstr ""
+"Questo è probabilmente un bug\n"
+"\t     Per favore riportalo su http://gna.org/projects/gtkpacman"
+
+#: Gui.py:402
+#, python-format
+msgid "%s is not installed"
+msgstr "%s non è installato"
+
+#: Gui.py:458 Gui.py:491 Gui.py:515
+msgid "Package"
+msgstr "Pacchetto"
+
+#: Gui.py:463
+msgid "Version"
+msgstr "Versione"
+
+#: Gui.py:467
+msgid "Installed Version"
+msgstr "Versione Installata"
+
+#: Gui.py:471 Gui.py:496 Gui.py:519
+msgid "Repository"
+msgstr "Repository"
+
+#: Models.py:145
+msgid "All"
+msgstr "Tutti"
+
+#: Models.py:146
+msgid "Installed"
+msgstr "Installati"
+
+#: Models.py:147
+msgid "Not installed"
+msgstr "Non installati"
+
+#: Models.py:148
+msgid "To upgrade"
+msgstr "Da aggiornare"
+
+#: Models.py:149
+msgid "Orphans"
+msgstr "Orfani"
+
+#: Models.py:152
+msgid "Manually installed"
+msgstr "Installati a mano"
+
+#: Models.py:155
+msgid "Search for..."
+msgstr "Cerca..."
+
+#: Models.py:167
+msgid ""
+"This is probably a bug\n"
+"            Please, report it at http://gna.org/projects/gtkpacman"
+msgstr ""
+"Questo è probabilmente un bug\n"
+"\t     Per favore riportalo su http://gna.org/projects/gtkpacman"
+
+#: Pacman.py:79
+msgid "version must be a string"
+msgstr "version dev'essere una stringa"
+
+#: Pacman.py:95
+msgid "inst_ver must be a string"
+msgstr "inst_ver dev'essere una stringa"
+
+#: Terminal.py:73
+#, python-format
+msgid "Installing/Upgrading %s"
+msgstr "Installazione/Aggiornamento di %s in corso"
+
+#: Terminal.py:84
+msgid "U action requires a package argument"
+msgstr "L'azione U richiede un pacchetto come argomento"
+
+#: Terminal.py:85
+#, python-format
+msgid "Upgrading %s from local file"
+msgstr "Aggiornamento di %s da file locale in corso"
+
+#: Terminal.py:94
+msgid "A action requires a package argument"
+msgstr "L'azione A richiede un pacchetto come argomento"
+
+#: Terminal.py:95
+#, python-format
+msgid "Installing %s from local file"
+msgstr "Installazione di %s da file locale in corso"
+
+#: Terminal.py:104
+msgid "R action requires a package argument"
+msgstr "L'azione R richiede un pacchetto come argomento"
+
+#: Terminal.py:105
+#, python-format
+msgid "Removing %s"
+msgstr "Rimozione di %s in corso"
+
+#: Terminal.py:141
+msgid "Click button to close terminal"
+msgstr "Clicca il bottone per chiudere il terminale"
+
+#: Terminal.py:143
+msgid "Done"
+msgstr "Fatto"
+
+#: gtkpacman.glade.h:1
+msgid "Allow bold"
+msgstr "Permetti l'uso del grassetto"
+
+#: gtkpacman.glade.h:2
+msgid "Be Verbose"
+msgstr "Verbose"
+
+#: gtkpacman.glade.h:3
+msgid "Cascade remove"
+msgstr "Rimozione a cascata"
+
+#: gtkpacman.glade.h:4
+msgid "Check dependencies"
+msgstr "Controlla le dipendenze"
+
+#: gtkpacman.glade.h:5
+msgid "Clear cache"
+msgstr "Pulisci la cache"
+
+#: gtkpacman.glade.h:6
+msgid "Close terminal"
+msgstr "Chiudi il terminale"
+
+#: gtkpacman.glade.h:7
+msgid "Common"
+msgstr "Comuni"
+
+#: gtkpacman.glade.h:8
+msgid "Copyright (C) 2005 by Stefano Esposito"
+msgstr "Copyright (C) 2005 di Stefano Esposito"
+
+#: gtkpacman.glade.h:9
+msgid "Core options"
+msgstr "Opzione del Core"
+
+#: gtkpacman.glade.h:10
+msgid "Dependencies"
+msgstr "Dipendenze"
+
+#: gtkpacman.glade.h:11
+msgid "Do not ask for any confirmation"
+msgstr "Non chiedere conferme"
+
+#: gtkpacman.glade.h:12
+msgid ""
+"Don't remove files from system, only remove entry from \"installed\" database"
+msgstr ""
+"Non rimuovere i file dal sistema, limitati a rimuovere l'entry dal "
+"databasedei pacchetti installati"
+
+#: gtkpacman.glade.h:13
+msgid "Don't save configuration files"
+msgstr "Noin salvare i file di configurazione"
+
+#: gtkpacman.glade.h:14
+msgid "Download Only"
+msgstr "Scarica solo"
+
+#: gtkpacman.glade.h:15
+msgid "Empty cache"
+msgstr "Svuota la cache"
+
+#: gtkpacman.glade.h:16
+msgid "Filelist"
+msgstr "Lista file"
+
+#: gtkpacman.glade.h:17
+msgid "Force install"
+msgstr "Forza l'installazione"
+
+#: gtkpacman.glade.h:18
+msgid ""
+"Giovanni Scafora <linuxmania@gmail.com> (French)\n"
+"Mattias Giese <Mattias.Giese@web.de> (German)\n"
+"Stefano Esposito <ragnarok@email.it> (Italian)\n"
+"Jens Perssons  <xerxes2@gmail.com> (Sweidish)"
+msgstr ""
+"Giovanni Scafora <linuxmania@gmail.com> (Francese)\n"
+"Mattias Giese <Mattias.Giese@web.de> (Tedesco)\n"
+"Stefano Esposito <ragnarok@email.it> (Italiano)\n"
+"Jens Perssons <xerxes2@gmail.com> (Svedese)"
+
+#: gtkpacman.glade.h:22
+msgid "Gtk Frontend for Archlinux pacman"
+msgstr "Frontend Gtk per pacman da Archlinux"
+
+#: gtkpacman.glade.h:23
+msgid "Gui options"
+msgstr "Opzioni Gui"
+
+#: gtkpacman.glade.h:24
+msgid "In_stall/Upgrade package from database"
+msgstr "In_stalla/Aggiorna pacchetti dal database"
+
+#: gtkpacman.glade.h:25
+msgid "Install Package from local file"
+msgstr "Installa pacchetti da file locali"
+
+#: gtkpacman.glade.h:26
+msgid "Install from file"
+msgstr "Installa da file"
+
+#: gtkpacman.glade.h:27
+msgid "Install package from local file"
+msgstr "Installa pacchetti da file locali"
+
+#: gtkpacman.glade.h:28
+msgid "Install/Upgrade"
+msgstr "Installa/Aggiorna"
+
+#: gtkpacman.glade.h:29
+msgid "Install/Upgrade Package from database"
+msgstr "Installa/Aggiorna pacchetti dal database"
+
+#: gtkpacman.glade.h:30
+msgid "Install/Upgrade package from database"
+msgstr "Installa/Aggiorna pacchetti dal database"
+
+#: gtkpacman.glade.h:31
+msgid "Installed files owned by selected package"
+msgstr "Files installati dal pacchetto selezionato"
+
+#: gtkpacman.glade.h:32
+msgid "List of packages in the database"
+msgstr "Lista dei pacchetti presenti nel database"
+
+#: gtkpacman.glade.h:33
+msgid "List of packages that need selected package"
+msgstr "Lista dei pacchetti dipendenti dal pacchetto selezionato"
+
+#: gtkpacman.glade.h:34
+msgid "List of selected package dependencies"
+msgstr "Lista delle dipendenze del pacchetto selezionato"
+
+#: gtkpacman.glade.h:35
+msgid "No confirm"
+msgstr "Non chiedere conferme"
+
+#: gtkpacman.glade.h:36
+msgid "Preferences"
+msgstr "Preferenze"
+
+#: gtkpacman.glade.h:37
+msgid "Quick filter:"
+msgstr "Filtro veloce"
+
+#: gtkpacman.glade.h:38
+msgid "Recursive remove"
+msgstr "Rimozione ricorsiva"
+
+#: gtkpacman.glade.h:39
+msgid "Refresh Database"
+msgstr "Aggiorna il database"
+
+#: gtkpacman.glade.h:40
+msgid "Refresh _database"
+msgstr "Aggiorna il _database"
+
+#: gtkpacman.glade.h:41
+msgid "Refresh database when upgrade system"
+msgstr "Aggiorna il database quando aggiorni il sistema"
+
+#: gtkpacman.glade.h:42
+msgid "Remove"
+msgstr "Rimovi"
+
+#: gtkpacman.glade.h:43
+msgid "Remove Package"
+msgstr "Rimuovi pacchetto"
+
+#: gtkpacman.glade.h:44
+msgid "Remove all packages from local packages repo"
+msgstr "Rimouve tutti i pacchetti dalla repository locale dei pacchetti"
+
+#: gtkpacman.glade.h:45
+msgid "Remove configuration files too"
+msgstr "Rimuovi anche i file di configurazione"
+
+#: gtkpacman.glade.h:46
+msgid "Remove old packages from local repo"
+msgstr "Riomuovi i pacchetti vecchi dalla repo locale"
+
+#: gtkpacman.glade.h:47
+msgid "Remove only database entry"
+msgstr "Rimouovi solo l'entrata del database"
+
+#: gtkpacman.glade.h:48
+msgid "Remove selected package and all packages that depend on it"
+msgstr ""
+"Rimuovi i pacchetti selezionati e tutti i pacchetti che dipendono da essi"
+
+#: gtkpacman.glade.h:49
+msgid ""
+"Remove selected packages and its dependencies (only if it's the only package "
+"that depends on them)"
+msgstr ""
+"Rimuovi i pacchetti selezionati e le loro dipendenze (solo se il "
+"pacchettorimosso è l'unico a dipendere da esse)"
+
+#: gtkpacman.glade.h:50
+msgid "Required by"
+msgstr "Richiesto da"
+
+#: gtkpacman.glade.h:51
+msgid "Scroll on keystroke"
+msgstr "Scorri quando viene premuto un tasto"
+
+#: gtkpacman.glade.h:52
+msgid "Scroll on output"
+msgstr "Scorri seguendo l'output"
+
+#: gtkpacman.glade.h:53
+msgid "Select A File"
+msgstr "Seleziona un file"
+
+#: gtkpacman.glade.h:54
+msgid "Select a file"
+msgstr "Seleziona un file"
+
+#: gtkpacman.glade.h:55
+msgid "Select background color"
+msgstr "Seleziona un colore di sfondo"
+
+#: gtkpacman.glade.h:56
+msgid "Select background image"
+msgstr "Seleziona un'immagine di sfondo"
+
+#: gtkpacman.glade.h:57
+msgid "Select foreground color"
+msgstr "Seleziona un colore di fronte"
+
+#: gtkpacman.glade.h:58
+msgid "Select terminal font"
+msgstr "Selezione il font per il terminale"
+
+#: gtkpacman.glade.h:59
+msgid "Set scrollback lines"
+msgstr "Setta le linee di scrollback"
+
+#: gtkpacman.glade.h:60
+msgid "Show Window"
+msgstr "Mostra finestra"
+
+#: gtkpacman.glade.h:61
+msgid "Summary"
+msgstr "Descrizione"
+
+#: gtkpacman.glade.h:62
+msgid "Summary of selected package"
+msgstr "Descrizione del pacchetto selezionato"
+
+#: gtkpacman.glade.h:63
+msgid "Terminal"
+msgstr "Terminale"
+
+#: gtkpacman.glade.h:64
+msgid "Terminal Preferences"
+msgstr "Preferenze del terminale"
+
+#: gtkpacman.glade.h:65
+msgid ""
+"This program is free software; you can redistribute it and/\n"
+"or modify it under the terms of the GNU General Public \n"
+"License as published by the Free Software Foundation; \n"
+"either version 2 of the License, or (at your option) any later \n"
+"version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied \n"
+"warranty of MERCHANTABILITY or FITNESS FOR A \n"
+"PARTICULAR PURPOSE.  See the GNU General Public License \n"
+"for more details.\n"
+"\n"
+"You should have received a copy of the GNU General Public \n"
+"License along with this program; if not, write to the Free \n"
+"Software Foundation, Inc., 51 Franklin St, Fifth Floor, \n"
+"Boston, MA  02110-1301  USA"
+msgstr ""
+"Questo programma è software libero; puoi ridistribuirlo e/o modificarlo\n"
+"secondo i termini della GNU General Public License, così come pubblicata\n"
+"dalla Free software Foundation; sia la versione 2 della Licenza o\n"
+"(a tua scelta) qualsiasi versione successiva.\n"
+"\n"
+"Questo programma è distribuito nella speranza che possa essere utile,\n"
+"ma SENZA ALCUNA GARANZIA; senza neanche l'implicita garanzia di\n"
+"COMMERCIABILITA' o ADEGUATEZZA PER UNO SCOPO PARTICOLARE.\n"
+"Vedi la GNU General Public License per maggiori dettagli.\n"
+"\n"
+"Dovresti aver ricevuto una copia della GNU General Public License insieme a\n"
+"questo programma; se così non fosse, scrivi alla\n"
+"Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, \n"
+"Boston, MA 02110-1301 USA"
+
+#: gtkpacman.glade.h:81
+msgid "Upgrade Package from local file"
+msgstr "Aggiorna pacchetti da file locali"
+
+#: gtkpacman.glade.h:82
+msgid "Upgrade System"
+msgstr "Aggiorna il Sistema"
+
+#: gtkpacman.glade.h:83
+msgid "Upgrade from file"
+msgstr "Aggiorna da file"
+
+#: gtkpacman.glade.h:84
+msgid "Upgrade package from local file"
+msgstr "Aggiorna pacchetti da file locali"
+
+#: gtkpacman.glade.h:85
+msgid "Upgrade s_ystem"
+msgstr "Aggiorna il s_istema"
+
+#: gtkpacman.glade.h:86
+msgid "Use alternative configuration file"
+msgstr "Usa un file di configurazione alternativo"
+
+#: gtkpacman.glade.h:87
+msgid "Use alternative database:          "
+msgstr "Usa un database alternativo:      "
+
+#: gtkpacman.glade.h:88
+msgid "Use alternative root:                  "
+msgstr "Usa una root alternativa:             "
+
+#: gtkpacman.glade.h:89
+msgid "Verbose output"
+msgstr "Verbose"
+
+#: gtkpacman.glade.h:90
+msgid ""
+"When you click on \"upgrade system\" button, refresh database before "
+"checking packages to upgrade"
+msgstr ""
+"Quando clicchi su \"aggiorna il sistema\", aggiorna il database prima di "
+"controllare i pacchetti da aggiornare"
+
+#: gtkpacman.glade.h:91
+msgid "_Add package from local file"
+msgstr "_Installa pacchetti da file locali"
+
+#: gtkpacman.glade.h:92
+msgid "_Edit"
+msgstr "_Modifica"
+
+#: gtkpacman.glade.h:93
+msgid "_File"
+msgstr "_File"
+
+#: gtkpacman.glade.h:94
+msgid "_Help"
+msgstr "_Aiuto"
+
+#: gtkpacman.glade.h:95
+msgid "_Pacman"
+msgstr "_Pacman"
+
+#: gtkpacman.glade.h:96
+msgid "_Remove package"
+msgstr "_Rimuovi pacchetti"
+
+#: gtkpacman.glade.h:97
+msgid "_Upgrade package from local file"
+msgstr "_Aggiorna pacchetti da file locali"
+
+#: gtkpacman.glade.h:98
+msgid "gtkPacman"
+msgstr "gtkPacman"
+
+#: gtkpacman.glade.h:99
+msgid "insert the name/path of the package to install"
+msgstr "inserisci il nome/percorso del pacchetto da installare"
+
+#~ msgid "Collection"
+#~ msgstr "Collezione"
+
+#~ msgid "Giovanni Scafora <linuxmania@gmail.com> for French"
+#~ msgstr "Giovanni Scafora <linuxmania@gmail.com> per il Francese"
+
+#~ msgid "inst must be True or False"
+#~ msgstr "inst dev'essere True o False"
+
+#~ msgid "translator-credits"
+#~ msgstr "ringraziamenti per le traduzioni"

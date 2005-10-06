@@ -1,0 +1,5 @@
+If you want contribute a translation follow this procedure:
+
+$ LANG=de_DE msginit
+
+Sobsitute de_DE with your language. Eg: for french: fr_FR, spanish: es_ES, and so on. Then edit the *.po resulting and send it by mail to ragnarok@email.it. Thanks

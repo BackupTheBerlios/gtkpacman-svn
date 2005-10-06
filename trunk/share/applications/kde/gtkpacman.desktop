@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+GenericName=Packages manager
+GenericName[it]=Gestore pacchetti
+Comment=Graphical interface for manageing packages trought pacman
+Comment[it]=Interfaccia grafica per gestire i pacchetti con pacman
+Name=gtkPacman
+Exec=kdesu gtkpacman
+Icon=/usr/share/gtkpacman/pacman.png
+Type=Application
+Terminal=false
+Categories=Qt;KDE;System;

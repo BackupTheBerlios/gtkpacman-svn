@@ -1,0 +1,42 @@
+INSTALL GUIDE FOR GTKPACMAN
+
+0. Intro
+
+gtkPacman can work without any installation, type:
+
+	# ./main.py
+
+If you want install it, you can do this in few steps as described below.
+
+1. Install
+
+Install gtkPacman is simple as:
+
+	# python setup.py install
+
+After that you can run gtkPacman typing:
+
+	# gtkpacman
+
+or use alt+F2 and then type gtkpacman. Since 1.0beta1, there are two desktop files. If you use xfce or gnome or kde, you'll find a menu item for gtkpacman in their menu. To run gtkpacman from those menu, you'll be asked for root password, either by kdesu or gksu.
+
+2. Make a Package.
+
+voidnull <linuxmania@gmail.com> is maintaining a PKGBUILD on aur. You'll find it on http://aur.archlinux.org/packages/gtkpacman/gtkpacman/PKGBUILD. If you're AUR member and you like gtkPacman, please vote for it :)
+After you downloaded it all you have to do is:
+
+	$ makepkg 
+	# pacman -A gtkpacman-x.x-x.pkg.tar.gz
+
+3. Install prebuilt package.
+
+Since version 1.0beta1, we're releasing prebuilt archlinux packages. You'll find them at http://download.gna.org/gtkpacman. To install it simply download it and use pacman to install it.
+
+	$ wget http://download.gna.org/gtkpacman/gtkpacman-x.x-x.pkg.tar.gz
+	# pacman -A gtkpacman-x.x-x.pkg.tar.gz
+
+4. Uninstall
+
+Uninstall is only supported for prebuilt packages:
+
+	# pacman -R gtkpacman-x.x-x.pkg.tar.gz

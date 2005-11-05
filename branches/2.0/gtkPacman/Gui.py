@@ -5,7 +5,7 @@ from Models import *
 
 class gui:
 
-    def __init__(self, fname):
+    def __init__(self, fname, icons):
 
         self.gld = gtk.glade.XML(fname, 'main_win', 'gtkpacman')
         hands = { 'hide_win' : self.hide,
@@ -22,6 +22,7 @@ class gui:
         self.db = database()
 
         self._setup_trees()
+        self._setup_icons(icons)
 
         self.stat_bar = self.gld.get_widget("statusbar")
         self.cont_id = self.stat_bar.get_context_id("statusbar")
@@ -34,7 +35,16 @@ class gui:
         self.db.setup_pacs()
         for repo in self.db.repos:
             self.trees[repo].set_model(pac_model(repo, self.db))
+        self.trees["third"].set_model(pac_model("third", self.db))
         return
+
+    def _setup_icons(self, icons):
+        for icon_name in icons.keys():
+            icon = gtk.gdk.pixbuf_new_from_file(icons[icon_name])
+            icon_set = gtk.IconSet(icon)
+            icon_factory = gtk.IconFactory()
+            icon_factory.add(icon_name, icon_set)
+            icon_factory.add_default()
     
     def _setup_pac_columns(self, tree):
         tree.insert_column_with_attributes(-1,
@@ -53,12 +63,14 @@ class gui:
                                            "Installed Version",
                                            gtk.CellRendererText(),
                                            text = 3)
-
+        col_num = 0
         for column in tree.get_columns():
             column.set_reorderable(True)
             column.set_resizable(True)
             column.set_clickable(True)
             column.set_sort_indicator(True)
+            column.set_sort_column_id(col_num)
+            col_num += 1
             continue
         return
     
@@ -78,6 +90,16 @@ class gui:
             notebook.append_page(scroll, gtk.Label(repo))
             self.trees[repo] = tree
             continue
+
+        tree = gtk.TreeView()
+        tree.set_rules_hint(True)
+        self._setup_pac_columns(tree)
+        scroll = gtk.ScrolledWindow(None, None)
+        scroll.set_policy('automatic', 'automatic')
+        scroll.add(tree)
+        scroll.show_all()
+        notebook.append_page(scroll, gtk.Label("Thirds' packages"))
+        self.trees["third"] = tree                             
         return
 
     def about(self, wid, event=None):

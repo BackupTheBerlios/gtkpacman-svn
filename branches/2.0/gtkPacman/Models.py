@@ -10,12 +10,15 @@ class pac_model(gtk.ListStore):
             if type(pac) != type(list()):
                 raise TypeError, "pac isn't a list"
 
-            if len(pac) > 2:
-                image = gtk.STOCK_YES
+            if len(pac) == 6:
+                image = "green"
                 db_ver = pac[4]
                 inst_ver = pac[0][1]
+                if pac[5]:
+                    image = "yellow"
+                    
             else:
-                image = gtk.STOCK_NO
+                image = "red"
                 inst_ver = "-"
                 db_ver = pac[0][1]
 

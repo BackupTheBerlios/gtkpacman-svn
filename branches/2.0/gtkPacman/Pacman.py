@@ -49,14 +49,15 @@ class database(dict):
                     except:
                         db_ver = "-"
                         
-                    self[repo][infos[0]] = [infos, deps, req_by, files, db_ver]
+                    self[repo][infos[0]] = [infos, deps, req_by, files, db_ver,
+                                            repo]
                     #self.installed.append(pack)
                 else:
                     try:
                         (infos, deps) = libpypac_1.pack_info(pack, repo)
                     except:
                         continue
-                    self[repo][infos[0]] = [infos, deps]
+                    self[repo][infos[0]] = [infos, deps, repo]
                 continue
             continue
         self._set_third_pacs()

@@ -16,13 +16,12 @@ class database(dict):
 
         self.repos.sort()
 
-    def setup_pacs(self): #, pac_cbk, repo_cbk):
+    def setup_pacs(self):
         
         for repo in self.repos:
 
             self[repo] = {}
-            #self.installed = []
-
+            
             repo_pacs = os.listdir("%s%s" %(libpypac_0.root_dir, repo))
             repo_pacs.sort()
             fraction = 1.0/len(repo_pacs)
@@ -51,7 +50,6 @@ class database(dict):
                         
                     self[repo][infos[0]] = [infos, deps, req_by, files, db_ver,
                                             repo]
-                    #self.installed.append(pack)
                 else:
                     try:
                         (infos, deps) = libpypac_1.pack_info(pack, repo)
@@ -67,7 +65,7 @@ class database(dict):
     def get_by_name(self, name, repo=None):
         
         if not repo:
-            for repo in self.repos:
+            for repo in self.keys():
                 try:
                     return self[repo][name]
                 except KeyError:
@@ -88,7 +86,9 @@ class database(dict):
         for pac in local_list:
             (infos, deps, req_by, files) =  libpypac_1.loc_pack_info(pac)
             if not self.get_by_name(infos[0]):
-                self["third"][infos[0]] = [infos, deps, req_by, files, "-"]
+                self["third"][infos[0]] = [
+                    infos, deps, req_by, files, "-", "-", False
+                    ]
             continue
         return
 

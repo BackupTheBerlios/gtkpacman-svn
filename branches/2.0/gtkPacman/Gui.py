@@ -1,4 +1,4 @@
-import gtk, gtk.glade
+import gtk, gtk.glade, thread, time
 
 from Pacman import *
 from Models import *
@@ -24,6 +24,9 @@ class gui:
         self._setup_trees()
         self._setup_dep_and_req_by_trees()
         self._setup_icons(icons)
+        
+        icon = gtk.gdk.pixbuf_new_from_file(icons["pacman"])
+        self.gld.get_widget("main_win").set_icon(icon)
 
         self.stat_bar = self.gld.get_widget("statusbar")
         self.cont_id = self.stat_bar.get_context_id("statusbar")
@@ -32,6 +35,14 @@ class gui:
         self.stat_bar.pack_end(self.prog_bar, False, True, 0)
 
 
+    def _do_pulse(self):
+        while self.pulse:
+            gtk.threads_enter()
+            self.prog_bar.pulse()
+            gtk.threads_leave()
+            time.sleep(0.1)
+        return
+    
     def _get_selected_pac(self, tree):
         (model, treeiter) = tree.get_selection().get_selected()
         name = model.get_value(treeiter, 1)
@@ -39,10 +50,28 @@ class gui:
         return pac
             
     def _init_db(self):
+        gtk.threads_enter()
+        self.stat_bar.push(self.cont_id, "Processing database")
+        self.prog_bar.show()
+        gtk.threads_leave()
+
+        self._start_pulse()
         self.db.setup_pacs()
+        self._stop_pulse()
+        
+        gtk.threads_enter()
+        self.prog_bar.hide()
+        self.stat_bar.pop(self.cont_id)
+        self.stat_bar.push(self.cont_id, "Done")
+        gtk.threads_leave()
+        
         for repo in self.db.repos:
+            gtk.threads_enter()
             self.trees[repo].set_model(pac_model(repo, self.db))
+            gtk.threads_leave()
+        gtk.threads_enter()
         self.trees["third"].set_model(pac_model("third", self.db))
+        gtk.threads_leave()
         return
 
     def _set_desc(self, pac):
@@ -140,6 +169,28 @@ class gui:
             col_num += 1
             continue
         return
+
+    def _setup_tree(self, repo, notebook):
+        
+        tree = gtk.TreeView()
+        tree.connect("cursor-changed", self.row_selected)
+        tree.connect("row-activated", self.row_double_clicked)
+        tree.set_rules_hint(True)
+        self._setup_pac_columns(tree)
+
+        scroll = gtk.ScrolledWindow(None, None)
+        scroll.set_policy('automatic', 'automatic')
+        scroll.add(tree)
+        scroll.show_all()
+
+        if repo == "third":
+            label = "Thirds' packages"
+        else:
+            label = repo
+            
+        notebook.append_page(scroll, gtk.Label(label))
+
+        self.trees[repo] = tree
     
     def _setup_trees(self):
         notebook = self.gld.get_widget("notebook")
@@ -147,28 +198,19 @@ class gui:
         self.trees = {}
 
         for repo in self.db.repos:
-            tree = gtk.TreeView()
-            tree.connect("cursor-changed", self.row_selected)
-            tree.connect("row-activated", self.row_double_clicked)
-            tree.set_rules_hint(True)
-            self._setup_pac_columns(tree)
-            scroll = gtk.ScrolledWindow(None, None)
-            scroll.set_policy('automatic', 'automatic')
-            scroll.add(tree)
-            scroll.show_all()
-            notebook.append_page(scroll, gtk.Label(repo))
-            self.trees[repo] = tree
+            self._setup_tree(repo, notebook)
             continue
 
-        tree = gtk.TreeView()
-        tree.set_rules_hint(True)
-        self._setup_pac_columns(tree)
-        scroll = gtk.ScrolledWindow(None, None)
-        scroll.set_policy('automatic', 'automatic')
-        scroll.add(tree)
-        scroll.show_all()
-        notebook.append_page(scroll, gtk.Label("Thirds' packages"))
-        self.trees["third"] = tree                             
+        self._setup_tree("third", notebook)
+        return
+
+    def _start_pulse(self):
+        self.pulse = True
+        thread.start_new_thread(self._do_pulse, ())
+        return
+
+    def _stop_pulse(self):
+        self.pulse = False
         return
 
     def about(self, wid, event=None):
@@ -205,8 +247,14 @@ class gui:
         return
     
     def run(self):
-        self._init_db()
+
+        gtk.threads_init()
+        
+        thread.start_new_thread(self._init_db, ())
+
+        gtk.threads_enter()
         gtk.main()
+        gtk.threads_leave()
         
     def sync(self, wid, event=None):
         return

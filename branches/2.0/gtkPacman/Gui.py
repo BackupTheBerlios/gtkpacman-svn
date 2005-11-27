@@ -16,10 +16,17 @@ class gui:
                   'upgrade' : self.upgrade,
                   'add' : self.add,
                   'refresh' : self.refresh,
-                  'remove' : self.remove }
+                  'remove' : self.remove,
+                  'toolbar': self.toolbar,
+                  'pack_infos' : self.pack_infos,
+                  'old_packs' : self.old_packs }
+        
         self.gld.signal_autoconnect(hands)
 
-        self.db = database()
+        self.pacman = pacman(self)
+        self.db = self.pacman.db
+        self.db_ready = False
+        self.old_model = gtk.ListStore(str, str, str, str)
 
         self._setup_trees()
         self._setup_dep_and_req_by_trees()
@@ -50,14 +57,13 @@ class gui:
         return pac
             
     def _init_db(self):
+
         gtk.threads_enter()
-        self.stat_bar.push(self.cont_id, "Processing database")
         self.prog_bar.show()
         gtk.threads_leave()
-
-        self._start_pulse()
-        self.db.setup_pacs()
-        self._stop_pulse()
+               
+        self.db.setup_pacs(self._set_progress, self._reset_progress)
+        self.db_ready = True
         
         gtk.threads_enter()
         self.prog_bar.hide()
@@ -65,15 +71,16 @@ class gui:
         self.stat_bar.push(self.cont_id, "Done")
         gtk.threads_leave()
         
-        for repo in self.db.repos:
-            gtk.threads_enter()
-            self.trees[repo].set_model(pac_model(repo, self.db))
-            gtk.threads_leave()
+    def _reset_progress(self, repo):
         gtk.threads_enter()
-        self.trees["third"].set_model(pac_model("third", self.db))
+        self.prog_bar.set_fraction(0.0)
+        self.stat_bar.pop(self.cont_id)
+        self.stat_bar.push(self.cont_id, "Setting %s packages list" %repo)
+        self.trees[repo].set_model(pac_model(repo, self.db,
+                                             self.old_model))
         gtk.threads_leave()
         return
-
+        
     def _set_desc(self, pac):
         desc = pac[0][2]
         summ_txt = self.gld.get_widget("summary_txt").get_buffer()
@@ -90,6 +97,37 @@ class gui:
             for file in pac[3]:
                 flist_txt.insert(flist_txt.get_end_iter(), "%s\n" %file)
                 continue
+        return
+
+    def _set_old_model(self):
+
+        import time
+        
+        while not self.db_ready:
+            time.sleep(1.0)
+
+        gtk.threads_enter()
+        self.trees["old"].set_model(self.old_model)
+        gtk.threads_leave()
+
+    def _set_progress(self, fraction, repo, pack_name):
+
+        gtk.threads_enter()
+        curr_fraction = self.prog_bar.get_fraction()
+        gtk.threads_leave()
+        
+        new_fraction = curr_fraction + fraction
+        if new_fraction >= 1.0:
+            new_fraction = 1.0
+
+        gtk.threads_enter()
+        self.stat_bar.pop(self.cont_id)
+        self.stat_bar.push(
+            self.cont_id,
+            "Processing %s repo - package: %s" %(repo, pack_name)
+            )
+        self.prog_bar.set_fraction(new_fraction)
+        gtk.threads_leave()
         return
             
     
@@ -185,10 +223,15 @@ class gui:
 
         if repo == "third":
             label = "Thirds' packages"
+        elif repo == "old":
+            label = "Old packages"
         else:
             label = repo
             
-        notebook.append_page(scroll, gtk.Label(label))
+        if repo == "old":
+            notebook.prepend_page(scroll, gtk.Label(label))
+        else:
+            notebook.append_page(scroll, gtk.Label(label))
 
         self.trees[repo] = tree
     
@@ -219,11 +262,88 @@ class gui:
     def add(self, wid, event=None):
         return
 
+    def already(self, pack):
+        self.statusbar.pop(self.cont_id)
+        self.statusbar.push(self.cont_id, "Package %s already in cache. Using cache copy" %pack)
+        return
+
+    def down_cbk(self, pack, transfered, tot_size):
+        percentile = transfered/tot_size
+
+        gtk.threads_enter()
+        self.prog_bar.show()
+        self.statusbar.pop(self.cont_id)
+        self.stausbar.push(self.cont_id, "Downloading %s" %pack)
+        self.prog_bar.set_fraction(percentile)
+        gtk.threads_leave()
+        return        
+
+    def err_cbk(self, string):
+        dlg = gtk.MessageDialog(self.gld.get_widget("main_win"),
+                                gtk.DIALOG_MODAL |
+                                gtk.DIALOG_DESTROY_WITH_PARENT,
+                                gtk.MESSAGE_ERROR,
+                                gtk.BUTTONS_CLOSE,
+                                string)
+        dlg.run()
+        dlg.destroy()
+        return
+    
     def hide(self, wid, event=None):
+        return
+
+    def md5sum_start(self, pack):
+        self.statusbar.pop(self.cont_id)
+        self.statusbar.push(self.cont_id, "Checking md5sum for %s" %pack)
+        self.prog_bar.set_fraction(0.0)
+        self._start_pulse()
+        return
+
+    def md5sum_stop(self):
+        self._stop_pulse()
+        return
+
+    def old_packs(self, wid, event=None):
+        if "old" not in self.trees.keys():
+            self._setup_tree("old", self.gld.get_widget("notebook"))
+            self.trees["old"].parent.hide()
+            
+        if wid.get_active():
+            self.trees["old"].parent.show()
+            self.gld.get_widget("notebook").set_current_page(0)
+            thread.start_new_thread(self._set_old_model, ())
+        else:
+            self.trees["old"].parent.hide()
+        return
+    
+    def pack_infos(self, wid, event=None):
+        if wid.get_active():
+            self.gld.get_widget("vpaned").show()
+        else:
+            self.gld.get_widget("vpaned").hide()
         return
     
     def preferences(self, wid, event=None):
         return
+
+    def question(self, to_install):
+        string = "Do you want to install these packages?: \n"
+        for pac in to_install:
+            string += "\t%s" %str(pac)
+            continue
+        dlg = gtk.MessageDialog(self.gld.get_widget("main_win"),
+                                gtk.DIALOG_MODAL |
+                                gtk.DIALOG_DESTROY_WITH_PARENT,
+                                gtk.MESSAGE_QUESTION,
+                                gtk.BUTTONS_YES_NO,
+                                string)
+        retcode = dlg.run()
+        if retcode == gtk.RESPONSE_YES:
+            dlg.destroy()
+            return True
+        else:
+            dlg.destroy()
+            return False
 
     def quit(self, wid, event=None):
         gtk.main_quit()
@@ -249,7 +369,7 @@ class gui:
     def run(self):
 
         gtk.threads_init()
-        
+
         thread.start_new_thread(self._init_db, ())
 
         gtk.threads_enter()
@@ -257,8 +377,26 @@ class gui:
         gtk.threads_leave()
         
     def sync(self, wid, event=None):
+        n_book = self.gld.get_widget("notebook")
+        num = n_book.get_current_page()
+        scr = n_book.get_nth_page(num)
+        tree = scr.get_child()
+        (model, iter) = tree.get_selection().get_selected()
+        if not iter:
+            self.err_cbk("Select a package before clicking on sync button")
+            return
+        name = model.get_value(iter, 1)
+        pack = self.db.get_by_name(name)
+        self.pacman.sync_pack(pack)
         return
 
+    def toolbar(self, wid, event=None):
+        if wid.get_active():
+            self.gld.get_widget("toolbar").show()
+        else:
+            self.gld.get_widget("toolbar").hide()
+        return
+    
     def upgrade(self, wid, event=None):
         return
     

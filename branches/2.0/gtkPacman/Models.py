@@ -2,7 +2,7 @@ import gtk
 
 class pac_model(gtk.ListStore):
 
-    def __init__(self, repo, db):
+    def __init__(self, repo, db, old_model):
 
         gtk.ListStore.__init__(self, str, str, str, str)
 
@@ -23,6 +23,10 @@ class pac_model(gtk.ListStore):
                 db_ver = pac[0][1]
 
             name = pac[0][0]
+
+            if image == "yellow":
+                old_model.append([image, name, db_ver, inst_ver])
+                
             self.append([image, name, db_ver, inst_ver])
 
 class dep_model(gtk.ListStore):
@@ -30,6 +34,9 @@ class dep_model(gtk.ListStore):
     def __init__(self, pac, db):
 
         gtk.ListStore.__init__(self, str, str, str, str, str)
+
+        if not pac[1]:
+            return
 
         for dep in pac[1]:
 

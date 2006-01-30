@@ -1,19 +1,14 @@
 #!/usr/bin/env python
 
-import pygtk
-pygtk.require('2.0')
-import gtk, os
-
-from gtkPacman.Gui import *
-
-fname = os.path.abspath('gtkpacman.glade')
-icons = { "green"  : os.path.abspath('share/pixmaps/green_box.png'),
-          "red"    : os.path.abspath('share/pixmaps/red_box.png'),
-          "yellow" : os.path.abspath('share/pixmaps/yellow_box.png'),
-          "pacman" : os.path.abspath('share/pixmaps/pacman.png') }
+from os.path import abspath
+from gtkpacman import app
 
 if __name__ == "__main__":
 
-    app = gui(fname, icons)
-    app.run()
-
+    icons = {"green" : "data/pixmaps/green_box.png", 
+             "red"   : "data/pixmaps/red_box.png",
+             "yellow": "data/pixmaps/yellow_box.png", 
+             "blank" : "data/pixmaps/blank_box.png",
+             "pacman": "data/pixmaps/pacman.png" }
+    fname = abspath("data/gtkpacman.glade")
+    app = app(fname, icons)

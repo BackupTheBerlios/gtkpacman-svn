@@ -1,7 +1,9 @@
 from gtk.glade import XML
-from gtk import ListStore, TreeStore, TreeView, CellRendererText
-from gtk import CellRendererPixbuf, CellRendererToggle, ScrolledWindow
-from gtk import TreeViewColumn, Label, main_quit
+from gtk import ListStore, TreeStore, TreeView, TreeViewColumn
+from gtk import CellRendererText, CellRendererPixbuf, CellRendererToggle
+from gtk import ScrolledWindow, Label
+from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
+from gtk import  main_quit
 
 import pacman
 
@@ -29,6 +31,7 @@ class gui:
 
         self.packages = pacman.get_all()
         self.queues = {"install": [], "remove": []}
+        self.queued = {}
         
         self._set_icons(icons)
         self._setup_notebook()
@@ -56,28 +59,20 @@ class gui:
         self.pages = {"remote": {}, "local": {}}
 
         self.pages["all"] = notebook_page(self.packages)
-        self.pages["all"].toggle_renderer.connect("toggled", self.add_install)
         notebook.append_page(self.pages["all"], Label("All"))
 
         self.pages["remote"]["node"] = self.pages["all"]
         
         self.pages["local"]["node"]= notebook_page(self.packages, node="local")
-        self.pages["local"]["node"].toggle_renderer.connect("toggled",
-                                                            self.add_install)
         notebook.append_page(self.pages["local"]["node"], Label("local"))
         
         for repo in pacman.repos:
             self.pages["remote"][repo] = notebook_page(self.packages, repo,
                                                        "remote")
-            self.pages["remote"][repo].toggle_renderer.connect("toggled",
-                                                               self.add_install
-                                                               )
             notebook.append_page(self.pages["remote"][repo], Label(repo))
 
             self.pages["local"][repo] = notebook_page(self.packages, repo,
                                                       "local")
-            self.pages["local"][repo].toggle_renderer.connect("toggled",
-                                                              self.add_install)
             notebook.append_page(self.pages["local"][repo], Label(repo))
             continue
 
@@ -105,7 +100,7 @@ class gui:
         tree.set_model(model)
         return
 
-    def _get_selected_page(self, repo_tree):        
+    def _get_selected_page(self, repo_tree, toggle=None):        
         model, tree_iter = repo_tree.get_selection().get_selected()
         if tree_iter is None:
             tree_iter = model.get_iter_from_string("0")
@@ -132,7 +127,7 @@ class gui:
         notebook.set_current_page(page_num)
         return
 
-    def add_install(self, widget, data=None):
+    def add_install(self, widget=None, data=None):
         repos_tree = self.gld.get_widget("treeview")
         page = self._get_selected_page(repos_tree)
 
@@ -140,32 +135,48 @@ class gui:
         name = model.get_value(l_iter, 2)
 
         if name not in self.queues["install"]:
+            if name in self.queues["remove"]:
+                self.queues["remove"].remove(name)
+                
             self.queues["install"].append(name)
+            installed = model.get_value(l_iter, 0)
+            if installed == "yellow" or installed == "green":
+                model.set_value(l_iter, 1, STOCK_GO_UP)
+            else:
+                model.set_value(l_iter, 1, STOCK_ADD)
+            self.queued[name] = (model, l_iter)
         return
 
-    def remove_install(self, widget, data=None):
+    def remove_install(self, widget=None, data=None):
         repos_tree = self.gld.get_widget("treeview")
         page = self._get_selected_page(repos_tree)
 
         model, l_iter = page.tree.get_selection().get_selected()
         name = model.get_value(l_iter, 2)
-
+        
         if name in self.queues["install"]:
             self.queues["install"].remove(name)
+            model.set_value(l_iter, 1, "")
+            self.queued.pop(name)
         return
 
-    def add_remove(self, widget, data=None):
+    def add_remove(self, widget=None, data=None):
         repos_tree = self.gld.get_widget("treeview")
         page = self._get_selected_page(repos_tree)
 
         model, l_iter = page.tree.get_selection().get_selected()
         name = model.get_value(l_iter, 2)
-
+        
         if name not in self.queues["remove"]:
+            if name in self.queues["install"]:
+                self.queues["install"].remove(name)
+                
             self.queues["remove"].append(name)
+            model.set_value(l_iter, 1, STOCK_REMOVE)
+            self.queued[name] = (model, l_iter)
         return
 
-    def remove_remove(self, widget, data=None):
+    def remove_remove(self, widget=None, data=None):
         repos_tree = self.gld.get_widget("treeview")
         page = self._get_selected_page(repos_tree)
 
@@ -174,6 +185,7 @@ class gui:
 
         if name in self.queues["remove"]:
             self.queues["remove"].remove(name)
+            model.set_value(l_iter, 1, "")
         return
 
     def execute(self, widget, data=None):
@@ -181,6 +193,7 @@ class gui:
             print k
             for name in self.queues[k]:
                 print "\t"+name
+                self.queued[name][0].set_value(self.queued[name][1], 1, "")
                 continue
             self.queues[k] = []
             continue
@@ -188,7 +201,7 @@ class gui:
         
     def quit(self, widget, event=None, data=None):
         main_quit()
-
+        
 class notebook_page(ScrolledWindow):
 
     def __init__(self, packages, repo=None, node=None):
@@ -206,13 +219,13 @@ class notebook_page(ScrolledWindow):
     def _setup_columns(self):
 
         pixbuf_renderer = CellRendererPixbuf()
-        self.toggle_renderer = CellRendererToggle()
-        self.toggle_renderer.activatable = True
+        action_renderer = CellRendererPixbuf()
+
         first_col = TreeViewColumn()
         first_col.pack_start(pixbuf_renderer)
-        first_col.pack_start(self.toggle_renderer)
+        first_col.pack_start(action_renderer)
         first_col.set_attributes(pixbuf_renderer, stock_id=0)
-        first_col.set_attributes(self.toggle_renderer, active=1)
+        first_col.set_attributes(action_renderer, stock_id=1)
         self.tree.insert_column(first_col, -1)
         
         self.tree.insert_column_with_attributes(-1,
@@ -240,7 +253,7 @@ class pac_list(ListStore):
 
     def __init__(self, packages, repo, node):
 
-        ListStore.__init__(self, str, bool, str, str, str)
+        ListStore.__init__(self, str, str, str, str, str)
 
         self.packages = packages
         
@@ -288,7 +301,6 @@ class pac_list(ListStore):
                         image = "green"
                 else:
                     image = "red"
-            self.append([image, False, name, version, repo])
+            self.append([image, "", name, version, repo])
             continue
         return
-    

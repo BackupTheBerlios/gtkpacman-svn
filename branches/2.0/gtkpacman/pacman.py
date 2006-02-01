@@ -74,7 +74,7 @@ def _parse_repo(repo):
             #...else write a new description and insert it into
             #REMOTE
             package = {"version": version, "desc": desc,
-                       "size": int(size), "depends": dependencies,
+                       "size": int(size), "dependencies": dependencies,
                        "old": False}
             packages[REMOTE][repo][name] = package
         continue

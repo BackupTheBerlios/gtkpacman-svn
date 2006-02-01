@@ -58,26 +58,28 @@ class gui:
 
         self.pages = {"remote": {}, "local": {}}
 
-        self.pages["all"] = notebook_page(self.packages)
+        self.pages["all"] = notebook_page(self.packages, hnd=self.change_row)
         notebook.append_page(self.pages["all"], Label("All"))
 
         self.pages["remote"]["node"] = self.pages["all"]
         
-        self.pages["local"]["node"]= notebook_page(self.packages, node="local")
+        self.pages["local"]["node"]= notebook_page(self.packages, node="local",
+                                                   hnd=self.change_row)
         notebook.append_page(self.pages["local"]["node"], Label("local"))
         
         for repo in pacman.repos:
             self.pages["remote"][repo] = notebook_page(self.packages, repo,
-                                                       "remote")
+                                                       "remote",
+                                                       self.change_row)
             notebook.append_page(self.pages["remote"][repo], Label(repo))
 
             self.pages["local"][repo] = notebook_page(self.packages, repo,
-                                                      "local")
+                                                      "local", self.change_row)
             notebook.append_page(self.pages["local"][repo], Label(repo))
             continue
 
         self.pages["local"]["none"] = notebook_page(self.packages, "none",
-                                                    "local")
+                                                    "local", self.change_row)
         notebook.append_page(self.pages["local"]["none"], Label("none"))
         return
 
@@ -197,19 +199,87 @@ class gui:
                 continue
             self.queues[k] = []
             continue
-        return
+        return            
+    def _get_node(self, page):
+        model, it = page.tree.get_selection().get_selected()
+        install = model.get_value(it, 0)
+        if install == "green" or install == "yellow":
+            return "local"
+        else:
+            return "remote"
+
+    def _build_description(self, name, repo, node):
+        package = self.packages[node][repo][name]
+
+        version = package["version"]
+        desc = package["desc"]
+        size = package["size"]
+        deps = package["dependencies"]
+
+        depends = ""
+        for dep in deps:
+            depends += "%s " %dep
+            continue
         
+        description = "Name: %s\nVersion: %s\nDepends on: %s\nSize: %s\nDescription: %s" %(name, version, depends, size, desc)
+        
+        if node == "local":
+            url = package["url"]
+            packager = package["packager"]
+            built = package["built"]
+            install_date = package["install_date"]
+            reason = package["reason"]
+            reasons = {1: "Installed as a dependency",
+                       0: "Excplicitly installed"}
+            dependants = package["dependants"]
+
+            req_by = ""
+            for req in dependants:
+                req_by += "%s " %req
+                continue
+            
+            description = "%s\nURL: %s\nPackager: %s\nBuild Date: %s\nInstall Date: %s\nReason: %s\nRequired By: %s\n" %(description, url, packager, built, install_date, reasons[reason], req_by)
+
+        return description
+
+    def _build_filelist(self, name, repo, node):
+        if not(node == "local"):
+            return "%s is not installed" %name
+
+        files = self.packages[node][repo][name]["file_list"]
+        filelist = ""
+        for line in files:
+            filelist += "%s\n" %line
+            continue
+        return filelist
+            
+    def change_row(self, treeview, data=None):
+        repos_tree = self.gld.get_widget("treeview")
+        page = self._get_selected_page(repos_tree)
+        node = self._get_node(page)
+
+        model, tree_iter = page.tree.get_selection().get_selected()
+        name = model.get_value(tree_iter, 2)
+        repo = model.get_value(tree_iter, 4)
+
+        description = self._build_description(name, repo, node)
+        self.gld.get_widget("summary").get_buffer().set_text(description)
+
+        files = self._build_filelist(name, repo, node)
+        self.gld.get_widget("files").get_buffer().set_text(files)
+
     def quit(self, widget, event=None, data=None):
         main_quit()
         
 class notebook_page(ScrolledWindow):
 
-    def __init__(self, packages, repo=None, node=None):
+    def __init__(self, packages, repo=None, node=None, hnd=None):
         
         ScrolledWindow.__init__(self, None, None)
         self.set_policy("automatic", "automatic")
 
         self.tree = TreeView()
+        self.tree.connect("cursor-changed", hnd)
         self.tree.set_model(pac_list(packages, repo, node))
         self._setup_columns()
 

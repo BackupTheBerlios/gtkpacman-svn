@@ -1,9 +1,9 @@
 from gtk.glade import XML
 from gtk import ListStore, TreeStore, TreeView, TreeViewColumn
 from gtk import CellRendererText, CellRendererPixbuf, CellRendererToggle
-from gtk import ScrolledWindow, Label
+from gtk import ScrolledWindow, Label, ProgressBar
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
-from gtk import  main_quit
+from gtk import main_quit
 
 import pacman
 
@@ -37,8 +37,8 @@ class gui:
         self._setup_notebook()
 
         self._setup_repos_tree()
-        
-        self.gld.get_widget("main_win").show_all()
+
+        self._setup_prog_bar()        
 
     def _set_icons(self, icons):
         import gtk.gdk
@@ -102,6 +102,13 @@ class gui:
         tree.set_model(model)
         return
 
+    def _setup_prog_bar(self):
+        self.prog_bar = ProgressBar()
+
+        stat_bar = self.gld.get_widget("statusbar")
+        stat_bar.pack_start(self.prog_bar, False, False, 0)
+        return
+
     def _get_selected_page(self, repo_tree, toggle=None):        
         model, tree_iter = repo_tree.get_selection().get_selected()
         if tree_iter is None:
@@ -120,6 +127,10 @@ class gui:
             node = model.get_value(node_iter, 0)
             page = self.pages[nodes[node]][selected]
         return page
+
+    def set_progress(self, fraction):
+        self.prog_bar.set_fraction(fraction)
+        return
 
     def change_repo(self, widget, data=None):
         notebook = self.gld.get_widget("notebook")
@@ -168,6 +179,10 @@ class gui:
 
         model, l_iter = page.tree.get_selection().get_selected()
         name = model.get_value(l_iter, 2)
+
+        installed = model.get_value(l_iter, 0)
+        if installed == "red":
+            return
         
         if name not in self.queues["remove"]:
             if name in self.queues["install"]:

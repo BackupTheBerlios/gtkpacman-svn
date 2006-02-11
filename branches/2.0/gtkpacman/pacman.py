@@ -101,3 +101,28 @@ def get_all():
     #Finally return the packages dict.
     return packages
 
+def find_by_name(name):
+    for key in packages.keys():
+        for sl_key in packages[key].keys():
+            for tl_key in packages[key][sl_key].keys():
+                if tl_key == name:
+                    return (packages[key][sl_key][tl_key], sl_key)
+                continue
+            continue
+        continue
+    return
+
+def download(pac_list, prog_f, stat_f):
+    for name in pac_list:
+        pac, repo = find_by_name(name)
+
+        version = pac["version"]
+        pac_name = "-".join((name,version))
+
+        size = pac["size"]
+
+        stat_f("Downloading %s" %pac_name)
+        libpypac_0.download(servers, repo, pac_name, size, prog_f)
+        stat_f("Done downloading %s" %pac_name)
+        continue
+    return

@@ -32,6 +32,8 @@ class gui:
         self.packages = pacman.get_all()
         self.queues = {"install": [], "remove": []}
         self.queued = {}
+
+        self.cont_id = self.gld.get_widget("statusbar").get_context_id()
         
         self._set_icons(icons)
         self._setup_notebook()
@@ -128,8 +130,18 @@ class gui:
             page = self.pages[nodes[node]][selected]
         return page
 
-    def set_progress(self, fraction):
+    def set_progress(self, package, transfered, tot_size):
+        fraction = transfered/tot_size
         self.prog_bar.set_fraction(fraction)
+        percent = fraction * 100
+        self.prog_bar.set_text(percent)
+        return
+
+    def set_message(self, msg):
+        stat = self.gld.get_widget("statusbar")
+
+        stat.pop(self.cont_id)
+        stat.push(self.cont_id, msg)
         return
 
     def change_repo(self, widget, data=None):
@@ -206,15 +218,41 @@ class gui:
         return
 
     def execute(self, widget, data=None):
-        for k in self.queues.keys():
-            print k
-            for name in self.queues[k]:
-                print "\t"+name
-                self.queued[name][0].set_value(self.queued[name][1], 1, "")
-                continue
-            self.queues[k] = []
-            continue
-        return            
+        self._install()
+        self._remove()
+
+    def _install(self):
+        pac_list, tot_size = pacman.parse_queue(self.queues["install"])
+
+        inst_dlg(pac_list, tot_size)
+        retcode = inst_dlg.run()
+        inst_dlg.destroy()
+
+        if not retcode:
+            return
+
+        conflicts = pacman.check_conflicts(pac_list)
+        if conflicts:
+            confl_dlg(conflicts)
+            retcode = confl_dlg.run()
+            if retcode:
+                for pac in conflicts:
+                    if not(pac in self.queues["remove"]):
+                        self.queues["remove"].append(pac)
+                    continue
+            else:
+                return
+        failure = pacman.download(pac_list, callback, msg_f)
+        if failure:
+            err_dlg("Error downloading %s.\nNo packages installed" %failure)
+            return
+
+        pacman.install(pac_list)
+        return
+
+    def _remove(self):
+        return
+            
     def _get_node(self, page):
         model, it = page.tree.get_selection().get_selected()
         install = model.get_value(it, 0)

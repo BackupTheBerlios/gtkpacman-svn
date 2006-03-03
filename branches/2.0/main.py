@@ -18,32 +18,23 @@
 # gtkPacman is copyright (C)2005-2006 by Stefano Esposito
 
 
-def get_fname():
+def get_fname_and_icons():
 
-    from os.path import exists, abspath
-
-    if exists("/usr/share/gtkpacman/gtkpacman.glade"):
-        fname = "/usr/share/gtkpacman/gtkpacman.glade"
-    else:
-        fname = abspath("data/gtkpacman.glade")
-
-    return fname
-
-def get_icons():
     from os.path import exists, abspath, join
 
-    icons = {"red": None, "yellow": None, "green": None, "pacman": None}
-
-    path = "/usr/share/gtkpacman/icons"
+    path = "/usr/share/gtkpacman/"
     if not exists(path):
-        path = abspath("data/icons")
+        path = abspath("data/")
 
-    icons["red"] = join(path, "red_box.png")
-    icons["yellow"] = join(path, "yellow_box.png")
-    icons["green"] = join(path, "green_box.png")
-    icons["pacman"] = join(path, "pacman.png")
+    icons = {}
+    fname = join(path, "gtkpacman.glade")
+    icons["red"] = join(path, "icons/red_box.png")
+    icons["yellow"] = join(path, "icons/yellow_box.png")
+    icons["green"] = join(path, "icons/green_box.png")
+    icons["pacman"] = join(path, "icons/pacman.png")
+    
 
-    return icons
+    return fname, icons
 
 def make_icons(icons):
     from gtk.gdk import pixbuf_new_from_file
@@ -65,8 +56,7 @@ if __name__ == "__main__":
     
     database = database()
     
-    fname = get_fname()
-    icons = get_icons()
+    fname, icons = get_fname_and_icons()
     make_icons(icons)
     
     gui = gui(fname, database)

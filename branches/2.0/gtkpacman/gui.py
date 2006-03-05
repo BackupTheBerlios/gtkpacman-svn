@@ -39,7 +39,7 @@ class gui:
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
                   #"about":          self.about,
-                  #"cursor_changed": self.pacs_changed,
+                  "pacs_changed": self.pacs_changed,
                   "repo_changed":   self.repo_changed}
         self.gld.signal_autoconnect(h_dict)
 
@@ -119,10 +119,10 @@ class gui:
             self.models[repo]["all"] = all_mod
             self.models[repo]["installed"] = inst_mod
 
-    def quit(self, widget, event=None):
+    def quit(self, widget, data=None):
         main_quit()
 
-    def repo_changed(self, widget):
+    def repo_changed(self, widget, data=None):
         repos_tree = self.gld.get_widget("repos_tree")
         pacs_tree = self.gld.get_widget("pacs_tree")
         
@@ -166,7 +166,23 @@ class gui:
                 self.inst_ver_col = pacs_tree.insert_column_with_attributes(
                     -1, "Avaible Version", CellRendererText(), text=4)
         pacs_tree.set_model(pacs_model)
-            
+
+    def pacs_changed(self, widget, data=None):
+        sum_txt = self.gld.get_widget("summary")
+        sum_buf = sum_txt.get_buffer()
+
+        file_txt = self.gld.get_widget("files")
+        file_buf = file_txt.get_buffer()
+        
+        model, t_iter = widget.get_selection().get_selected()
+        name = model.get_value(t_iter, 2)
+
+        pac = self.database.get_by_name(name)
+        if not pac.prop_setted:
+            self.database.set_pac_properties(pac)
+
+        sum_buf.set_text(pac.summary)
+        file_buf.set_text(pac.filelist)
 
 class installed_list(ListStore):
 

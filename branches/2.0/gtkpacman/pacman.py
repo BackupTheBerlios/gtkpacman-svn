@@ -70,15 +70,6 @@ class package:
             raise TypeError, _('inst_ver must be a string')
         return
     
-    def setted(self, setted):
-        """If properties are setted"""
-        self.prop_setted = setted
-        return
-    
-    def is_setted(self):
-        """Return True if properties have been setted, False elsewhere"""
-        return self.prop_setted
-    
 class database(dict):
     """The database of gtkPacman, where all pacs are stored and ordered"""
     def __init__(self):
@@ -197,68 +188,125 @@ class database(dict):
             
         pack_dir = "-".join((pac.name, version))
         path = "/var/lib/pacman/%s/%s" %(repo, pack_dir)
-        self.set_description(pac, path)
-        self.set_dependencies(pac)
-        self.set_filelist(pac, repo, path)
-        self.set_req_by(pac)
-        pac.setted(True)
+        self._set_summary(pac, path)
+        self._set_filelist(pac, path)
+        pac.prop_setted = True
         return
 
-    def set_description(self, pac, path):
+    def _set_summary(self, pac, path):
+        desc_file = open("%s/desc" %path).read()
+        
+        desc = self._get_description(desc_file)
+        deps = self._get_dependencies(path)
+        size = self._get_size(desc_file)
+
+        if pac.installed:
+            req_by = self._get_req_by(path)
+            packager = self._get_packager(desc_file)
+            builddate = self._get_builddate(desc_file)
+            installdate = self._get_installdate(desc_file)
+            reason = self._get_reason(desc_file)
+            
+            summary = "Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s" %(desc, deps, req_by, size, packager, builddate, installdate, reason)
+        else:
+            summary = "Description: %s\nDepends on: %s\nSize (compressed): %s" %(desc, deps, size)
+
+        pac.summary = summary
+
+    def _get_size(self, desc):
+
+        try:
+            begin = desc.index("%CSIZE%") + len("%CSIZE%")
+        except ValueError:
+            begin = desc.index("%SIZE%") + len("%SIZE%")
+
+        end = desc.index("%", begin)
+        size_s = desc[begin:end].strip()
+        size_int = int(size_s)
+        measure = "byte(s)"
+
+        if size_int >= 1024 and size_int < 1048576:
+            size_int = size_int/1024
+            measure = "kB"
+        if size_int >= 1048576:
+            size_int = size_int/1048576
+            measure = "MB"
+
+        size = "%s %s" %(size_int, measure)
+        return size
+
+    def _get_packager(self, desc):
+        begin = desc.index("%PACKAGER%") + len("%PACKAGER%")
+        end = desc.index("%", begin)
+
+        packager = desc[begin:end].strip()
+        return packager
+
+    def _get_builddate(self, desc):
+        begin = desc.index("%BUILDDATE%") + len("%BUILDDATE%")
+        end = desc.index("%", begin)
+
+        builddate = desc[begin:end].strip()
+        return builddate
+
+    def _get_installdate(self, desc):
+        begin = desc.index("%INSTALLDATE%") + len("%INSTALLDATE%")
+        end = desc.index("%", begin)
+
+        installdate = desc[begin:end].strip()
+        return installdate
+
+    def _get_reason(self, desc):
+        begin = desc.index("%REASON%") + len("%REASON%")
+        reason_int = int(desc[begin:].strip())
+
+        if reason_int:
+            reason = "Installed as a dependency for another package"
+        else:
+            reason = "Excplicitly installed"
+
+        return reason
+        
+    def _get_description(self, desc):
         """Set description for the given pac"""
-        desc = open("%s/desc" %path).read()
         begin = desc.index("%DESC%") + len("%DESC%")
         end = desc.index("%", begin)
         description = desc[begin:end].strip()
-        pac.description = description
-        return
+        return description
 
-    def set_dependencies(self, pac):
+    def _get_dependencies(self, path):
         """Set dependencies list for the given pac"""
-        repo = pac.repo
-        if repo == "foreigners":
-            repo = "local"
-        directory = "-".join((pac.name, pac.version))
-        deps = open("/var/lib/pacman/%s/%s/depends" %(repo, directory)).read()
+        deps = open("%s/depends" %path).read()
 
         dependencies = []
         begin = deps.index("%DEPENDS%") + len("%DEPENDS%")
         end = deps.find("%", begin) - len("%")
         dependencies = deps[begin:end].strip()
-        
-        if dependencies:
-            pac.dependencies = dependencies.split("\n")
-        else:
-            pac.dependencies = ""
-        return
+        depends = dependencies.split("\n")
+        deps = ", ".join(depends)
+        return deps
     
-    def set_filelist(self, pac, repo, path):
-        """Set installed files list for the given pac"""
-        if repo == "local":
-            files = open("%s/files" %path).read()
-            begin = files.index("%FILES%") + len("%FILES%")
-            end = files.find("%", begin) - len("%")
-            filelist = files[begin:end].strip()
-            pac.filelist = filelist
-        return
-
-    def set_req_by(self, pac):
+    def _get_req_by(self, path):
         """Set list of packages that needs given pac"""
-        if not pac.installed:
-            return
-        
-        directory = "-".join((pac.name, pac.version))
-        path = "/var/lib/pacman/local/%s" %directory
         depends = open("%s/depends" %path).read()
 
         begin = depends.find("%REQUIREDBY%") + len("%REQUIREDBY%")
         end = depends.find("%", begin) - len("%")
 
         reqs = depends[begin:end].strip().split("\n")
-        if reqs:
-            pac.req_by = reqs
-        else:
-            pac.req_by = ""
+        req_by = ", ".join(reqs)
+        return req_by
+
+    def _set_filelist(self, pac, path):
+        """Set installed files list for the given pac"""
+        if not pac.installed:
+            return
+        
+        files = open("%s/files" %path).read()
+        begin = files.index("%FILES%") + len("%FILES%")
+        end = files.find("%", begin) - len("%")
+        filelist = files[begin:end].strip()
+        pac.filelist = filelist
         return
     
     def set_orphans(self):

@@ -1,0 +1,212 @@
+# Italian translations for gtkpacman package
+# Traduzioni italiane per il pacchetto gtkpacman.
+# Copyright (C) 2006 THE gtkpacman'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gtkpacman package.
+# Stefano Esposito <ragnarok@email.it>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 2.0alpha\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-03-05 17:46+0100\n"
+"PO-Revision-Date: 2006-03-05 17:24+0100\n"
+"Last-Translator: Stefano Esposito <ragnarok@email.it>\n"
+"Language-Team: Italian <tp@lists.linux.it>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: gui.py:64
+msgid "Package"
+msgstr "Pacchetto"
+
+#: gui.py:66
+msgid "Installed Version"
+msgstr "Versione installata"
+
+#: gui.py:69 gui.py:171
+msgid "Avaible Version"
+msgstr "Versione disponibile"
+
+#: gui.py:72
+msgid "Repo"
+msgstr "Repo"
+
+#: gui.py:91
+msgid "All"
+msgstr "Tutti"
+
+#: gui.py:97
+msgid "all"
+msgstr "tutti"
+
+#: gui.py:98
+msgid "installed"
+msgstr "installati"
+
+#: gui.py:101
+msgid "foreigners"
+msgstr "stranieri"
+
+#: pacman.py:54
+msgid "version must be a string"
+msgstr "la versione deve essere una stringa"
+
+#: pacman.py:62
+msgid "inst must be True or False"
+msgstr "inst deve essere True o False"
+
+#: pacman.py:70
+msgid "inst_ver must be a string"
+msgstr "inst_ver deve essere una stringa"
+
+#: pacman.py:210
+#, python-format
+msgid ""
+"Description: %s\n"
+"Depends on: %s\n"
+"Required by: %s\n"
+"Size: %s\n"
+"Packager: %s\n"
+"Built: %s\n"
+"Installed: %s\n"
+"Reason: %s"
+msgstr ""
+"Descrizione: %s\n"
+"Dipendenze: %s\n"
+"Dipendenti: %s\n"
+"Dimensione: %s\n"
+"Creatore: %s\n"
+"Compilato il: %s\n"
+"Installato il: %s\n"
+"Motivazione: %s"
+
+#: pacman.py:212
+#, python-format
+msgid ""
+"Description: %s\n"
+"Depends on: %s\n"
+"Size (compressed): %s"
+msgstr ""
+"Descrizione: %s\n"
+"Dipendenze: %s\n"
+"Dimensione (compresso): %s"
+
+#: pacman.py:264
+msgid "Installed as a dependency for another package"
+msgstr "Installato come dipendenza per un altro pacchetto"
+
+#: pacman.py:266
+msgid "Excplicitly installed"
+msgstr "Installato esplicitamente"
+
+#: pacman.py:303
+#, python-format
+msgid "%s is not installed"
+msgstr "%s non e' installato"
+
+#: pacman.py:348
+#, python-format
+msgid "%s is not in the database"
+msgstr "%s non e' presente nel database"
+
+#: gtkpacman.glade.h:1
+msgid "Add to _remove queue"
+msgstr "Aggiungi alla cosa di _rimozione"
+
+#: gtkpacman.glade.h:2
+msgid "Add to install queue"
+msgstr "Aggiungi alla coda di installazione"
+
+#: gtkpacman.glade.h:3
+msgid "Add to remove queue"
+msgstr "Aggiungi alla coda di rimozione"
+
+#: gtkpacman.glade.h:4
+msgid "Clear cache"
+msgstr "Pulisci la cache"
+
+#: gtkpacman.glade.h:5
+msgid "Delete from install queue"
+msgstr "Elimina dalla coda di installazione"
+
+#: gtkpacman.glade.h:6
+msgid "Delete from remove queue"
+msgstr "Elimina dalla coda di rimozione"
+
+#: gtkpacman.glade.h:7
+msgid "E_xecute"
+msgstr "E_segui"
+
+#: gtkpacman.glade.h:8
+msgid "Empty cache"
+msgstr "Svuota la cache"
+
+#: gtkpacman.glade.h:9
+msgid "Execute queued operations"
+msgstr "Esegui le operazioni in coda"
+
+#: gtkpacman.glade.h:10
+msgid "Files"
+msgstr "Files"
+
+#: gtkpacman.glade.h:11
+msgid "Immediate actions"
+msgstr "Azioni immediate"
+
+#: gtkpacman.glade.h:12
+msgid "Install/Upgrade package from _local file"
+msgstr "Installa/Aggiorna un pacchetto da file _locale"
+
+#: gtkpacman.glade.h:13
+msgid "Queue actions"
+msgstr "Azioni di coda"
+
+#: gtkpacman.glade.h:14
+msgid "R_emove from remove queue"
+msgstr "_Elimina dalla coda di rimozione"
+
+#: gtkpacman.glade.h:15
+msgid "Refresh _database"
+msgstr "Aggiorna il _database"
+
+#: gtkpacman.glade.h:16
+msgid "Refresh database"
+msgstr "Aggiorna il database"
+
+#: gtkpacman.glade.h:17
+msgid "Remove from _install queue"
+msgstr "Elimina dalla coda di _installazione"
+
+#: gtkpacman.glade.h:18
+msgid "Summary"
+msgstr "Riassunto"
+
+#: gtkpacman.glade.h:19
+msgid "Upgrade system"
+msgstr "Aggiorna il sistema"
+
+#: gtkpacman.glade.h:20
+msgid "_Add to install queue"
+msgstr "_Aggiungi alla coda di installazione"
+
+#: gtkpacman.glade.h:21
+msgid "_File"
+msgstr "_File"
+
+#: gtkpacman.glade.h:22
+msgid "_Help"
+msgstr "_Aiuto"
+
+#: gtkpacman.glade.h:23
+msgid "_Pacman"
+msgstr "_Pacman"
+
+#: gtkpacman.glade.h:24
+msgid "_Upgrade system"
+msgstr "Aggiorna il _sistema"
+
+#: gtkpacman.glade.h:25
+msgid "gtkpacman"
+msgstr "gtkpacman"

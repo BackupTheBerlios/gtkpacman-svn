@@ -1,0 +1,200 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-03-05 17:46+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: gui.py:64
+msgid "Package"
+msgstr ""
+
+#: gui.py:66
+msgid "Installed Version"
+msgstr ""
+
+#: gui.py:69 gui.py:171
+msgid "Avaible Version"
+msgstr ""
+
+#: gui.py:72
+msgid "Repo"
+msgstr ""
+
+#: gui.py:91
+msgid "All"
+msgstr ""
+
+#: gui.py:97
+msgid "all"
+msgstr ""
+
+#: gui.py:98
+msgid "installed"
+msgstr ""
+
+#: gui.py:101
+msgid "foreigners"
+msgstr ""
+
+#: pacman.py:54
+msgid "version must be a string"
+msgstr ""
+
+#: pacman.py:62
+msgid "inst must be True or False"
+msgstr ""
+
+#: pacman.py:70
+msgid "inst_ver must be a string"
+msgstr ""
+
+#: pacman.py:210
+#, python-format
+msgid ""
+"Description: %s\n"
+"Depends on: %s\n"
+"Required by: %s\n"
+"Size: %s\n"
+"Packager: %s\n"
+"Built: %s\n"
+"Installed: %s\n"
+"Reason: %s"
+msgstr ""
+
+#: pacman.py:212
+#, python-format
+msgid ""
+"Description: %s\n"
+"Depends on: %s\n"
+"Size (compressed): %s"
+msgstr ""
+
+#: pacman.py:264
+msgid "Installed as a dependency for another package"
+msgstr ""
+
+#: pacman.py:266
+msgid "Excplicitly installed"
+msgstr ""
+
+#: pacman.py:303
+#, python-format
+msgid "%s is not installed"
+msgstr ""
+
+#: pacman.py:348
+#, python-format
+msgid "%s is not in the database"
+msgstr ""
+
+#: gtkpacman.glade.h:1
+msgid "Add to _remove queue"
+msgstr ""
+
+#: gtkpacman.glade.h:2
+msgid "Add to install queue"
+msgstr ""
+
+#: gtkpacman.glade.h:3
+msgid "Add to remove queue"
+msgstr ""
+
+#: gtkpacman.glade.h:4
+msgid "Clear cache"
+msgstr ""
+
+#: gtkpacman.glade.h:5
+msgid "Delete from install queue"
+msgstr ""
+
+#: gtkpacman.glade.h:6
+msgid "Delete from remove queue"
+msgstr ""
+
+#: gtkpacman.glade.h:7
+msgid "E_xecute"
+msgstr ""
+
+#: gtkpacman.glade.h:8
+msgid "Empty cache"
+msgstr ""
+
+#: gtkpacman.glade.h:9
+msgid "Execute queued operations"
+msgstr ""
+
+#: gtkpacman.glade.h:10
+msgid "Files"
+msgstr ""
+
+#: gtkpacman.glade.h:11
+msgid "Immediate actions"
+msgstr ""
+
+#: gtkpacman.glade.h:12
+msgid "Install/Upgrade package from _local file"
+msgstr ""
+
+#: gtkpacman.glade.h:13
+msgid "Queue actions"
+msgstr ""
+
+#: gtkpacman.glade.h:14
+msgid "R_emove from remove queue"
+msgstr ""
+
+#: gtkpacman.glade.h:15
+msgid "Refresh _database"
+msgstr ""
+
+#: gtkpacman.glade.h:16
+msgid "Refresh database"
+msgstr ""
+
+#: gtkpacman.glade.h:17
+msgid "Remove from _install queue"
+msgstr ""
+
+#: gtkpacman.glade.h:18
+msgid "Summary"
+msgstr ""
+
+#: gtkpacman.glade.h:19
+msgid "Upgrade system"
+msgstr ""
+
+#: gtkpacman.glade.h:20
+msgid "_Add to install queue"
+msgstr ""
+
+#: gtkpacman.glade.h:21
+msgid "_File"
+msgstr ""
+
+#: gtkpacman.glade.h:22
+msgid "_Help"
+msgstr ""
+
+#: gtkpacman.glade.h:23
+msgid "_Pacman"
+msgstr ""
+
+#: gtkpacman.glade.h:24
+msgid "_Upgrade system"
+msgstr ""
+
+#: gtkpacman.glade.h:25
+msgid "gtkpacman"
+msgstr ""

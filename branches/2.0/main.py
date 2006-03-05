@@ -50,9 +50,16 @@ def make_icons(icons):
 
 if __name__ == "__main__":
 
+    from locale import setlocale, LC_ALL
+    from gettext import install
     from gtk import main
+    from gtk.glade import bindtextdomain, textdomain
     from gtkpacman import gui, database
-    
+
+    setlocale(LC_ALL, '')
+    bindtextdomain('gtkpacman', 'data/locale')
+    textdomain('gtkpacman')
+    install('gtkpacman', 'data/locale', unicode=1)
     
     database = database()
     

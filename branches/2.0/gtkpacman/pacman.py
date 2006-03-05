@@ -59,7 +59,7 @@ class package:
         if type(isold) == type(True):
             self.isold = isold
         else:
-            raise(TypeError, 'inst must be True or False')
+            raise TypeError, _('inst must be True or False')
         return
 
     def set_inst_ver(self, inst_ver):
@@ -207,9 +207,9 @@ class database(dict):
             installdate = self._get_installdate(desc_file)
             reason = self._get_reason(desc_file)
             
-            summary = "Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s" %(desc, deps, req_by, size, packager, builddate, installdate, reason)
+            summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, req_by, size, packager, builddate, installdate, reason)
         else:
-            summary = "Description: %s\nDepends on: %s\nSize (compressed): %s" %(desc, deps, size)
+            summary = _("Description: %s\nDepends on: %s\nSize (compressed): %s") %(desc, deps, size)
 
         pac.summary = summary
 
@@ -261,9 +261,9 @@ class database(dict):
         reason_int = int(desc[begin:].strip())
 
         if reason_int:
-            reason = "Installed as a dependency for another package"
+            reason = _("Installed as a dependency for another package")
         else:
-            reason = "Excplicitly installed"
+            reason = _("Excplicitly installed")
 
         return reason
         
@@ -300,7 +300,7 @@ class database(dict):
     def _set_filelist(self, pac, path):
         """Set installed files list for the given pac"""
         if not pac.installed:
-            return
+            return _("%s is not installed") %pac.name
         
         files = open("%s/files" %path).read()
         begin = files.index("%FILES%") + len("%FILES%")
@@ -345,7 +345,7 @@ class database(dict):
             for pac in self[repo]:
                 if name == pac.name:
                     return pac
-        raise NameError, "%s is not in the database" %name
+        raise NameError, _("%s is not in the database") %name
     
     def set_olds(self):
         """Set old pacs"""

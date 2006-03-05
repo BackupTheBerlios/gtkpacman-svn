@@ -16,6 +16,7 @@
 #
 # gtkPacman is copyright (C)2005-2006 by Stefano Esposito
 
+import gettext
 from gtk import main, main_quit
 from gtk import TreeStore, TreeView, ListStore
 from gtk import CellRendererText, CellRendererPixbuf
@@ -25,7 +26,7 @@ from gtk.glade import XML
 class gui:
     def __init__(self, fname, database):
 
-        self.gld = XML(fname, "main_win")
+        self.gld = XML(fname, "main_win", "gtkpacman")
 
         h_dict = {"quit":           self.quit,
                   #"add_install":    self.add_to_install_queue,
@@ -60,15 +61,15 @@ class gui:
                                                 stock_id=0)
         pacs_tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
                                                 stock_id=1)
-        pacs_tree.insert_column_with_attributes(-1, "Package",
+        pacs_tree.insert_column_with_attributes(-1, _("Package"),
                                                 CellRendererText(), text=2)
-        pacs_tree.insert_column_with_attributes(-1, "Installed Version",
+        pacs_tree.insert_column_with_attributes(-1, _("Installed Version"),
                                                 CellRendererText(), text=3)
         self.inst_ver_col = pacs_tree.insert_column_with_attributes(
-            -1, "Avaible Version", CellRendererText(), text=4
+            -1, _("Avaible Version"), CellRendererText(), text=4
             )
         self.repo_col = pacs_tree.insert_column_with_attributes(
-            -1, "Repo",
+            -1, _("Repo"),
             CellRendererText(), text=5
             )
 
@@ -87,14 +88,17 @@ class gui:
         repos_tree = self.gld.get_widget("repos_tree")
 
         repos_model = TreeStore(str)
-        all_it = repos_model.append(None, ["All"])
+        all_it = repos_model.append(None, [_("All")])
 
         for repo in self.database.repos:
+            if repo == "foreigners":
+                continue
             repo_it = repos_model.append(all_it, [repo])
-            if repo != "foreigners":
-                repos_model.append(repo_it, ["all"])
-                repos_model.append(repo_it, ["installed"])
+            repos_model.append(repo_it, [_("all")])
+            repos_model.append(repo_it, [_("installed")])
             continue
+
+        repos_model.append(all_it, [_("foreigners")])
         
         repos_tree.insert_column_with_attributes(-1, "", CellRendererText(),
                                                  text=0)
@@ -129,7 +133,7 @@ class gui:
         repos_model, tree_iter = repos_tree.get_selection().get_selected()
         selected = repos_model.get_value(tree_iter, 0)
 
-        if selected == "All":
+        if not repos_model.iter_depth(tree_iter):
             pacs_model = self.models["all"]
             if not self.repo_col:
                 self.repo_col = pacs_tree.insert_column_with_attributes(
@@ -164,7 +168,7 @@ class gui:
                 self.repo_col = None
             if not self.inst_ver_col:
                 self.inst_ver_col = pacs_tree.insert_column_with_attributes(
-                    -1, "Avaible Version", CellRendererText(), text=4)
+                    -1, _("Avaible Version"), CellRendererText(), text=4)
         pacs_tree.set_model(pacs_model)
 
     def pacs_changed(self, widget, data=None):

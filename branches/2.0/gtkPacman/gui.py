@@ -348,7 +348,7 @@ class gui:
                         req_pac = self.database.get_by_name(req)
                     except NameError:
                         continue
-                    warning_list.append(req)
+                    warning_list.append(req_pac)
                 continue
             continue
 
@@ -356,6 +356,7 @@ class gui:
         if warning_list:
             dlg = warning_dialog(main_win, warning_list)
             resp = dlg.run()
+            dlg.destroy()
             if resp == 1:
                 for req_pac in warning_list:
                     self.queues["remove"].append(req_pac.name)

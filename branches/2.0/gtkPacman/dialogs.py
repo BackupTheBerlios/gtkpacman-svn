@@ -17,14 +17,14 @@
 # gtkPacman is copyright (C)2005-2006 by Stefano Esposito
 
 from gtk import Dialog, MessageDialog, AboutDialog
-from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label
+from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
 from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
-from gtk import STOCK_APPLY
+from gtk import STOCK_APPLY, STOCK_REMOVE
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT
 from gtk import MESSAGE_ERROR
 from gtk import BUTTONS_CLOSE
-from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT
+from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import image_new_from_stock, ICON_SIZE_BUTTON, ICON_SIZE_DIALOG
 
 from terminal import terminal
@@ -284,11 +284,11 @@ class warning_dialog(Dialog):
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT)
 
         self._setup_buttons()
-        self._setup_trees(pacs)
+        self._setup_tree(pacs)
         self._setup_layout()
 
     def _setup_buttons(self):
-        rem_all_img = image_new_from_stok(STOCK_REMOVE, ICON_SIZE_BUTTON)
+        rem_all_img = image_new_from_stock(STOCK_REMOVE, ICON_SIZE_BUTTON)
         rem_all_butt = Button("Remove All")
         rem_all_butt.set_image(rem_all_img)
         rem_all_butt.show()
@@ -298,7 +298,7 @@ class warning_dialog(Dialog):
         rem_butt.set_image(rem_img)
         rem_butt.show()
 
-        close_butt = Button(STOCK_CLOSE)
+        close_butt = Button(stock=STOCK_CLOSE)
         close_butt.show()
 
         self.add_action_widget(rem_all_butt, RESPONSE_ACCEPT)
@@ -307,14 +307,15 @@ class warning_dialog(Dialog):
 
     def _setup_layout(self):
 
-        label = Label("This packages requires one of the packages you've selected for removal.\nDo you want to remove them all,, or do you want to force the removal of the selected packages only?(This will probably break dependent packages")
+        label = Label("This packages requires one of the packages you've selected for removal.\nDo you want to remove them all,, or do you want to force the removal\nof the selected packages only?(This will probably break dependent packages)")
+        label.show()
 
         self.vbox.pack_start(label, False, False, 0)
         self.vbox.pack_start(self.tree, True, True, 0)
         return
 
     def _setup_tree(self, pacs):
-        self.tree = Treeview()
+        self.tree = TreeView()
         self.model = ListStore(str, str, str)
 
         self.tree.insert_column_with_attributes(-1, "",

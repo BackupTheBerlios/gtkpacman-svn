@@ -24,7 +24,7 @@ from gtk import ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
 from gtk.glade import XML
 
-from dialogs import confirm_dialog, do_dialog, warning_dialog
+from dialogs import confirm_dialog, do_dialog, warning_dialog, about_dialog
 
 class gui:
     def __init__(self, fname, database):
@@ -42,7 +42,7 @@ class gui:
                   #"add_local":      self.add_from_local_file,
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
-                  #"about":          self.about,
+                  "about":          self.about,
                   "pacs_changed":   self.pacs_changed,
                   "repo_changed":   self.repo_changed}
         self.gld.signal_autoconnect(h_dict)
@@ -376,7 +376,13 @@ class gui:
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []
-        return        
+        return
+
+    def about(self, widget, data=None):
+        dlg = about_dialog()
+        dlg.run()
+        dlg.destroy()
+        return
 
 class installed_list(ListStore):
 

@@ -1,0 +1,37 @@
+INSTALL GUIDE FOR GTKPACMAN
+
+0. Intro
+
+gtkPacman can work without any installation, type:
+
+	# ./gtkpacman
+
+If you want install it, you can do this in few steps as described below.
+
+1. Install
+
+Install gtkPacman is simple as:
+
+	# python setup.py install
+
+After that you can run gtkPacman typing:
+
+	# gtkpacman
+
+or use alt+F2 and then type gtkpacman. Since 1.0beta1, there are two desktop files. If you use xfce or gnome or kde, you'll find a menu item for gtkpacman in their menu. To run gtkpacman from those menu, you'll be asked for root password, either by kdesu or gksu.
+
+2. Install from community repo
+
+gtkPacman is on the community repo, so you can install it simply with:
+
+	# pacman -S gtkpacman
+
+Be sure that the community repo is active in your /etc/pacman.conf
+
+3. Uninistall
+
+Uninistall is supported for package installations only.
+To uninistall gtkPacman type:
+
+	# pacman -R gtkpacman
+

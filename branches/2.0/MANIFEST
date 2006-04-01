@@ -1,0 +1,7 @@
+gtkpacman
+setup.py
+gtkPacman/__init__.py
+gtkPacman/dialogs.py
+gtkPacman/gui.py
+gtkPacman/pacman.py
+gtkPacman/terminal.py

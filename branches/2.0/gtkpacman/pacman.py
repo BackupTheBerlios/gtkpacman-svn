@@ -44,6 +44,7 @@ class package:
         self.filelist = ""
         self.isorphan = True
         self.req_by = ""
+        self.dependencies = ""
         self.prop_setted = False
         
     def set_version(self, version):
@@ -69,6 +70,99 @@ class package:
         else:
             raise TypeError, _('inst_ver must be a string')
         return
+
+    def download(self, server_dict, callback_func=None):
+        #This function is taken and adapted from libpypac.
+        #libpypac is Copyright (C) 2005 Libpypac Foundation
+        #libpypac is released under LGPL
+        #This function is released under the same license of gtkpacman
+
+        import ftplib, httplib
+        
+        pac_name = "-".join((self.name, self.version))
+        for server in server_dict[self.repo]:
+            s_list = server.rsplit("//")
+            str = s_list[-1]
+            s_list = str.rsplit("/")
+            host = s_list[0]
+
+            s_list = s_list[1:]
+            cwd = ""
+      
+            for i in range(len(s_list)):
+                cwd = "/%s%s" %(s_list.pop(), cwd)
+
+            path = "/var/cache/pacman/pkg/%s.pkg.tar.gz.part" %pac_name
+            final_fname = "/var/cache/pacman/pkg/%s.pkg.tar.gz" %pac_name
+                
+            if server.startswith("ftp"):
+                try:
+                    ftp_class = ftplib.FTP(host)
+                    ftp_class.login("anonymous")
+                    ftp_class.cwd(cwd)
+                    ftp_class.voidcmd("TYPE I")
+                    
+                    if os.path.exists(path):
+                        transfered = os.path.getsize(path)
+                        ftp_class.sendcmd("REST %s" %transfered)
+                        loc_file = open(path, "ab")
+                    else:
+                        transfered = 0
+                        loc_file = open(path, "wb")
+          
+                    socket, totsize = ftp_class.ntransfercmd("RETR %s.tar.gz" %pac_name, transfered)
+                    
+                    while True:
+                        buf = socket.recv(8192)
+                        if not len(buf):
+                            break
+                        loc_file.write(buf)
+                        transfered += len(buf)
+                        if callback_func != None:
+                            callback_func(pac_name, transfered, self.size)
+          
+                    ftp_class.close()
+                    loc_file.close()
+                    os.rename(path, final_fname)
+                    return "1"
+        
+                except:
+                    try:
+                        loc_file.close()
+                    except:
+                        pass
+      
+            elif server.startswith("http"):
+                try:
+                    http_class = httplib.HTTPConnection(host)
+                    http_class.request("GET", "%s/%s.tar.gz" %(cwd, pac_name))
+                    _file = http_class.getresponse()
+                    loc_file = open(path, 'wb')
+                    transfered = 0
+         
+                    while True:
+                        data = _file.read(8192)
+                        if not data: 
+                            break
+                        loc_file.write(data)
+                        transfered += len(data)
+                        if callback_func != None:
+                            callback_func(pac_name, transfered, size)
+          
+                    loc_file.close()
+                    http_class.close()
+                    os.rename(path, final_fname)
+                    return "1"
+                                                                                                    
+                except:
+                    try:
+                        loc_file.close()
+                    except:
+                        pass
+            
+                    return None
+            continue
+        return
     
 class database(dict):
     """The database of gtkPacman, where all pacs are stored and ordered"""
@@ -90,8 +184,10 @@ class database(dict):
         #Init some variable which will be usefull
         self.olds = []
         self.orphans = []
-        self.set_orphans()
 
+        #Set servers dictinary
+        self._set_servers()
+        
     def _get_installed(self):
         installed = os.listdir("/var/lib/pacman/local")
         installed.sort()
@@ -117,7 +213,7 @@ class database(dict):
         try:
             pacs = os.listdir("/var/lib/pacman/%s" %repo)
         except OSError:
-            self.repos.remove(repos)
+            self.repos.remove(repo)
             return
         try:
             pacs.remove(".lastupdate")
@@ -206,12 +302,15 @@ class database(dict):
             builddate = self._get_builddate(desc_file)
             installdate = self._get_installdate(desc_file)
             reason = self._get_reason(desc_file)
-            
+
             summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, req_by, size, packager, builddate, installdate, reason)
+            pac.req_by = req_by
+
         else:
             summary = _("Description: %s\nDepends on: %s\nSize (compressed): %s") %(desc, deps, size)
 
         pac.summary = summary
+        pac.dependencies = deps
 
     def _get_size(self, desc):
 
@@ -279,7 +378,10 @@ class database(dict):
         deps = open("%s/depends" %path).read()
 
         dependencies = []
-        begin = deps.index("%DEPENDS%") + len("%DEPENDS%")
+        try:
+            begin = deps.index("%DEPENDS%") + len("%DEPENDS%")
+        except ValueError:
+            return ""
         end = deps.find("%", begin) - len("%")
         dependencies = deps[begin:end].strip()
         depends = dependencies.split("\n")
@@ -307,6 +409,47 @@ class database(dict):
         end = files.find("%", begin) - len("%")
         filelist = files[begin:end].strip()
         pac.filelist = filelist
+        return
+
+    def _set_servers(self):
+        conf_file = open("/etc/pacman.conf", "r").read()
+        self.servers = {}
+        for repo in self.repos:
+            if repo == "foreigners":
+                continue
+            self.servers[repo] = []
+            self._get_repo_servers(repo, conf_file)
+            continue
+        return
+
+    def _get_repo_servers(self, repo, conf_file):
+        try:
+            begin = conf_file.index("[%s]" %repo) + len("[%s]" %repo)
+        except ValueError:
+            return
+        end = conf_file.index("[", begin)
+        current_section = conf_file[begin:end].strip()
+        current_lines = current_section.splitlines()
+        current_options = {}
+        for line in current_lines:
+            if not line or line.startswith("#"):
+                continue
+            opt, value = line.split(" = ")
+            current_options[opt] = value
+            continue
+        for key in current_options.keys():
+            if key == "Include":
+                servers = open(current_options[key], "r").readlines()
+                for server in servers:
+                    server = server.strip()
+                    if not server or server.startswith("#") or server.startswith("["):
+                        continue
+                    self.servers[repo].append(server.split(" = ")[1])
+                    continue
+            elif key == "Server":
+                server = current_options[key].split(" = ")[1]
+                self.servers[repo].append(server)
+            continue
         return
     
     def set_orphans(self):

@@ -21,7 +21,10 @@ from gtk import main, main_quit
 from gtk import TreeStore, TreeView, ListStore
 from gtk import CellRendererText, CellRendererPixbuf
 from gtk import ScrolledWindow
+from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
 from gtk.glade import XML
+
+from dialogs import confirm_dialog, do_dialog, warning_dialog
 
 class gui:
     def __init__(self, fname, database):
@@ -29,30 +32,51 @@ class gui:
         self.gld = XML(fname, "main_win", "gtkpacman")
 
         h_dict = {"quit":           self.quit,
-                  #"add_install":    self.add_to_install_queue,
-                  #"remove_install": self.remove_from_install_queue,
-                  #"add_remove":     self.add_to_remove_queue,
-                  #"remove_remove":  self.remove_from_remove_queue,
-                  #"execute":        self.execute,
+                  "add_install":    self.add_to_install_queue,
+                  "remove_install": self.remove_from_install_queue,
+                  "add_remove":     self.add_to_remove_queue,
+                  "remove_remove":  self.remove_from_remove_queue,
+                  "execute":        self.execute,
                   #"up_sys":         self.upgrade_system,
                   #"refr_db":        self.refresh_databases,
                   #"add_local":      self.add_from_local_file,
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
                   #"about":          self.about,
-                  "pacs_changed": self.pacs_changed,
+                  "pacs_changed":   self.pacs_changed,
                   "repo_changed":   self.repo_changed}
         self.gld.signal_autoconnect(h_dict)
 
 
         self.fname = fname
         self.database = database
+        self.queues = {"add": [], "remove": []}
 
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
 
+    def _adjust_queues (self):
+        for name in self.queues["add"]:
+            if name == "x-server":
+                ind = self.queues["add"].index("x-server")
+                self.queues["add"][ind] = "x-org"
+            elif ">=" in name:
+                ind = self.queues["add"].index(name)
+                name = name.split(">=")[0]
+                self.queues["add"][ind] = name
+            continue
 
+    def _adjust_names(self, names):
+        for ind in range(len(names)):
+            if names[ind] == "x-server":
+                names[ind] = "xorg-server"
+            elif ">=" in names[ind]:
+                name = names[ind].split(">=")[0]
+                names[ind] = name
+            continue
+        return names
+        
     def _setup_pacs_tree(self):
 
         pacs_tree = self.gld.get_widget("pacs_tree")
@@ -82,6 +106,8 @@ class gui:
             col.set_clickable(True)
             col.set_resizable(True)
             sort_id += 1
+            continue
+        return
         
     def _setup_repos_tree(self):
 
@@ -122,9 +148,41 @@ class gui:
 
             self.models[repo]["all"] = all_mod
             self.models[repo]["installed"] = inst_mod
+            continue
+        return
+
+    def _refresh_trees(self):
+        for model in self.models.keys():
+            if model == "all" or model == "foreigners":
+                self._refresh_model(model)
+            else:
+                for mod in self.models[model].keys():
+                    self._refresh_model(model, mod)
+                    continue
+            continue
+        return
+
+    def _refresh_model(self, model, submodel=None):
+        if submodel:
+            liststore = self.models[model][submodel]
+        else:
+            liststore = self.models[model]
+
+        for row in liststore:
+            if row[2] in self.queues["add"]:
+                row[1] = None
+                row[0] = "green"
+                row[3] = row[4]
+            elif row[2] in self.queues["remove"]:
+                row[1] = None
+                row[0] = "red"
+                row[3] = "-"
+            continue
+        return           
 
     def quit(self, widget, data=None):
         main_quit()
+        return
 
     def repo_changed(self, widget, data=None):
         repos_tree = self.gld.get_widget("repos_tree")
@@ -170,6 +228,7 @@ class gui:
                 self.inst_ver_col = pacs_tree.insert_column_with_attributes(
                     -1, _("Avaible Version"), CellRendererText(), text=4)
         pacs_tree.set_model(pacs_model)
+        return
 
     def pacs_changed(self, widget, data=None):
         sum_txt = self.gld.get_widget("summary")
@@ -187,6 +246,137 @@ class gui:
 
         sum_buf.set_text(pac.summary)
         file_buf.set_text(pac.filelist)
+        return
+
+    def add_to_install_queue(self, widget, data=None):
+        tree = self.gld.get_widget("pacs_tree")
+        model, l_iter = tree.get_selection().get_selected()
+
+        name = model.get_value(l_iter, 2)
+        if name in self.queues["add"]:
+            return
+        if name in self.queues["remove"]:
+            self.queues["remove"].remove(name)
+
+        self.queues["add"].append(name)
+
+        image = model.get_value(l_iter, 0)
+        if image == "red":
+            model.set_value(l_iter, 1, STOCK_ADD)
+        else:
+            model.set_value(l_iter, 1, STOCK_GO_UP)
+        return
+
+    def remove_from_install_queue(self, widget, data=None):
+        tree = self.gld.get_widget("pacs_tree")
+        model, l_iter = tree.get_selection().get_selected()
+
+        name = model.get_value(l_iter, 2)
+        if not (name in self.queues["add"]):
+            return
+
+        self.queues["add"].remove(name)
+        model.set_value(l_iter, 1, None)
+        return
+
+    def add_to_remove_queue(self, widget, data=None):
+        tree = self.gld.get_widget("pacs_tree")
+        model, l_iter = tree.get_selection().get_selected()
+
+        name = model.get_value(l_iter, 2)
+        if name in self.queues["remove"]:
+            return
+                
+        image = model.get_value(l_iter, 0)
+
+        if image == "red":
+            return
+
+        if name in self.queues["add"]:
+            self.queues["add"].remove(name)
+
+        self.queues["remove"].append(name)
+        model.set_value(l_iter, 1, STOCK_REMOVE)
+        return
+
+    def remove_from_remove_queue(self, widget, data=None):
+        tree = self.gld.get_widget("pacs_tree")
+        model, l_iter = tree.get_selection().get_selected()
+
+        name = model.get_value(l_iter, 2)
+        if not (name in self.queues["remove"]):
+            return
+
+        self.queues["remove"].remove(name)
+        model.set_value(l_iter, 1, None)
+        return
+
+    def execute(self, widget, data=None):
+        warning_list = []
+        force = False
+        self.pacs_queues = {"add": [], "remove": []}
+
+        self._adjust_queues ()
+        
+        for name in self.queues["add"]:
+            if not name or name == " ":
+                continue
+            
+            pac = self.database.get_by_name(name)
+            self.pacs_queues["add"].append(pac)
+                
+            dependencies = pac.dependencies.split(', ')
+            dependencies = self._adjust_names(dependencies)
+            for dep in dependencies:
+                if not dep or dep == " ":
+                    continue
+                if not(dep in self.queues["add"]):
+                    dep_pac = self.database.get_by_name(dep)
+                    if not dep_pac.installed:
+                        self.queues["add"].append(dep)
+                continue
+            continue
+        
+        for name in self.queues["remove"]:
+            pac = self.database.get_by_name(name)
+            self.pacs_queues["remove"].append(pac)
+            
+            req_by = pac.req_by.split(', ')
+            for req in req_by:
+                if req != " " and (not(req_by in self.queues["remove"])):
+                    try:
+                        req_pac = self.database.get_by_name(req)
+                    except NameError:
+                        continue
+                    warning_list.append(req)
+                continue
+            continue
+
+        if warning_list:
+            dlg = warning_dialog()
+            resp = dlg.run()
+            if resp == 1:
+                for req_pac in warning_list:
+                    self.queues["remove"].append(req_pac.name)
+                    force = False
+                    continue
+            elif resp == 2:
+                force = True
+            else:
+                return
+
+        main_win = self.gld.get_widget("main_win")
+        dlg = confirm_dialog(main_win, self.pacs_queues)
+        if dlg.run():
+            do_dlg = do_dialog(self.gld.get_widget("main_win"),
+                               self.pacs_queues)
+            do_dlg.run(force)
+            do_dlg.destroy()
+
+        self._refresh_trees()
+        self.queues["add"] = []
+        self.queues["remove"] = []
+        return        
 
 class installed_list(ListStore):
 

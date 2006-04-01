@@ -47,25 +47,39 @@ def make_icons(icons):
         icon_factory.add(icon_name, icon_set)
         icon_factory.add_default()
         continue
+    return
+
 
 if __name__ == "__main__":
 
+    from os import getuid
     from locale import setlocale, LC_ALL
     from gettext import install
-    from gtk import main
+    from gtk import main, threads_init, threads_enter, threads_leave
     from gtk.glade import bindtextdomain, textdomain
-    from gtkpacman import gui, database
+    from gtkpacman import gui, database, non_root_dialog
 
     setlocale(LC_ALL, '')
     bindtextdomain('gtkpacman', 'data/locale')
     textdomain('gtkpacman')
     install('gtkpacman', 'data/locale', unicode=1)
+
+    if getuid():
+        from sys import exit
+        dlg = non_root_dialog()
+        dlg.run()
+        dlg.destroy()
+        exit(1)
     
     database = database()
     
     fname, icons = get_fname_and_icons()
     make_icons(icons)
+
+    threads_init()
     
     gui = gui(fname, database)
 
+    threads_enter()
     main()
+    threads_leave()

@@ -18,3 +18,4 @@
 
 from gui import gui
 from pacman import database
+from dialogs import non_root_dialog

@@ -352,8 +352,9 @@ class gui:
                 continue
             continue
 
+        main_win = self.gld.get_widget("main_win")
         if warning_list:
-            dlg = warning_dialog()
+            dlg = warning_dialog(main_win, warning_list)
             resp = dlg.run()
             if resp == 1:
                 for req_pac in warning_list:
@@ -365,7 +366,6 @@ class gui:
             else:
                 return
 
-        main_win = self.gld.get_widget("main_win")
         dlg = confirm_dialog(main_win, self.pacs_queues)
         if dlg.run():
             do_dlg = do_dialog(self.gld.get_widget("main_win"),

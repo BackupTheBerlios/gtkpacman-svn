@@ -1,3 +1,7 @@
+COPYING
+INSTALL
+LICENSE
+README
 gtkpacman
 setup.py
 gtkPacman/__init__.py

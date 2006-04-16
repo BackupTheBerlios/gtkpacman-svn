@@ -20,7 +20,7 @@
 from distutils.core import setup
 
 setup(name="gtkpacman",
-      version="2.0-alpha2",
+      version="2.0alpha1",
       description="Gtk package manager based on pacman",
       author="Stefano Esposito", author_email="ragnarok@email.it",
       url="http://gtkpacman.berlios.de",

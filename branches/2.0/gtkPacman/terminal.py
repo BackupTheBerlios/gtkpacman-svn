@@ -16,67 +16,41 @@
 #
 # gtkPacman is copyright (C)2005 by Stefano Esposito
 
-from gtk import threads_leave, threads_enter
 from vte import Terminal
 
 class terminal(Terminal):
 
-    def __init__(self, error_cbk, success_cbk):
+    def __init__(self, close_button):
 
         Terminal.__init__(self)
 
-        self.error_cbk = error_cbk
-        self.success_cbk = success_cbk
-        self.last = ""
-        self.id = None
-        
-    def install(self, pac, row):
-        threads_enter()
-        command = "pacman"
-        argv = ("pacman", "-Sd", "--noconfirm", pac.name)
-        self.last = pac
+        self.connect("child-exited", self.close, close_button)
 
-        if self.id:
-            self.disconnect(self.id)
-            
-        self.id = self.connect("child-exited", self.quit, self.error_cbk,
-                               self.success_cbk, row, "install")
+    def do(self, queues):
+        names_queues = { "add": [], "remove": [] }
 
-        self.fork_command(command, argv)
-        #self.feed_child("pacman -Sd --noconfirm %s;exit\n" %pac.name)
-        threads_leave()
+        for pac in queues["add"]:
+            names_queues["add"].append(pac.name)
+            continue
+        for pac in queues["remove"]:
+            names_queues["remove"].append(pac.name)
 
-    def remove(self, pac, row, force):
-        threads_enter()
-        command = "pacman"
+        inst_pacs = " ".join(names_queues["add"])
+        rem_pacs = " ".join(names_queues["remove"])
 
-        if not force:
-            argv = ("pacman", "-Rd", "--noconfirm", pac.name)
+        if inst_pacs and rem_pacs:
+            command = "pacman -Sdf %s;pacman -Rdf %s;exit\n" %(inst_pacs, rem_pacs)
+        elif inst_pacs:
+            command = "pacman -Sdf %s;exit\n" %inst_pacs
+        elif rem_pacs:
+            command = "pacman -Rdf %s;exit\n" %rem_pacs
         else:
-            argv = ("pacman", "-Rdf", "--noconfirm", pac.name)
-                   
-        self.last = pac
-
-        if self.id:
-            self.disconnect(self.id)
+            command = "exit\n"
             
-        self.id = self.connect("child-exited", self.quit, self.error_cbk,
-                               self.success_cbk, row, "remove")
-        
-        self.fork_command(command, argv)
-        #self.feed_child("%s;exit\n" %command)
-        threads_leave()
+        self.fork_command()
+        self.feed_child(command)
 
-    def quit(self, term, error_cbk, success_cbk, row, what):
-        from gtk import STOCK_APPLY, STOCK_CANCEL
-        
-        text = self.get_text(lambda terminal,col,row,data: True)
+    def close(self, term, close_button):
 
-        if "error" in text:
-            error_cbk(row, self.last, what)
-            row[0] = STOCK_CANCEL
-        else:
-            success_cbk(row)
-            row[0] = STOCK_CANCEL
+        close_button.show()
         return
-            

@@ -16,12 +16,15 @@
 #
 # gtkPacman is copyright (C)2005-2006 by Stefano Esposito
 
+from thread import start_new_thread
+
 import gettext
+
 from gtk import main, main_quit
 from gtk import TreeStore, TreeView, ListStore
 from gtk import CellRendererText, CellRendererPixbuf
 from gtk import ScrolledWindow
-from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
+from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, RESPONSE_ACCEPT
 from gtk.glade import XML
 
 from dialogs import confirm_dialog, do_dialog, warning_dialog, about_dialog
@@ -151,32 +154,33 @@ class gui:
             continue
         return
 
-    def _refresh_trees(self):
+    def _refresh_trees(self, errors=None):
         for model in self.models.keys():
             if model == "all" or model == "foreigners":
-                self._refresh_model(model)
+                self._refresh_model(model, errors=errors)
             else:
                 for mod in self.models[model].keys():
-                    self._refresh_model(model, mod)
+                    self._refresh_model(model, mod, errors)
                     continue
             continue
         return
 
-    def _refresh_model(self, model, submodel=None):
+    def _refresh_model(self, model, submodel=None, errors=None):
         if submodel:
             liststore = self.models[model][submodel]
         else:
             liststore = self.models[model]
 
         for row in liststore:
-            if row[2] in self.queues["add"]:
-                row[1] = None
-                row[0] = "green"
-                row[3] = row[4]
-            elif row[2] in self.queues["remove"]:
-                row[1] = None
-                row[0] = "red"
-                row[3] = "-"
+            if (errors and row[2] not in errors) or (not errors):
+                if row[2] in self.queues["add"]:
+                    row[1] = None
+                    row[0] = "green"
+                    row[3] = row[4]
+                elif row[2] in self.queues["remove"]:
+                    row[1] = None
+                    row[0] = "red"
+                    row[3] = "-"
             continue
         return           
 
@@ -312,73 +316,35 @@ class gui:
         return
 
     def execute(self, widget, data=None):
-        warning_list = []
-        force = False
-        self.pacs_queues = {"add": [], "remove": []}
-
-        self._adjust_queues ()
+        pacs_queues = { "add": [], "remove": [] }
         
         for name in self.queues["add"]:
-            if not name or name == " ":
-                continue
-            
             pac = self.database.get_by_name(name)
-            self.pacs_queues["add"].append(pac)
-                
-            dependencies = pac.dependencies.split(', ')
-            dependencies = self._adjust_names(dependencies)
-            for dep in dependencies:
-                if not dep or dep == " ":
-                    continue
-                if not(dep in self.queues["add"]):
-                    dep_pac = self.database.get_by_name(dep)
-                    if not dep_pac.installed:
-                        self.queues["add"].append(dep)
-                continue
+            pacs_queues["add"].append(pac)
             continue
-        
+
         for name in self.queues["remove"]:
             pac = self.database.get_by_name(name)
-            self.pacs_queues["remove"].append(pac)
-            
-            req_by = pac.req_by.split(', ')
-            for req in req_by:
-                if req != " " and (not(req_by in self.queues["remove"])):
-                    try:
-                        req_pac = self.database.get_by_name(req)
-                    except NameError:
-                        continue
-                    warning_list.append(req_pac)
-                continue
+            pacs_queues["remove"].append(pac)
             continue
 
-        main_win = self.gld.get_widget("main_win")
-        if warning_list:
-            dlg = warning_dialog(main_win, warning_list)
-            resp = dlg.run()
-            dlg.destroy()
-            if resp == 1:
-                for req_pac in warning_list:
-                    self.queues["remove"].append(req_pac.name)
-                    force = False
-                    continue
-            elif resp == 2:
-                force = True
-            else:
-                return
+        retcode = self._confirm(pacs_queues)
+        if retcode:
+            dlg = do_dialog(pacs_queues)
+            dlg.connect("destroy", self._refresh_trees_and_queues)
+            dlg.run()
+        return
 
-        dlg = confirm_dialog(main_win, self.pacs_queues)
-        if dlg.run():
-            do_dlg = do_dialog(self.gld.get_widget("main_win"),
-                               self.pacs_queues)
-            do_dlg.run(force)
-            do_dlg.destroy()
+    def _confirm(self, pacs_queues):
+        dlg = confirm_dialog(self.gld.get_widget("main_win"), pacs_queues)
+        return dlg.run()
 
+    def _refresh_trees_and_queues(self, widget):
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []
         return
-
+           
     def about(self, widget, data=None):
         dlg = about_dialog()
         dlg.run()

@@ -20,10 +20,10 @@ from time import sleep
 
 from gtk import Dialog, MessageDialog, AboutDialog
 from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
-from gtk import Window, WINDOW_TOPLEVEL, VBox
+from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox
 from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
-from gtk import STOCK_APPLY, STOCK_REMOVE
+from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT
 from gtk import MESSAGE_ERROR
 from gtk import BUTTONS_CLOSE
@@ -147,33 +147,15 @@ class warning_dialog(Dialog):
     def __init__(self, parent, pacs):
 
         Dialog.__init__(self, _("Warning!"), parent,
-                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT)
+                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
+                        (STOCK_YES, RESPONSE_YES, STOCK_NO, RESPONSE_REJECT))
 
-        self._setup_buttons()
         self._setup_tree(pacs)
         self._setup_layout()
 
-    def _setup_buttons(self):
-        rem_all_img = image_new_from_stock(STOCK_REMOVE, ICON_SIZE_BUTTON)
-        rem_all_butt = Button(_("Remove All"))
-        rem_all_butt.set_image(rem_all_img)
-        rem_all_butt.show()
-
-        rem_img = image_new_from_stock(STOCK_CANCEL, ICON_SIZE_BUTTON)
-        rem_butt = Button(_("Force"))
-        rem_butt.set_image(rem_img)
-        rem_butt.show()
-
-        close_butt = Button(stock=STOCK_CLOSE)
-        close_butt.show()
-
-        self.add_action_widget(rem_all_butt, RESPONSE_ACCEPT)
-        self.add_action_widget(rem_butt, RESPONSE_YES)
-        self.add_action_widget(close_butt, RESPONSE_CLOSE)
-
     def _setup_layout(self):
 
-        label = Label(_("This packages requires one of the packages you've selected for removal.\nDo you want to remove them all,, or do you want to force the removal\nof the selected packages only?(This will probably break dependent packages)"))
+        label = Label(_("This packages requires one of the packages you've selected for removal.\nDo you want to remove them all?"))
         label.show()
 
         self.vbox.pack_start(label, False, False, 0)
@@ -208,16 +190,6 @@ class warning_dialog(Dialog):
         self.tree.set_model(self.model)
         self.tree.show_all()
         return
-
-    def run(self):
-        response = Dialog.run(self)
-
-        if response == RESPONSE_ACCEPT:
-            return 1
-        elif response == RESPONSE_YES:
-            return 2
-        else:
-            return 0
 
 class about_dialog(AboutDialog):
 
@@ -261,11 +233,14 @@ class do_dialog(Window):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
+        self.set_property("destroy-with-parent", True)
+        self.set_modal(True)
+        self.connect("delete-event", self._stop_closing)
+        self.set_position(WIN_POS_CENTER)
 
         self._setup_trees(queues)
         self._setup_layout()
 
-        self.connect("delete-event", self._stop_closing)
         self.queues = queues
 
     def _setup_trees(self, queues):

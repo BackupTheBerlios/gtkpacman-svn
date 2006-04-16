@@ -24,7 +24,8 @@ from gtk import main, main_quit
 from gtk import TreeStore, TreeView, ListStore
 from gtk import CellRendererText, CellRendererPixbuf
 from gtk import ScrolledWindow
-from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, RESPONSE_ACCEPT
+from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
+from gtk import RESPONSE_YES, RESPONSE_ACCEPT
 from gtk.glade import XML
 
 from dialogs import confirm_dialog, do_dialog, warning_dialog, about_dialog
@@ -320,11 +321,32 @@ class gui:
         
         for name in self.queues["add"]:
             pac = self.database.get_by_name(name)
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
+                
+            deps = pac.dependencies.split(", ")
             pacs_queues["add"].append(pac)
+            pacs_queues["add"].extend(deps)
             continue
 
         for name in self.queues["remove"]:
             pac = self.database.get_by_name(name)
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
+                
+            if pac.req_by:
+                req_pacs = []
+                for name in pac.req_by.split(", "):
+                    pac = self.database.get_by_name(name)
+                    req_pacs.append(pac)
+                    
+                dlg = warning_dialog(self.gld.get_widget("main_win"),
+                                     req_pacs)
+                if dlg.run() == RESPONSE_YES:
+                    pacs_queues["remove"].append(pac)
+                    pacs_queues["remove"].extend(req_pacs)
+                dlg.destroy()
+                continue
             pacs_queues["remove"].append(pac)
             continue
 

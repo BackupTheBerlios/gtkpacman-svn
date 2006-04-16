@@ -184,9 +184,6 @@ class database(dict):
         #Init some variable which will be usefull
         self.olds = []
         self.orphans = []
-
-        #Set servers dictinary
-        self._set_servers()
         
     def _get_installed(self):
         installed = os.listdir("/var/lib/pacman/local")
@@ -409,47 +406,6 @@ class database(dict):
         end = files.find("%", begin) - len("%")
         filelist = files[begin:end].strip()
         pac.filelist = filelist
-        return
-
-    def _set_servers(self):
-        conf_file = open("/etc/pacman.conf", "r").read()
-        self.servers = {}
-        for repo in self.repos:
-            if repo == "foreigners":
-                continue
-            self.servers[repo] = []
-            self._get_repo_servers(repo, conf_file)
-            continue
-        return
-
-    def _get_repo_servers(self, repo, conf_file):
-        try:
-            begin = conf_file.index("[%s]" %repo) + len("[%s]" %repo)
-        except ValueError:
-            return
-        end = conf_file.index("[", begin)
-        current_section = conf_file[begin:end].strip()
-        current_lines = current_section.splitlines()
-        current_options = {}
-        for line in current_lines:
-            if not line or line.startswith("#"):
-                continue
-            opt, value = line.split(" = ")
-            current_options[opt] = value
-            continue
-        for key in current_options.keys():
-            if key == "Include":
-                servers = open(current_options[key], "r").readlines()
-                for server in servers:
-                    server = server.strip()
-                    if not server or server.startswith("#") or server.startswith("["):
-                        continue
-                    self.servers[repo].append(server.split(" = ")[1])
-                    continue
-            elif key == "Server":
-                server = current_options[key].split(" = ")[1]
-                self.servers[repo].append(server)
-            continue
         return
     
     def set_orphans(self):

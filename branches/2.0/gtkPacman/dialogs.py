@@ -39,7 +39,7 @@ class non_root_dialog(MessageDialog):
 
         MessageDialog.__init__(self, None,
                                DIALOG_MODAL, MESSAGE_WARNING, BUTTONS_CLOSE,
-                               _("You have to be root to run gtkpacman with full fueatures!\nYou will run a limited gtkpacman, with disabled packages managing features"))
+                               _("You must be root to fully use gtkpacman.\nSince you aren't root, gtkpacman will not allow any packages management operation (Install/Remove)"))
 
 class confirm_dialog(Dialog):
 

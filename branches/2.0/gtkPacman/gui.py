@@ -155,33 +155,31 @@ class gui:
             continue
         return
 
-    def _refresh_trees(self, errors=None):
+    def _refresh_trees(self):
         for model in self.models.keys():
             if model == "all" or model == "foreigners":
-                self._refresh_model(model, errors=errors)
+                self._refresh_model(model)
             else:
                 for mod in self.models[model].keys():
-                    self._refresh_model(model, mod, errors)
+                    self._refresh_model(model, mod)
                     continue
             continue
         return
 
-    def _refresh_model(self, model, submodel=None, errors=None):
+    def _refresh_model(self, model, submodel=None):
         if submodel:
             liststore = self.models[model][submodel]
         else:
             liststore = self.models[model]
 
         for row in liststore:
-            if (errors and row[2] not in errors) or (not errors):
-                if row[2] in self.queues["add"]:
-                    row[1] = None
-                    row[0] = "green"
-                    row[3] = row[4]
-                elif row[2] in self.queues["remove"]:
-                    row[1] = None
-                    row[0] = "red"
-                    row[3] = "-"
+            row[1] = None
+            if row[2] in self.queues["add"]:
+                row[0] = "green"
+                row[3] = row[4]
+            elif row[2] in self.queues["remove"]:
+                row[0] = "red"
+                row[3] = "-"
             continue
         return           
 
@@ -336,32 +334,44 @@ class gui:
                 
             if pac.req_by:
                 req_pacs = []
-                for name in pac.req_by.split(", "):
-                    pac = self.database.get_by_name(name)
-                    req_pacs.append(pac)
+                for req in pac.req_by.split(", "):
+                    req_pac = self.database.get_by_name(req)
+                    req_pacs.append(req_pac)
                     
                 dlg = warning_dialog(self.gld.get_widget("main_win"),
                                      req_pacs)
                 if dlg.run() == RESPONSE_YES:
                     pacs_queues["remove"].append(pac)
                     pacs_queues["remove"].extend(req_pacs)
+                else:
+                    self.queues["remove"].remove(name)
                 dlg.destroy()
                 continue
             pacs_queues["remove"].append(pac)
             continue
+
+        if not (pacs_queues["add"] or pacs_queues["remove"]):
+            self._refresh_trees_and_queues()
+            return
 
         retcode = self._confirm(pacs_queues)
         if retcode:
             dlg = do_dialog(pacs_queues)
             dlg.connect("destroy", self._refresh_trees_and_queues)
             dlg.run()
+        else:
+            self.queues["add"] = []
+            self.queues["remove"] = []
+            self._refresh_trees_and_queues()
         return
 
     def _confirm(self, pacs_queues):
         dlg = confirm_dialog(self.gld.get_widget("main_win"), pacs_queues)
-        return dlg.run()
+        retcode = dlg.run()
+        dlg.destroy()
+        return retcode
 
-    def _refresh_trees_and_queues(self, widget):
+    def _refresh_trees_and_queues(self, widget=None):
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []

@@ -28,10 +28,11 @@ from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT
 from gtk.glade import XML
 
-from dialogs import confirm_dialog, do_dialog, warning_dialog, about_dialog
+from dialogs import confirm_dialog, do_dialog, warning_dialog
+from dialogs import about_dialog, non_root_dialog
 
 class gui:
-    def __init__(self, fname, database):
+    def __init__(self, fname, database, uid):
 
         self.gld = XML(fname, "main_win", "gtkpacman")
 
@@ -46,6 +47,7 @@ class gui:
                   #"add_local":      self.add_from_local_file,
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
+                  #"search_pac":     self.search,
                   "about":          self.about,
                   "pacs_changed":   self.pacs_changed,
                   "repo_changed":   self.repo_changed}
@@ -56,9 +58,25 @@ class gui:
         self.database = database
         self.queues = {"add": [], "remove": []}
 
+        self._setup_avaible_actions(uid)
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
+        dlg = non_root_dialog()
+        dlg.run()
+        dlg.destroy()
+
+    def _setup_avaible_actions(self, uid):
+        if uid:
+            self.gld.get_widget("queue").set_sensitive(False)
+            self.gld.get_widget("immediate").set_sensitive(False)
+            self.gld.get_widget("add_install").set_sensitive(False)
+            self.gld.get_widget("remove_install").set_sensitive(False)
+            self.gld.get_widget("add_remove").set_sensitive(False)
+            self.gld.get_widget("remove_remove").set_sensitive(False)
+            self.gld.get_widget("execute").set_sensitive(False)
+            self.gld.get_widget("up_sys").set_sensitive(False)
+            self.gld.get_widget("up_db").set_sensitive(False)
 
     def _adjust_queues (self):
         for name in self.queues["add"]:

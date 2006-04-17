@@ -25,7 +25,7 @@ from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT
-from gtk import MESSAGE_ERROR
+from gtk import MESSAGE_WARNING
 from gtk import BUTTONS_CLOSE
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import image_new_from_stock, ICON_SIZE_BUTTON, ICON_SIZE_DIALOG
@@ -38,8 +38,8 @@ class non_root_dialog(MessageDialog):
     def __init__(self):
 
         MessageDialog.__init__(self, None,
-                               DIALOG_MODAL, MESSAGE_ERROR, BUTTONS_CLOSE,
-                               _("You have to be root to run gtkpacman!"))
+                               DIALOG_MODAL, MESSAGE_WARNING, BUTTONS_CLOSE,
+                               _("You have to be root to run gtkpacman with full fueatures!\nYou will run a limited gtkpacman, with disabled packages managing features"))
 
 class confirm_dialog(Dialog):
 

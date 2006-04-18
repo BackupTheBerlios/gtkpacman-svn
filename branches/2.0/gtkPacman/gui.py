@@ -162,8 +162,12 @@ class gui:
         self.models = {}
 
         self.models["all"] = whole_list(self.database.values())
-        if self.database["foreigners"]:
+        try:
             self.models["foreigners"] = installed_list(self.database["foreigners"])
+        except KeyError:
+            self.database["foreigners"] = []
+            self.models["foreigners"] = installed_list(self.database["foreigners"]
+            
         
         for repo in self.database.repos:
             if repo == "foreigners":

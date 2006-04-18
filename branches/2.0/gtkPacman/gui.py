@@ -48,7 +48,7 @@ class gui:
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
                   #"search_pac":     self.search,
-                  #"show_popup":     self.show_popup,
+                  "show_popup":     self.show_popup,
                   "about":          self.about,
                   "pacs_changed":   self.pacs_changed,
                   "repo_changed":   self.repo_changed}
@@ -59,13 +59,11 @@ class gui:
         self.database = database
         self.queues = {"add": [], "remove": []}
 
+        self._setup_popup_menu(fname)
         self._setup_avaible_actions(uid)
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
-
-        self.popup_gld = XML(fname, "popup_menu", "gtkpacman")
-        self.popup = self.popup_gld.get_widget("popup_menu")
         
         dlg = non_root_dialog()
         dlg.run()
@@ -82,6 +80,10 @@ class gui:
             self.gld.get_widget("execute").set_sensitive(False)
             self.gld.get_widget("up_sys").set_sensitive(False)
             self.gld.get_widget("up_db").set_sensitive(False)
+            self.popup_gld.get_widget("popup_add_install").set_sensitive(False)
+            self.popup_gld.get_widget("popup_remove_install").set_sensitive(False)
+            self.popup_gld.get_widget("popup_add_remove").set_sensitive(False)
+            self.popup_gld.get_widget("popup_remove_remove").set_sensitive(False)
 
     def _adjust_queues (self):
         for name in self.queues["add"]:
@@ -135,6 +137,16 @@ class gui:
             sort_id += 1
             continue
         return
+
+    def _setup_popup_menu(self, fname):
+        self.popup_gld = XML(fname, "popup_menu", "gtkpacman")
+        popup_h_dict = { "add_install": self.add_to_install_queue,
+                         "remove_install": self.remove_from_install_queue,
+                         "add_remove": self.add_to_remove_queue,
+                         "remove_remove": self.remove_from_remove_queue }
+        self.popup_gld.signal_autoconnect(popup_h_dict)
+        self.popup = self.popup_gld.get_widget("popup_menu")
+
         
     def _setup_repos_tree(self):
 
@@ -166,9 +178,8 @@ class gui:
             self.models["foreigners"] = installed_list(self.database["foreigners"])
         except KeyError:
             self.database["foreigners"] = []
-            self.models["foreigners"] = installed_list(self.database["foreigners"]
+            self.models["foreigners"] = installed_list(self.database["foreigners"])
             
-        
         for repo in self.database.repos:
             if repo == "foreigners":
                 continue
@@ -410,6 +421,12 @@ class gui:
         dlg.run()
         dlg.destroy()
         return
+
+    def show_popup(self, widget, event, data=None):
+        if event.button == 3:
+            self.popup.popup(None, None, None, event.button, event.time)
+        else:
+            self.popup.popdown()
 
 class installed_list(ListStore):
 

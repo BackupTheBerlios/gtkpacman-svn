@@ -463,6 +463,8 @@ class database(dict):
         pacs = []
         for repo in self.repos:
             for pac in self[repo]:
+                if not pac.prop_setted:
+                    self.set_pac_properties(pac)
                 if pac.description.count(desc):
                     pacs.append(pac)
                 continue
@@ -471,11 +473,16 @@ class database(dict):
     
     def get_by_keywords(self, keywords):
         """Return pacs which have keywords as name or in description"""
+        keys = []
         #Split keywords by '+' or spaces
-        if keywords.count("+"):
-            keys = keywords.split("+")
+        if keywords.count("+") and keywords.count(" "):
+            keys_1 = keywords.split("+")
+            for key in keys_1:
+                keys = key.split(" ")
         elif keywords.count(" "):
             keys = keywords.split()
+        elif keyword.count("+"):
+            keys = keyword.split("+")
         else:
             keys = keywords
 
@@ -489,10 +496,10 @@ class database(dict):
                     pac = None
                 if pac:
                     pacs.append(pac)
+                    
                 pac = self.get_by_desc(key)
-                if pac:
-                    if not pacs.count(pac):
-                        pacs.append(pac)
+                if pac and (not pacs.count(pac)):
+                    pacs.append(pac)
         else:
             try:
                 pac = self.get_by_name(keys)
@@ -501,9 +508,8 @@ class database(dict):
             if pac:
                 pacs.append(pac)
             pac = self.get_by_desc(keys)
-            if pac:
-                if not pacs.count(pac):
-                    pacs.append(pac)
+            if pac and (not pacs.count(pac)):
+                pacs.append(pac)
         return pacs
     
     def refresh(self):

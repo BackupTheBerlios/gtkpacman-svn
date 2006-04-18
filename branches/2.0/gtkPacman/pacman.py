@@ -169,14 +169,8 @@ class database(dict):
     def __init__(self):
         """Init database"""
         #Get repos present on machine
-        self.repos = os.listdir("/var/lib/pacman")
+        self.repos = self._get_repos()
 
-        #Remove some undesiderable voices of repos list
-        self.repos.remove("local")
-        try:
-            self.repos.remove("wget-log")
-        except ValueError:
-            pass
         self.repos.sort()
         self.set_pacs()
         self.repos.append("foreigners")
@@ -184,6 +178,26 @@ class database(dict):
         #Init some variable which will be usefull
         self.olds = []
         self.orphans = []
+
+    def _get_repos(self):
+        conf_file = file("/etc/pacman.conf", "r").read()
+        conf_file_lines = conf_file.splitlines()
+
+        repos = [] 
+        for line in conf_file_lines:
+            if line.startswith("#"):
+                continue
+
+            if line.startswith("["):
+                begin = line.index("[") + len("[")
+                end = line.index("]")
+                repo = line[begin:end]
+                if repo == "options":
+                    continue
+                else:
+                    repos.append(repo)
+            continue
+        return repos
         
     def _get_installed(self):
         installed = os.listdir("/var/lib/pacman/local")

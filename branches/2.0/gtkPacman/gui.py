@@ -48,6 +48,7 @@ class gui:
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
                   #"search_pac":     self.search,
+                  #"show_popup":     self.show_popup,
                   "about":          self.about,
                   "pacs_changed":   self.pacs_changed,
                   "repo_changed":   self.repo_changed}
@@ -62,6 +63,10 @@ class gui:
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
+
+        self.popup_gld = XML(fname, "popup_menu", "gtkpacman")
+        self.popup = self.popup_gld.get_widget("popup_menu")
+        
         dlg = non_root_dialog()
         dlg.run()
         dlg.destroy()
@@ -157,7 +162,8 @@ class gui:
         self.models = {}
 
         self.models["all"] = whole_list(self.database.values())
-        self.models["foreigners"] = installed_list(self.database["foreigners"])
+        if self.database["foreigners"]:
+            self.models["foreigners"] = installed_list(self.database["foreigners"])
         
         for repo in self.database.repos:
             if repo == "foreigners":

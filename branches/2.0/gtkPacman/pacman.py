@@ -506,8 +506,8 @@ class database(dict):
                 keys = key.split(" ")
         elif keywords.count(" "):
             keys = keywords.split()
-        elif keyword.count("+"):
-            keys = keyword.split("+")
+        elif keywords.count("+"):
+            keys = keywords.split("+")
         else:
             keys = keywords
 

@@ -64,10 +64,11 @@ class gui:
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
-        
-        dlg = non_root_dialog()
-        dlg.run()
-        dlg.destroy()
+
+        if uid:
+            dlg = non_root_dialog()
+            dlg.run()
+            dlg.destroy()
 
     def _setup_avaible_actions(self, uid):
         if uid:
@@ -360,10 +361,14 @@ class gui:
             pac = self.database.get_by_name(name)
             if not pac.prop_setted:
                 self.database.set_pac_properties(pac)
-                
-            deps = pac.dependencies.split(", ")
+
             pacs_queues["add"].append(pac)
-            pacs_queues["add"].extend(deps)
+            
+            deps = pac.dependencies.split(", ")
+            for dep in deps:
+                dep_pac = self.database.get_by_name(dep)
+                if not dep_pac.installed:
+                    pacs_queues["add"].append(dep_pac)
             continue
 
         for name in self.queues["remove"]:
@@ -376,17 +381,18 @@ class gui:
                 for req in pac.req_by.split(", "):
                     req_pac = self.database.get_by_name(req)
                     req_pacs.append(req_pac)
-                    
+
+                pacs_queues["remove"].append(pac)
                 dlg = warning_dialog(self.gld.get_widget("main_win"),
                                      req_pacs)
                 if dlg.run() == RESPONSE_YES:
-                    pacs_queues["remove"].append(pac)
                     pacs_queues["remove"].extend(req_pacs)
                 else:
                     self.queues["remove"].remove(name)
+                    pacs_queues["remove"].remove(pac)
                 dlg.destroy()
-                continue
-            pacs_queues["remove"].append(pac)
+            else:
+                pacs_queues["remove"].append(pac)
             continue
 
         if not (pacs_queues["add"] or pacs_queues["remove"]):

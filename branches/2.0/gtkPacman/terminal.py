@@ -24,6 +24,7 @@ class terminal(Terminal):
 
         Terminal.__init__(self)
 
+        self.set_sensitive(False)
         self.connect("child-exited", self.close, close_button)
 
     def do(self, queues):
@@ -39,11 +40,11 @@ class terminal(Terminal):
         rem_pacs = " ".join(names_queues["remove"])
 
         if inst_pacs and rem_pacs:
-            command = "pacman -Sdf %s;pacman -Rdf %s;exit\n" %(inst_pacs, rem_pacs)
+            command = "pacman -Sdf --noconfirm %s;pacman -Rdf --noconfirm %s;exit\n" %(inst_pacs, rem_pacs)
         elif inst_pacs:
-            command = "pacman -Sdf %s;exit\n" %inst_pacs
+            command = "pacman -Sdf --noconfirm %s;exit\n" %inst_pacs
         elif rem_pacs:
-            command = "pacman -Rdf %s;exit\n" %rem_pacs
+            command = "pacman -Rdf --noconfirm %s;exit\n" %rem_pacs
         else:
             command = "exit\n"
             

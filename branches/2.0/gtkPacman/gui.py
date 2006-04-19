@@ -29,7 +29,7 @@ from gtk import RESPONSE_YES, RESPONSE_ACCEPT
 from gtk.glade import XML
 
 from dialogs import confirm_dialog, do_dialog, warning_dialog
-from dialogs import about_dialog, non_root_dialog
+from dialogs import about_dialog, non_root_dialog, search_dialog
 
 class gui:
     def __init__(self, fname, database, uid):
@@ -47,7 +47,7 @@ class gui:
                   #"add_local":      self.add_from_local_file,
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
-                  #"search_pac":     self.search,
+                  "search_pac":     self.search,
                   "show_popup":     self.show_popup,
                   "about":          self.about,
                   "pacs_changed":   self.pacs_changed,
@@ -58,6 +58,7 @@ class gui:
         self.fname = fname
         self.database = database
         self.queues = {"add": [], "remove": []}
+        self.search_iter = None
 
         self._setup_popup_menu(fname)
         self._setup_avaible_actions(uid)
@@ -235,7 +236,10 @@ class gui:
         selected = repos_model.get_value(tree_iter, 0)
 
         if not repos_model.iter_depth(tree_iter):
-            pacs_model = self.models["all"]
+            if selected.count("Search"):
+                pacs_model = self.models["search"]
+            else:
+                pacs_model = self.models["all"]
             if not self.repo_col:
                 self.repo_col = pacs_tree.insert_column_with_attributes(
                     -1, "", CellRendererText(), text=5
@@ -434,6 +438,20 @@ class gui:
         else:
             self.popup.popdown()
 
+    def search(self, widget, data=None):
+        dlg = search_dialog(self.gld.get_widget("main_win"))
+        if dlg.run():
+            keywords = dlg.entry.get_text()
+        dlg.destroy()
+
+        pacs = self.database.get_by_keywords(keywords)
+        
+        repos_model = self.gld.get_widget("repos_tree").get_model()
+        if self.search_iter:
+            repos_model.remove(self.search_iter)
+        self.search_iter = repos_model.append(None, ["Search results for '%s'" %keywords])
+        self.models["search"] = search_list(pacs)
+
 class installed_list(ListStore):
 
     def __init__(self, pacs):
@@ -491,3 +509,22 @@ class whole_list(ListStore):
                     inst_ver = pac.inst_ver
 
                 self.append([image, None, pac.name, inst_ver, pac.version, pac.repo])
+
+class search_list(ListStore):
+
+    def __init__(self, pacs):
+
+        ListStore.__init__(self, str, str, str, str, str, str)
+
+        for pac in pacs:
+            if not (pac.isold or pac.installed):
+                image = "red"
+                inst_ver = "-"
+            elif pac.isold:
+                image = "yellow"
+                inst_ver = pac.inst_ver
+            else:
+                image = "green"
+                inst_ver = pac.inst_ver
+
+            self.append([image, None, pac.name, inst_ver, pac.version, pac.repo])

@@ -20,7 +20,7 @@ from time import sleep
 
 from gtk import Dialog, MessageDialog, AboutDialog
 from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
-from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox
+from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox, Entry
 from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO
@@ -341,3 +341,28 @@ class do_dialog(Window):
         self.stop_emission("delete-event")
         return True
     
+class search_dialog(Dialog):
+
+    def __init__(self, parent):
+
+        Dialog.__init__(self, _("Search for.."), parent,
+                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
+                        (STOCK_OK, RESPONSE_ACCEPT,
+                         STOCK_CANCEL, RESPONSE_REJECT))
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+
+        self.label = Label("Insert keywords:")
+
+        self.entry = Entry()
+        self.entry.connect("activate", self._entry_response)
+
+        self.vbox.pack_start(self.label, False, False, 0)
+        self.vbox.pack_start(self.entry, False, False, 0)
+
+        self.vbox.show_all()
+
+    def _entry_response(self, widget, data=None):
+        self.response(RESPONSE_ACCEPT)

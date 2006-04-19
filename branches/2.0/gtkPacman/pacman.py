@@ -381,7 +381,7 @@ class database(dict):
         """Set description for the given pac"""
         begin = desc.index("%DESC%") + len("%DESC%")
         end = desc.index("%", begin)
-        description = desc[begin:end].strip()
+        description = unicode(desc[begin:end].strip(), errors="ignore")
         return description
 
     def _get_dependencies(self, path):
@@ -459,6 +459,17 @@ class database(dict):
                 if name == pac.name:
                     return pac
         raise NameError, _("%s is not in the database") %name
+
+    def search_by_name(self, name):
+        """Return a list of packages wich contains 'name' in the name"""
+        pacs = []
+        for repo in self.repos:
+            for pac in self[repo]:
+                if pac.name.count(name):
+                    pacs.append(pac)
+                continue
+            continue
+        return pacs
     
     def set_olds(self):
         """Set old pacs"""
@@ -504,16 +515,12 @@ class database(dict):
         #Then using get_by_desc and get_by_name get the packages
         if type(keys) == type(list()):
             for key in keys:
-                try:
-                    pac = self.get_by_name(key)
-                except NameError:
-                    pac = None
-                if pac:
-                    pacs.append(pac)
+                pacs.extend(self.search_by_name(key))
                     
                 pac = self.get_by_desc(key)
                 if pac and (not pacs.count(pac)):
                     pacs.append(pac)
+                continue
         else:
             try:
                 pac = self.get_by_name(keys)

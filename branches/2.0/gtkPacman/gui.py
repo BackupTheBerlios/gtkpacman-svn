@@ -16,8 +16,6 @@
 #
 # gtkPacman is copyright (C)2005-2006 by Stefano Esposito
 
-from thread import start_new_thread
-
 import gettext
 
 from gtk import main, main_quit
@@ -440,7 +438,7 @@ class gui:
 
     def search(self, widget, data=None):
         dlg = search_dialog(self.gld.get_widget("main_win"))
-        if dlg.run():
+        if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
         dlg.destroy()
 
@@ -452,6 +450,56 @@ class gui:
         self.search_iter = repos_model.append(None, ["Search results for '%s'" %keywords])
         self.models["search"] = search_list(pacs)
 
+    def add_from_local_file(self, widget, data=None):
+        from tarfile import TarFile
+        from os import mkdir, system
+
+        dlg = local_install_dialog()
+        if dlg.run() == RESPONSE_ACCEPT:
+            fname = dlg.get_filename()
+        dlg.destroy()
+
+        archive = TarFile.gzopen(fname)
+        os.mkdir("/tmp/gtkpacman/", 0755)
+        for member in archive.getmembers():
+            archive.extract(member, "/tmp/gtkpacman")
+            continue
+
+        info_file = file("/tmp/gtkpacman/.PKGINFO")
+        infos = info_file.read()
+        info_file.close()
+
+        infos_lines = infos.splitlines()
+        install = remove = []
+
+        pac = self.database.make_foreigner_pac(info_lines)
+        install.append(pac)
+        
+        for line in infos_lines:
+            if line.startswith("#"):
+                continue
+            elif line.startswith("depend"):
+                sides = line.split(" = ")
+                install.append(self.database.get_by_name(sides[1]))
+            elif line.startswith("conflict") or line.startswith("provides"):
+                sides = line.split(" = ")
+                remove.append(self.database.get_by_name(sides[1]))
+            continue
+
+        pacs_queues = { "add": install, "remove": remove }
+
+        dlg = self._confirm(pacs_queues)
+        if dlg.run == RESPONSE_ACCEPT:
+            i_dlg = local_install_dialog(fname, pacs_queues)
+            i_dlg.run()
+            i_dlg.destroy()
+        dlg.destroy()
+
+        self.database["foreigners"].append(pac)
+        self.models["foreigners"] = installed_list(self.database["foreigners"])
+
+        os.system("rm -rf /tmp/gtkpacman")
+            
 class installed_list(ListStore):
 
     def __init__(self, pacs):

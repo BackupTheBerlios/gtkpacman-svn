@@ -70,99 +70,6 @@ class package:
         else:
             raise TypeError, _('inst_ver must be a string')
         return
-
-    def download(self, server_dict, callback_func=None):
-        #This function is taken and adapted from libpypac.
-        #libpypac is Copyright (C) 2005 Libpypac Foundation
-        #libpypac is released under LGPL
-        #This function is released under the same license of gtkpacman
-
-        import ftplib, httplib
-        
-        pac_name = "-".join((self.name, self.version))
-        for server in server_dict[self.repo]:
-            s_list = server.rsplit("//")
-            str = s_list[-1]
-            s_list = str.rsplit("/")
-            host = s_list[0]
-
-            s_list = s_list[1:]
-            cwd = ""
-      
-            for i in range(len(s_list)):
-                cwd = "/%s%s" %(s_list.pop(), cwd)
-
-            path = "/var/cache/pacman/pkg/%s.pkg.tar.gz.part" %pac_name
-            final_fname = "/var/cache/pacman/pkg/%s.pkg.tar.gz" %pac_name
-                
-            if server.startswith("ftp"):
-                try:
-                    ftp_class = ftplib.FTP(host)
-                    ftp_class.login("anonymous")
-                    ftp_class.cwd(cwd)
-                    ftp_class.voidcmd("TYPE I")
-                    
-                    if os.path.exists(path):
-                        transfered = os.path.getsize(path)
-                        ftp_class.sendcmd("REST %s" %transfered)
-                        loc_file = open(path, "ab")
-                    else:
-                        transfered = 0
-                        loc_file = open(path, "wb")
-          
-                    socket, totsize = ftp_class.ntransfercmd("RETR %s.tar.gz" %pac_name, transfered)
-                    
-                    while True:
-                        buf = socket.recv(8192)
-                        if not len(buf):
-                            break
-                        loc_file.write(buf)
-                        transfered += len(buf)
-                        if callback_func != None:
-                            callback_func(pac_name, transfered, self.size)
-          
-                    ftp_class.close()
-                    loc_file.close()
-                    os.rename(path, final_fname)
-                    return "1"
-        
-                except:
-                    try:
-                        loc_file.close()
-                    except:
-                        pass
-      
-            elif server.startswith("http"):
-                try:
-                    http_class = httplib.HTTPConnection(host)
-                    http_class.request("GET", "%s/%s.tar.gz" %(cwd, pac_name))
-                    _file = http_class.getresponse()
-                    loc_file = open(path, 'wb')
-                    transfered = 0
-         
-                    while True:
-                        data = _file.read(8192)
-                        if not data: 
-                            break
-                        loc_file.write(data)
-                        transfered += len(data)
-                        if callback_func != None:
-                            callback_func(pac_name, transfered, size)
-          
-                    loc_file.close()
-                    http_class.close()
-                    os.rename(path, final_fname)
-                    return "1"
-                                                                                                    
-                except:
-                    try:
-                        loc_file.close()
-                    except:
-                        pass
-            
-                    return None
-            continue
-        return
     
 class database(dict):
     """The database of gtkPacman, where all pacs are stored and ordered"""
@@ -532,6 +439,54 @@ class database(dict):
             if pac and (not pacs.count(pac)):
                 pacs.append(pac)
         return pacs
+
+    def make_foreigner_pac(self, info_lines, filelist):
+        from time import asctime, localtime
+        
+        infos = {}
+        
+        for line in info_lines:
+            if line.startswith("#"):
+                continue
+
+            sides = line.split(" = ")
+
+            if sides[0] not in infos.keys():
+                infos[sides[0]] = sides[1]
+            else:
+                if type(infos[sides[0]]) == type(list()):
+                    infos[sides[0]].append(sides[1])
+                else:
+                    tmp = infos[sides[0]]
+                    infos[sides[0]] = [tmp, sides[1]]
+            continue
+
+        name = infos["pkgname"]
+        ver = infos["pkgver"]
+        desc = infos["pkgdesc"]
+        url = infos["url"]
+        b_date = infos["builddate"]
+        packager = infos["packager"]
+        size = infos["size"]
+        deps = infos["depend"]
+        confl = infos["conflict"]
+        provides = infos["provides"]
+        installdate = asctime(localtime())
+        reason = _("Explicitly installed")
+        req_by = ()
+
+        summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, req_by, size, packager, b_date, installdate, reason)
+
+        pac = package(name, ver, ver, "foreigners")
+        self["foreigners"].append(pac)
+
+        pac.summary = summary
+        pac.deps = deps
+        pac.filelist = filelist
+
+        pac.prop_setted = True
+
+        return pac
     
     def refresh(self):
         """Refresh the database"""

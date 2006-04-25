@@ -440,53 +440,39 @@ class database(dict):
                 pacs.append(pac)
         return pacs
 
-    def make_foreigner_pac(self, info_lines, filelist):
+    def get_local_file_deps(self, fname):
+        from os import mkdir, system
+        from os.path import exists
+        from tarfile import TarFile
         from time import asctime, localtime
-        
-        infos = {}
-        
-        for line in info_lines:
-            if line.startswith("#"):
-                continue
 
-            sides = line.split(" = ")
+        if exists("/tmp/gtkpacman"):
+           system("rm -rf /tmp/gtkpacman")
 
-            if sides[0] not in infos.keys():
-                infos[sides[0]] = sides[1]
-            else:
-                if type(infos[sides[0]]) == type(list()):
-                    infos[sides[0]].append(sides[1])
-                else:
-                    tmp = infos[sides[0]]
-                    infos[sides[0]] = [tmp, sides[1]]
+        mkdir("/tmp/gtkpacman", 0755)
+        archive = TarFile.gzopen(fname)
+        for member in archive.getmembers():
+            archive.extract(member, "/tmp/gtkpacman")
             continue
 
-        name = infos["pkgname"]
-        ver = infos["pkgver"]
-        desc = infos["pkgdesc"]
-        url = infos["url"]
-        b_date = infos["builddate"]
-        packager = infos["packager"]
-        size = infos["size"]
-        deps = infos["depend"]
-        confl = infos["conflict"]
-        provides = infos["provides"]
-        installdate = asctime(localtime())
-        reason = _("Explicitly installed")
-        req_by = ()
+        info_file = file("/tmp/gtkpacman/.PKGINFO")
+        infos = info_file.read()
+        info_file.close()
 
-        summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, req_by, size, packager, b_date, installdate, reason)
+        infos_lines = infos.splitlines()
+        deps = []
+        conflicts = []
+        
+        for line in infos_lines:
+            sides = line.split(" = ")
+            if sides[0] == "depend":
+                deps.append(sides[1])
+            elif sides[0] == "conflict":
+                conflicts.append(sides[1])
+            continue
 
-        pac = package(name, ver, ver, "foreigners")
-        self["foreigners"].append(pac)
-
-        pac.summary = summary
-        pac.deps = deps
-        pac.filelist = filelist
-
-        pac.prop_setted = True
-
-        return pac
+        system("rm -rf /tmp/gtkpacman")
+        return deps, conflicts
     
     def refresh(self):
         """Refresh the database"""

@@ -28,6 +28,8 @@ from gtk.glade import XML
 
 from dialogs import confirm_dialog, do_dialog, warning_dialog
 from dialogs import about_dialog, non_root_dialog, search_dialog
+from dialogs import local_install_dialog, local_install_fchooser_dialog
+from dialogs import local_confirm_dialog
 
 class gui:
     def __init__(self, fname, database, uid):
@@ -42,7 +44,7 @@ class gui:
                   "execute":        self.execute,
                   #"up_sys":         self.upgrade_system,
                   #"refr_db":        self.refresh_databases,
-                  #"add_local":      self.add_from_local_file,
+                  "add_local":      self.add_from_local_file,
                   #"clear_cache":    self.celar_cache,
                   #"empty_cache":    self.empty_cache,
                   "search_pac":     self.search,
@@ -451,54 +453,50 @@ class gui:
         self.models["search"] = search_list(pacs)
 
     def add_from_local_file(self, widget, data=None):
-        from tarfile import TarFile
-        from os import mkdir, system
-
-        dlg = local_install_dialog()
+        dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"))
         if dlg.run() == RESPONSE_ACCEPT:
             fname = dlg.get_filename()
         dlg.destroy()
+        
+        deps, conflicts = self.database.get_local_file_deps(fname)
 
-        archive = TarFile.gzopen(fname)
-        os.mkdir("/tmp/gtkpacman/", 0755)
-        for member in archive.getmembers():
-            archive.extract(member, "/tmp/gtkpacman")
+        install = []
+        remove = []
+        
+        for dep in deps:
+            dep_pkg = self.database.get_by_name(dep)
+            if not dep_pkg.installed:
+                install.append(dep_pkg)
             continue
 
-        info_file = file("/tmp/gtkpacman/.PKGINFO")
-        infos = info_file.read()
-        info_file.close()
-
-        infos_lines = infos.splitlines()
-        install = remove = []
-
-        pac = self.database.make_foreigner_pac(info_lines)
-        install.append(pac)
-        
-        for line in infos_lines:
-            if line.startswith("#"):
-                continue
-            elif line.startswith("depend"):
-                sides = line.split(" = ")
-                install.append(self.database.get_by_name(sides[1]))
-            elif line.startswith("conflict") or line.startswith("provides"):
-                sides = line.split(" = ")
-                remove.append(self.database.get_by_name(sides[1]))
+        for conflict in conflicts:
+            try:
+                conflict_pkg = self.database.get_by_name(conflict)
+                remove.append(conflict_pkg)
+            except NameError:
+                pass
             continue
 
         pacs_queues = { "add": install, "remove": remove }
 
-        dlg = self._confirm(pacs_queues)
-        if dlg.run == RESPONSE_ACCEPT:
+        retcode = self._local_confirm(fname, pacs_queues)
+        if retcode:
             i_dlg = local_install_dialog(fname, pacs_queues)
+            i_dlg.connect("destroy", self._after_local_install)
             i_dlg.run()
-            i_dlg.destroy()
-        dlg.destroy()
 
-        self.database["foreigners"].append(pac)
+    def _after_local_install(self, wid, data=None):
+        self.database.refresh()
         self.models["foreigners"] = installed_list(self.database["foreigners"])
 
-        os.system("rm -rf /tmp/gtkpacman")
+    def _local_confirm(self, fname, pacs_queue):
+        dlg = local_confirm_dialog(self.gld.get_widget("main_win"),
+                                   fname, pacs_queue)
+        if dlg.run():
+            retcode = True
+        else:
+            retcode = False
+        return retcode
             
 class installed_list(ListStore):
 

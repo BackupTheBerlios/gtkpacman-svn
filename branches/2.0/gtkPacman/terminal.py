@@ -27,29 +27,66 @@ class terminal(Terminal):
         self.set_sensitive(False)
         self.connect("child-exited", self.close, close_button)
 
-    def do(self, queues):
-        names_queues = { "add": [], "remove": [] }
+    def do(self, queues, fname):
+        names_queues = { "add": [], "remove": [], "local": "" }
 
+        if fname:
+            queues["add"].remove(queues["add"][0])
+            names_queues["local"] = fname
         for pac in queues["add"]:
             names_queues["add"].append(pac.name)
             continue
         for pac in queues["remove"]:
             names_queues["remove"].append(pac.name)
+            continue
 
         inst_pacs = " ".join(names_queues["add"])
         rem_pacs = " ".join(names_queues["remove"])
 
+        pacman = "pacman --noconfirm"
+        
         if inst_pacs and rem_pacs:
-            command = "pacman -Sdf --noconfirm %s;pacman -Rdf --noconfirm %s;exit\n" %(inst_pacs, rem_pacs)
+            command = "%s -Sdf %s;%s -Rdf %s;exit\n" %(pacman, inst_pacs, pacman, rem_pacs)
+
         elif inst_pacs:
-            command = "pacman -Sdf --noconfirm %s;exit\n" %inst_pacs
+            command = "%s -Sdf %s;exit\n" %(pacman, inst_pacs)
+
         elif rem_pacs:
-            command = "pacman -Rdf --noconfirm %s;exit\n" %rem_pacs
+            command = "%s -Rdf %s;exit\n" %(pacman, rem_pacs)
+
         else:
             command = "exit\n"
             
         self.fork_command()
         self.feed_child(command)
+
+    def do_local(self, fname,queues):
+        names_queues = { "add": [], "remove": []}
+        
+        for pac in queues["add"]:
+            names_queues["add"].append(pac.name)
+            continue
+        for pac in queues["remove"]:
+            names_queues["remove"].append(pac.name)
+            continue
+
+        inst_pacs = " ".join(names_queues["add"])
+        rem_pacs = " ".join(names_queues["remove"])
+
+        pacman = "pacman --noconfirm"
+        local = "%s -Uf %s" %(pacman, fname)
+
+        if inst_pacs and rem_pacs:
+            command = "%{loc}s;%{pac}s -Sdf %{inst}s;%{pac}s -Rdf %{rem}s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs, "rem": rem_pacs}
+        elif inst_pacs:
+            command = "%{loc}s;%{pac}s -Sdf %{inst}s;%{pac}s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs}
+        elif rem_pacs:
+            command = "%{loc}s;%{pac}s -Rdf %{rem}s;exit\n" %{"pac": pacman, "loc": local, "rem": rem_pacs}
+        else:
+            command = "%s;exit\n" %local
+
+        self.fork_command()
+        self.feed_child(command)        
 
     def close(self, term, close_button):
 

@@ -18,14 +18,14 @@
 
 from time import sleep
 
-from gtk import Dialog, MessageDialog, AboutDialog
+from gtk import Dialog, MessageDialog, AboutDialog, FileChooserDialog
 from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
 from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox, Entry
 from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
-from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO
+from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT
-from gtk import MESSAGE_WARNING
+from gtk import MESSAGE_WARNING, FILE_CHOOSER_ACTION_OPEN
 from gtk import BUTTONS_CLOSE
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import image_new_from_stock, ICON_SIZE_BUTTON, ICON_SIZE_DIALOG
@@ -340,6 +340,51 @@ class do_dialog(Window):
     def _stop_closing(self, widget, event):
         self.stop_emission("delete-event")
         return True
+
+class local_install_fchooser_dialog(FileChooserDialog):
+
+    def __init__(self, parent):
+        FileChooserDialog.__init__(self, _("Choose package to install"),
+                                   parent, FILE_CHOOSER_ACTION_OPEN,
+                                   (STOCK_OPEN, RESPONSE_ACCEPT,
+                                    STOCK_CANCEL, RESPONSE_REJECT))
+
+class local_confirm_dialog(confirm_dialog):
+
+    def __init__(self, parent, fname, pacs_queue):
+        from os.path import basename
+        
+        confirm_dialog.__init__(self, parent, pacs_queue)
+        package = basename(fname)
+
+        name_n_ver = package.split("-", package.count("-")-1)
+        version = name_n_ver.pop()
+        name = "-".join(name_n_ver)
+
+        self.install_model.prepend(["red", name, version])
+
+class local_install_dialog(do_dialog):
+
+    def __init__(self, fname, pacs_queue):
+        from os.path import basename
+        
+        do_dialog.__init__(self, pacs_queue)
+
+        package = basename(fname)
+        
+        name_n_ver = package.split("-", package.count("-")-1)
+        version = name_n_ver.pop()
+        name = "-".join(name_n_ver)
+
+        self.inst_model.prepend(["red", name, version])
+        self.fname = fname
+        self.pacs_queue = pacs_queue
+
+    def run(self):
+        self.show()
+        self.terminal.do_local(self.fname, self.pacs_queue)
+        return
+        
     
 class search_dialog(Dialog):
 

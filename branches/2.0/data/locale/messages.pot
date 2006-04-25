@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-03-05 17:46+0100\n"
+"POT-Creation-Date: 2006-04-25 23:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,51 +16,144 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: gui.py:64
+#: dialogs.py:42
+msgid ""
+"You must be root to fully use gtkpacman.\n"
+"Since you aren't root, gtkpacman will not allow any packages management "
+"operation (Install/Remove)"
+msgstr ""
+
+#: dialogs.py:48
+msgid "Confirm"
+msgstr ""
+
+#: dialogs.py:69 dialogs.py:97 dialogs.py:271 dialogs.py:299 gui.py:123
 msgid "Package"
 msgstr ""
 
-#: gui.py:66
+#: dialogs.py:72 dialogs.py:100 dialogs.py:274
+msgid "Version"
+msgstr ""
+
+#: dialogs.py:120
+msgid "Are you sure you want to install/remove those packages?"
+msgstr ""
+
+#: dialogs.py:122
+msgid "Packages to install"
+msgstr ""
+
+#: dialogs.py:123
+msgid "Packages to remove"
+msgstr ""
+
+#: dialogs.py:149
+msgid "Warning!"
+msgstr ""
+
+#: dialogs.py:158
+msgid ""
+"This packages requires one of the packages you've selected for removal.\n"
+"Do you want to remove them all?"
+msgstr ""
+
+#: dialogs.py:203
+msgid ""
+"Copyright (C)2005-2006 by Stefano Esposito.\n"
+"Rights to copy, modify, and redistribute are granted under the GNU General "
+"Public License Terms"
+msgstr ""
+
+#: dialogs.py:204
+msgid "Gtk package manager based on pacman"
+msgstr ""
+
+#: dialogs.py:205
+msgid ""
+"gtkPacman is free software; you can redistribute it and/or modify\n"
+"it under the terms of the GNU General Public License as published by\n"
+"the Free Software Foundation; either version 2 of the License, or\n"
+"(at your option) any later version.\n"
+"\n"
+"gtkPacman program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU General Public License for more details.\n"
+"\n"
+"You should have received a copy of the GNU General Public License\n"
+"along with this program; if not, write to the Free Software\n"
+"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"
+msgstr ""
+
+#: dialogs.py:302 gui.py:125
 msgid "Installed Version"
 msgstr ""
 
-#: gui.py:69 gui.py:171
+#: dialogs.py:317
+msgid "Terminal"
+msgstr ""
+
+#: dialogs.py:347
+msgid "Choose package to install"
+msgstr ""
+
+#: dialogs.py:393
+msgid "Search for.."
+msgstr ""
+
+#: gui.py:71 gui.py:542
+msgid "Done."
+msgstr ""
+
+#: gui.py:128 gui.py:280
 msgid "Avaible Version"
 msgstr ""
 
-#: gui.py:72
+#: gui.py:131
 msgid "Repo"
 msgstr ""
 
-#: gui.py:91
+#: gui.py:135 gui.py:162 gui.py:182 gui.py:205 gui.py:246
 msgid "All"
 msgstr ""
 
-#: gui.py:97
+#: gui.py:168 gui.py:198 gui.py:268 gui.py:273
 msgid "all"
 msgstr ""
 
-#: gui.py:98
+#: gui.py:169 gui.py:199 gui.py:268
 msgid "installed"
 msgstr ""
 
-#: gui.py:101
+#: gui.py:172 gui.py:184 gui.py:187 gui.py:190 gui.py:205 gui.py:256
 msgid "foreigners"
 msgstr ""
 
-#: pacman.py:54
+#: gui.py:243
+msgid "Search"
+msgstr ""
+
+#: gui.py:517
+msgid "Clearing Cache..."
+msgstr ""
+
+#: gui.py:530
+msgid "Emptying cache..."
+msgstr ""
+
+#: pacman.py:55
 msgid "version must be a string"
 msgstr ""
 
-#: pacman.py:62
+#: pacman.py:63
 msgid "inst must be True or False"
 msgstr ""
 
-#: pacman.py:70
+#: pacman.py:71
 msgid "inst_ver must be a string"
 msgstr ""
 
-#: pacman.py:210
+#: pacman.py:224
 #, python-format
 msgid ""
 "Description: %s\n"
@@ -73,7 +166,7 @@ msgid ""
 "Reason: %s"
 msgstr ""
 
-#: pacman.py:212
+#: pacman.py:228
 #, python-format
 msgid ""
 "Description: %s\n"
@@ -81,20 +174,20 @@ msgid ""
 "Size (compressed): %s"
 msgstr ""
 
-#: pacman.py:264
+#: pacman.py:281
 msgid "Installed as a dependency for another package"
 msgstr ""
 
-#: pacman.py:266
+#: pacman.py:283
 msgid "Excplicitly installed"
 msgstr ""
 
-#: pacman.py:303
+#: pacman.py:323
 #, python-format
 msgid "%s is not installed"
 msgstr ""
 
-#: pacman.py:348
+#: pacman.py:368
 #, python-format
 msgid "%s is not in the database"
 msgstr ""
@@ -140,7 +233,7 @@ msgid "Files"
 msgstr ""
 
 #: gtkpacman.glade.h:11
-msgid "Immediate actions"
+msgid "Immediate Actions"
 msgstr ""
 
 #: gtkpacman.glade.h:12
@@ -148,23 +241,23 @@ msgid "Install/Upgrade package from _local file"
 msgstr ""
 
 #: gtkpacman.glade.h:13
-msgid "Queue actions"
-msgstr ""
-
-#: gtkpacman.glade.h:14
 msgid "R_emove from remove queue"
 msgstr ""
 
-#: gtkpacman.glade.h:15
+#: gtkpacman.glade.h:14
 msgid "Refresh _database"
 msgstr ""
 
-#: gtkpacman.glade.h:16
+#: gtkpacman.glade.h:15
 msgid "Refresh database"
 msgstr ""
 
-#: gtkpacman.glade.h:17
+#: gtkpacman.glade.h:16
 msgid "Remove from _install queue"
+msgstr ""
+
+#: gtkpacman.glade.h:17
+msgid "Search packages"
 msgstr ""
 
 #: gtkpacman.glade.h:18
@@ -188,13 +281,17 @@ msgid "_Help"
 msgstr ""
 
 #: gtkpacman.glade.h:23
-msgid "_Pacman"
+msgid "_Queue Actions"
 msgstr ""
 
 #: gtkpacman.glade.h:24
-msgid "_Upgrade system"
+msgid "_Search"
 msgstr ""
 
 #: gtkpacman.glade.h:25
+msgid "_Upgrade system"
+msgstr ""
+
+#: gtkpacman.glade.h:26
 msgid "gtkpacman"
 msgstr ""

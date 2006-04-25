@@ -45,8 +45,8 @@ class gui:
                   #"up_sys":         self.upgrade_system,
                   #"refr_db":        self.refresh_databases,
                   "add_local":      self.add_from_local_file,
-                  #"clear_cache":    self.celar_cache,
-                  #"empty_cache":    self.empty_cache,
+                  "clear_cache":    self.clear_cache,
+                  "empty_cache":    self.empty_cache,
                   "search_pac":     self.search,
                   "show_popup":     self.show_popup,
                   "about":          self.about,
@@ -65,6 +65,10 @@ class gui:
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
+
+        stat_bar = self.gld.get_widget("statusbar")
+        self.stat_id = stat_bar.get_context_id("stat")
+        stat_bar.push(self.stat_id, _("Done."))
 
         if uid:
             dlg = non_root_dialog()
@@ -128,7 +132,7 @@ class gui:
             CellRendererText(), text=5
             )
 
-        pacs_tree.set_model(self.models["all"])
+        pacs_tree.set_model(self.models[_("All")])
 
         sort_id = 0
         for col in pacs_tree.get_columns():
@@ -175,15 +179,15 @@ class gui:
     def _setup_pacs_models(self):
         self.models = {}
 
-        self.models["all"] = whole_list(self.database.values())
+        self.models[_("All")] = whole_list(self.database.values())
         try:
-            self.models["foreigners"] = installed_list(self.database["foreigners"])
+            self.models[_("foreigners")] = installed_list(self.database["foreigners"])
         except KeyError:
             self.database["foreigners"] = []
-            self.models["foreigners"] = installed_list(self.database["foreigners"])
+            self.models[_("foreigners")] = installed_list(self.database["foreigners"])
             
         for repo in self.database.repos:
-            if repo == "foreigners":
+            if repo == _("foreigners"):
                 continue
             
             self.models[repo] = {}
@@ -191,14 +195,14 @@ class gui:
             all_mod = all_list(self.database[repo])
             inst_mod = installed_list(self.database[repo])
 
-            self.models[repo]["all"] = all_mod
-            self.models[repo]["installed"] = inst_mod
+            self.models[repo][_("all")] = all_mod
+            self.models[repo][_("installed")] = inst_mod
             continue
         return
 
     def _refresh_trees(self):
         for model in self.models.keys():
-            if model == "all" or model == "foreigners":
+            if model == _("All") or model == _("foreigners"):
                 self._refresh_model(model)
             else:
                 for mod in self.models[model].keys():
@@ -236,10 +240,10 @@ class gui:
         selected = repos_model.get_value(tree_iter, 0)
 
         if not repos_model.iter_depth(tree_iter):
-            if selected.count("Search"):
+            if selected.count(_("Search")):
                 pacs_model = self.models["search"]
             else:
-                pacs_model = self.models["all"]
+                pacs_model = self.models[_("All")]
             if not self.repo_col:
                 self.repo_col = pacs_tree.insert_column_with_attributes(
                     -1, "", CellRendererText(), text=5
@@ -249,7 +253,7 @@ class gui:
                     -1, "", CellRendererText(), text=4
                     )
                 
-        elif selected == "foreigners":
+        elif selected == _("foreigners"):
             if self.repo_col:
                 pacs_tree.remove_column(self.repo_col)
                 self.repo_col = None
@@ -261,12 +265,12 @@ class gui:
             pacs_model = self.models[selected]
             
         else:
-            if selected == "all" or selected == "installed":
+            if selected == _("all") or selected == _("installed"):
                 parent_iter = repos_model.iter_parent(tree_iter)
                 parent = repos_model.get_value(parent_iter, 0)
                 pacs_model = self.models[parent][selected]
             else:
-                pacs_model = self.models[selected]["all"]
+                pacs_model = self.models[selected][_("all")]
 
             if self.repo_col:
                 pacs_tree.remove_column(self.repo_col)
@@ -454,9 +458,13 @@ class gui:
 
     def add_from_local_file(self, widget, data=None):
         dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"))
-        if dlg.run() == RESPONSE_ACCEPT:
-            fname = dlg.get_filename()
+        response = dlg.run()
         dlg.destroy()
+        
+        if response == RESPONSE_ACCEPT:
+            fname = dlg.get_filename()
+        else:
+            return
         
         deps, conflicts = self.database.get_local_file_deps(fname)
 
@@ -497,7 +505,46 @@ class gui:
         else:
             retcode = False
         return retcode
-            
+
+    def clear_cache(self, wid, data=None):
+        from gtk import Window, WINDOW_TOPLEVEL
+        from terminal import terminal
+        
+        stat_bar = self.gld.get_widget("statusbar")
+
+        win = Window(WINDOW_TOPLEVEL)
+        term = terminal()
+        term.connect("child-exited", self._done)
+        win.add(term)
+        win.show_all()
+        
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Clearing Cache..."))
+        
+        term.fork_command("pacman", ["pacman", "-Sc"])
+        return
+
+    def empty_cache(self, wid, data=None):
+        from terminal import terminal
+        
+        stat_bar = self.gld.get_widget("statusbar")
+        term = terminal()
+        term.connect("child-exited", self._done)
+
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Emptying cache..."))
+
+        term.fork_command("pacman", ["pacman", "-Scc"])
+        return
+
+    def _done(self, terminal, data=None):
+        terminal.destroy()
+
+        stat_bar = self.gld.get_widget("statusbar")
+
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Done."))
+        
 class installed_list(ListStore):
 
     def __init__(self, pacs):

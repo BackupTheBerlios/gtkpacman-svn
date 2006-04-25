@@ -20,12 +20,13 @@ from vte import Terminal
 
 class terminal(Terminal):
 
-    def __init__(self, close_button):
+    def __init__(self, close_button=None):
 
         Terminal.__init__(self)
 
         self.set_sensitive(False)
-        self.connect("child-exited", self.close, close_button)
+        if close_button:
+            self.connect("child-exited", self.close, close_button)
 
     def do(self, queues, fname):
         names_queues = { "add": [], "remove": [], "local": "" }

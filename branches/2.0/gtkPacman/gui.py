@@ -29,7 +29,9 @@ from gtk.glade import XML
 from dialogs import confirm_dialog, do_dialog, warning_dialog
 from dialogs import about_dialog, non_root_dialog, search_dialog
 from dialogs import local_install_dialog, local_install_fchooser_dialog
-from dialogs import local_confirm_dialog
+from dialogs import local_confirm_dialog, upgrade_dialog
+
+from models import installed_list, all_list, whole_list, search_list
 
 class gui:
     def __init__(self, fname, database, uid):
@@ -42,8 +44,8 @@ class gui:
                   "add_remove":     self.add_to_remove_queue,
                   "remove_remove":  self.remove_from_remove_queue,
                   "execute":        self.execute,
-                  #"up_sys":         self.upgrade_system,
-                  #"refr_db":        self.refresh_databases,
+                  "up_sys":         self.upgrade_system,
+                  "refr_db":        self.refresh_database,
                   "add_local":      self.add_from_local_file,
                   "clear_cache":    self.clear_cache,
                   "empty_cache":    self.empty_cache,
@@ -544,80 +546,19 @@ class gui:
 
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Done."))
-        
-class installed_list(ListStore):
 
-    def __init__(self, pacs):
+    def upgrade_system(self, widget, data=None):        
+        dlg = upgrade_dialog()
+        dlg.connect("destroy", self._done_upgrade)
+        dlg.run()
+        return
 
-        ListStore.__init__(self, str, str, str, str, str)
+    def refresh_database(self, widget, data=None):
+        dlg = upgrade_dialog(True)
+        dlg.connect("destroy", self._done_upgrade)
+        dlg.run()
+        return
 
-        for pac in pacs:
-            if not pac.installed:
-                continue
-
-            if pac.isold:
-                image = "yellow"
-            else:
-                image = "green"
-                
-            self.append([image, None, pac.name, pac.inst_ver, pac.version])
-            continue
-
-class all_list(ListStore):
-
-    def __init__(self, pacs):
-
-        ListStore.__init__(self, str, str, str, str, str)
-
-        for pac in pacs:
-            if not (pac.isold or pac.installed):
-                image = "red"
-                inst_ver = "-"
-            elif pac.isold:
-                image = "yellow"
-                inst_ver = pac.inst_ver
-            else:
-                image = "green"
-                inst_ver = pac.inst_ver
-
-            self.append([image, None, pac.name, inst_ver, pac.version])
-            continue
-
-class whole_list(ListStore):
-
-    def __init__(self, pacs):
-
-        ListStore.__init__(self, str, str, str, str, str, str)
-        
-        for r_list in pacs:
-            for pac in r_list:
-                if not (pac.isold or pac.installed):
-                    image = "red"
-                    inst_ver = "-"
-                elif pac.isold:
-                    image = "yellow"
-                    inst_ver = pac.inst_ver
-                else:
-                    image = "green"
-                    inst_ver = pac.inst_ver
-
-                self.append([image, None, pac.name, inst_ver, pac.version, pac.repo])
-
-class search_list(ListStore):
-
-    def __init__(self, pacs):
-
-        ListStore.__init__(self, str, str, str, str, str, str)
-
-        for pac in pacs:
-            if not (pac.isold or pac.installed):
-                image = "red"
-                inst_ver = "-"
-            elif pac.isold:
-                image = "yellow"
-                inst_ver = pac.inst_ver
-            else:
-                image = "green"
-                inst_ver = pac.inst_ver
-
-            self.append([image, None, pac.name, inst_ver, pac.version, pac.repo])
+    def _done_upgrade(self, widget, data=None):
+        self.database.refresh()
+        self._setup_pacs_models()

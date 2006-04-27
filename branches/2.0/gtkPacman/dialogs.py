@@ -199,7 +199,7 @@ class about_dialog(AboutDialog):
         AboutDialog.__init__(self)
 
         self.set_name("gtkpacman")
-        self.set_version("2.0-alpha1")
+        self.set_version("2.0alpha2")
         self.set_copyright(_("Copyright (C)2005-2006 by Stefano Esposito.\nRights to copy, modify, and redistribute are granted under the GNU General Public License Terms"))
         self.set_comments(_("Gtk package manager based on pacman"))
         self.set_license(_("""gtkPacman is free software; you can redistribute it and/or modify
@@ -312,7 +312,7 @@ class do_dialog(Window):
         self.hpaned.add2(self.rem_tree)
 
         self.close_button = Button(stock=STOCK_CLOSE)
-        self.close_button.connect("clicked", self.close)
+        self.close_button.connect("clicked", lambda _: self.destroy())
 
         self.expander = Expander(_("Terminal"))
         self.terminal = terminal(self.close_button)
@@ -411,3 +411,48 @@ class search_dialog(Dialog):
 
     def _entry_response(self, widget, data=None):
         self.response(RESPONSE_ACCEPT)
+
+class upgrade_dialog(Window):
+
+    def __init__(self, db=False):
+
+        Window.__init__(self, WINDOW_TOPLEVEL)
+        self.set_property("skip-taskbar-hint", True)
+        self.set_modal(True)
+        self.set_position(WIN_POS_CENTER)
+
+        self.vbox = VBox(False, 0)
+        
+        self.terminal = terminal()
+        self.terminal.connect("child-exited",
+                              lambda _: self.close_button.show())
+        
+        self.close_button = Button(stock=STOCK_CLOSE)
+        self.close_button.connect("clicked", lambda _: self.destroy())
+
+        self.vbox.pack_start(self.terminal, False, False, 0)
+        self.vbox.pack_start(self.close_button, False, False, 0)
+
+        self.add(self.vbox)
+
+        self.terminal.show()
+        self.vbox.show()
+
+        self.db = db
+
+    def run(self):
+
+        self.show()
+        self.terminal.fork_command()
+
+        if self.db:
+            self.terminal.feed_child("pacman -Sy;exit\n")
+        else:
+            self.terminal.set_sensitive(True)
+            self.terminal.feed_child("pacman -Syu;exit\n")
+
+    def _close(self, terminal, data=None):
+        self.close_button.show()
+        return
+        
+        

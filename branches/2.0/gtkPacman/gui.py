@@ -455,7 +455,7 @@ class gui:
         repos_model = self.gld.get_widget("repos_tree").get_model()
         if self.search_iter:
             repos_model.remove(self.search_iter)
-        self.search_iter = repos_model.append(None, ["Search results for '%s'" %keywords])
+        self.search_iter = repos_model.append(None, [_("Search results for '%s'") %keywords])
         self.models["search"] = search_list(pacs)
 
     def add_from_local_file(self, widget, data=None):

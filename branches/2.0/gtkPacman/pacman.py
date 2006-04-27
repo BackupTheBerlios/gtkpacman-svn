@@ -229,6 +229,7 @@ class database(dict):
 
         pac.summary = summary
         pac.dependencies = deps
+        pac.description = desc
 
     def _get_size(self, desc):
 
@@ -424,9 +425,11 @@ class database(dict):
             for key in keys:
                 pacs.extend(self.search_by_name(key))
                     
-                pac = self.get_by_desc(key)
-                if pac and (not pacs.count(pac)):
-                    pacs.append(pac)
+                dpacs = self.get_by_desc(key)
+                for pac in dpacs:
+                    if not pacs.count(pac):
+                        pacs.append(pac)
+                    continue
                 continue
         else:
             try:

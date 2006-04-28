@@ -399,7 +399,7 @@ class search_dialog(Dialog):
 
     def _setup_layout(self):
 
-        self.label = Label("Insert keywords:")
+        self.label = Label(_("Insert keywords:"))
 
         self.entry = Entry()
         self.entry.connect("activate", self._entry_response)

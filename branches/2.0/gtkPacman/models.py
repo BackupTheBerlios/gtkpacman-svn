@@ -83,9 +83,6 @@ class search_list(ListStore):
         ListStore.__init__(self, str, str, str, str, str, str)
 
         for pac in pacs:
-            if type(pac) == type(list()):
-                for p in pac:
-                    print p.name
                 
             if not (pac.isold or pac.installed):
                 image = "red"

@@ -424,23 +424,11 @@ class database(dict):
         if type(keys) == type(list()):
             for key in keys:
                 pacs.extend(self.search_by_name(key))
-                    
-                dpacs = self.get_by_desc(key)
-                for pac in dpacs:
-                    if not pacs.count(pac):
-                        pacs.append(pac)
-                    continue
+                pacs.extend(self.get_by_desc(key))
                 continue
         else:
-            try:
-                pac = self.get_by_name(keys)
-            except NameError:
-                pac = None
-            if pac:
-                pacs.append(pac)
-            pac = self.get_by_desc(keys)
-            if pac and (not pacs.count(pac)):
-                pacs.append(pac)
+            pacs.extend(self.search_by_name(keys))
+            pacs.extend(self.get_by_desc(keys))
         return pacs
 
     def get_local_file_deps(self, fname):

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-04-25 23:18+0200\n"
+"POT-Creation-Date: 2006-04-28 22:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,7 +27,7 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
-#: dialogs.py:69 dialogs.py:97 dialogs.py:271 dialogs.py:299 gui.py:123
+#: dialogs.py:69 dialogs.py:97 dialogs.py:271 dialogs.py:299 gui.py:125
 msgid "Package"
 msgstr ""
 
@@ -85,7 +85,7 @@ msgid ""
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"
 msgstr ""
 
-#: dialogs.py:302 gui.py:125
+#: dialogs.py:302 gui.py:127
 msgid "Installed Version"
 msgstr ""
 
@@ -101,43 +101,52 @@ msgstr ""
 msgid "Search for.."
 msgstr ""
 
-#: gui.py:71 gui.py:542
+#: dialogs.py:402
+msgid "Insert keywords:"
+msgstr ""
+
+#: gui.py:73 gui.py:548
 msgid "Done."
 msgstr ""
 
-#: gui.py:128 gui.py:280
+#: gui.py:130 gui.py:282
 msgid "Avaible Version"
 msgstr ""
 
-#: gui.py:131
+#: gui.py:133
 msgid "Repo"
 msgstr ""
 
-#: gui.py:135 gui.py:162 gui.py:182 gui.py:205 gui.py:246
+#: gui.py:137 gui.py:164 gui.py:184 gui.py:207 gui.py:248
 msgid "All"
 msgstr ""
 
-#: gui.py:168 gui.py:198 gui.py:268 gui.py:273
+#: gui.py:170 gui.py:200 gui.py:270 gui.py:275
 msgid "all"
 msgstr ""
 
-#: gui.py:169 gui.py:199 gui.py:268
+#: gui.py:171 gui.py:201 gui.py:270
 msgid "installed"
 msgstr ""
 
-#: gui.py:172 gui.py:184 gui.py:187 gui.py:190 gui.py:205 gui.py:256
+#: gui.py:174 gui.py:186 gui.py:189 gui.py:192 gui.py:207 gui.py:258
 msgid "foreigners"
 msgstr ""
 
-#: gui.py:243
+#: gui.py:245
 msgid "Search"
 msgstr ""
 
-#: gui.py:517
+#: gui.py:458
+#, python-format
+msgid "Search results for '%s'"
+msgstr ""
+
+#: gui.py:524
 msgid "Clearing Cache..."
 msgstr ""
 
-#: gui.py:530
+#: gui.py:537
 msgid "Emptying cache..."
 msgstr ""
 
@@ -174,20 +183,20 @@ msgid ""
 "Size (compressed): %s"
 msgstr ""
 
-#: pacman.py:281
+#: pacman.py:282
 msgid "Installed as a dependency for another package"
 msgstr ""
 
-#: pacman.py:283
+#: pacman.py:284
 msgid "Excplicitly installed"
 msgstr ""
 
-#: pacman.py:323
+#: pacman.py:324
 #, python-format
 msgid "%s is not installed"
 msgstr ""
 
-#: pacman.py:368
+#: pacman.py:369
 #, python-format
 msgid "%s is not in the database"
 msgstr ""

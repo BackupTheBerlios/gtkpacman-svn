@@ -199,7 +199,7 @@ class about_dialog(AboutDialog):
         AboutDialog.__init__(self)
 
         self.set_name("gtkpacman")
-        self.set_version("2.0alpha2")
+        self.set_version("svn")
         self.set_copyright(_("Copyright (C)2005-2006 by Stefano Esposito.\nRights to copy, modify, and redistribute are granted under the GNU General Public License Terms"))
         self.set_comments(_("Gtk package manager based on pacman"))
         self.set_license(_("""gtkPacman is free software; you can redistribute it and/or modify
@@ -314,8 +314,10 @@ class do_dialog(Window):
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
+        self.terminal = terminal()
+        self.terminal.connect("child-exited", lambda _: self.close_button.show())
+
         self.expander = Expander(_("Terminal"))
-        self.terminal = terminal(self.close_button)
         self.expander.add(self.terminal)
 
         self.vbox = VBox(False, 0)
@@ -414,10 +416,111 @@ class search_dialog(Dialog):
 
 class upgrade_dialog(Window):
 
-    def __init__(self, db=False):
+    def __init__(self, to_upgrade):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
+        self.set_property("modal", True)
+        self.set_property("destroy-with-parent", True)
+        self.set_position(WIN_POS_CENTER)
+
+        self._setup_tree(to_upgrade)
+        self._setup_layout()
+
+    def _setup_layout(self):
+        self.vbox = VBox(False, 0)
+
+        self.terminal = terminal()
+        self.terminal.connect("child-exited", lambda _: self.close_button.show())
+        self.close_button = Button(stock=STOCK_CLOSE)
+        self.close_button.connect("clicked", lambda _: self.destroy())
+
+        self.vbox.pack_start(self.tree, False, False, 0)
+        self.vbox.pack_start(self.terminal, False, False, 0)
+        self.vbox.pack_start(self.close_button, False, False, 0)
+
+        self.tree.show()
+        self.terminal.show()
+        self.vbox.show()
+        return
+
+    def _setup_tree(self, pacs):
+        self.model = ListStore(str, str, str)
+
+        for pac in pacs:
+            self.model.append("yellow", pac.name, pac.version)
+            continue
+
+        self.tree = TreeView()
+
+        self.tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
+                                                stock_id = 0)
+        self.tree.insert_column_with_attributes(-1, "Package",
+                                                CellRendererText(), text = 1)
+        self.tree.insert_column_with_attributes(-1, "Version",
+                                                CellRendererText(), text = 2)
+
+        self.tree.set_model(self.model)
+        return
+    
+    def run(self):
+        self.show()
+        self.terminal.do_upgrade()
+
+class upgrade_confirm_dialog(Dialog):
+
+    def __init__(self, parent, to_upgrade):
+
+        Dialog.__init__(self, _("Confirm Upgrade"), parent,
+                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
+                        (STOCK_OK, RESPONSE_ACCEPT,
+                         STOCK_CANCEL, RESPONSE_REJECT))
+
+        self._setup_tree(to_upgrade)
+        self._setup_layout()
+
+    def _setup_tree(self, pacs):
+        self.model = ListStore(str, str, str)
+
+        for pac in pacs:
+            self.model.append(["yellow", pac.name, pac.version])
+            continue
+
+        self.tree = TreeView()
+        self.tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
+                                                stock_id = 0)
+        self.tree.insert_column_with_attributes(-1, "Package",
+                                                CellRendererText(), text = 1)
+        self.tree.insert_column_with_attributes(-1, "Version",
+                                                CellRendererText(), text = 2)
+
+        self.tree.set_model(self.model)
+        self.tree.show()
+
+    def _setup_layout(self):
+
+        self.label = Label(_("Are you sure yo want to upgrade those packages?\n"))
+        self.label.show()
+        
+        self.vbox.pack_start(self.label, False, False, 0)
+        self.vbox.pack_start(self.tree, False, False, 0)
+
+    def run(self):
+        retcode = Dialog.run(self)
+        self.destroy()
+
+        if retcode == RESPONSE_ACCEPT:
+            return True
+        else:
+            return False
+
+class refresh_dialog(Window):
+
+    def __init__(self):
+
+        Window.__init__(self, WINDOW_TOPLEVEL)
+        self.set_property("skip-taskbar-hint", True)
+        self.set_property("destroy-with-parent", True)
         self.set_modal(True)
         self.set_position(WIN_POS_CENTER)
 
@@ -438,19 +541,12 @@ class upgrade_dialog(Window):
         self.terminal.show()
         self.vbox.show()
 
-        self.db = db
-
     def run(self):
 
         self.show()
         self.terminal.fork_command()
-
-        if self.db:
-            self.terminal.feed_child("pacman -Sy;exit\n")
-        else:
-            self.terminal.set_sensitive(True)
-            self.terminal.feed_child("pacman -Syu;exit\n")
-
+        self.terminal.feed_child("pacman -Sy;exit\n")
+        
     def _close(self, terminal, data=None):
         self.close_button.show()
         return

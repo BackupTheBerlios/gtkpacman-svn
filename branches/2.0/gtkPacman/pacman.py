@@ -426,9 +426,20 @@ class database(dict):
                 pacs.extend(self.search_by_name(key))
                 pacs.extend(self.get_by_desc(key))
                 continue
+            for pac in pacs:
+                if pacs.count(pac) == 1:
+                    pacs.remove(pac)
+                continue
+            
         else:
             pacs.extend(self.search_by_name(keys))
             pacs.extend(self.get_by_desc(keys))
+
+        for pac in pacs:
+            while pacs.count(pac) > 1:
+                pacs.remove(pac)
+                continue
+            continue
         return pacs
 
     def get_local_file_deps(self, fname):

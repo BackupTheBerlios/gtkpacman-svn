@@ -20,20 +20,15 @@ from vte import Terminal
 
 class terminal(Terminal):
 
-    def __init__(self, close_button=None):
+    def __init__(self):
 
         Terminal.__init__(self)
 
         self.set_sensitive(False)
-        if close_button:
-            self.connect("child-exited", self.close, close_button)
 
-    def do(self, queues, fname):
-        names_queues = { "add": [], "remove": [], "local": "" }
+    def do(self, queues):
+        names_queues = { "add": [], "remove": []}
 
-        if fname:
-            queues["add"].remove(queues["add"][0])
-            names_queues["local"] = fname
         for pac in queues["add"]:
             names_queues["add"].append(pac.name)
             continue
@@ -61,7 +56,7 @@ class terminal(Terminal):
         self.fork_command()
         self.feed_child(command)
 
-    def do_local(self, fname,queues):
+    def do_local(self, fname, queues):
         names_queues = { "add": [], "remove": []}
         
         for pac in queues["add"]:
@@ -87,9 +82,12 @@ class terminal(Terminal):
             command = "%s;exit\n" %local
 
         self.fork_command()
-        self.feed_child(command)        
+        self.feed_child(command)
+
+    def do_upgrade(self):
+        self.terminal.fork_command()
+        self.feed_child("pacman -Su --noconfirm;exit\n")
 
     def close(self, term, close_button):
-
         close_button.show()
         return

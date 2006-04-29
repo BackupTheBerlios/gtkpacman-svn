@@ -26,10 +26,13 @@ from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT
 from gtk.glade import XML
 
-from dialogs import confirm_dialog, do_dialog, warning_dialog
-from dialogs import about_dialog, non_root_dialog, search_dialog
+from dialogs import non_root_dialog, about_dialog
+from dialogs import warning_dialog, confirm_dialog, do_dialog
+from dialogs import search_dialog
 from dialogs import local_install_dialog, local_install_fchooser_dialog
-from dialogs import local_confirm_dialog, upgrade_dialog
+from dialogs import local_confirm_dialog
+from dialogs import upgrade_dialog, upgrade_confirm_dialog
+from dialogs import refresh_dialog
 
 from models import installed_list, all_list, whole_list, search_list
 
@@ -411,6 +414,9 @@ class gui:
 
         retcode = self._confirm(pacs_queues)
         if retcode:
+            stat_bar = self.gld.get_widget("statusbar")
+            stat_bar.pop(self.stat_id)
+            stat_bar.push(self.stat_id, _("Executing queued operations"))
             dlg = do_dialog(pacs_queues)
             dlg.connect("destroy", self._refresh_trees_and_queues)
             dlg.run()
@@ -423,13 +429,15 @@ class gui:
     def _confirm(self, pacs_queues):
         dlg = confirm_dialog(self.gld.get_widget("main_win"), pacs_queues)
         retcode = dlg.run()
-        dlg.destroy()
         return retcode
 
     def _refresh_trees_and_queues(self, widget=None):
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []
+        stat_bar = self.gld.get_widget("statusbar")
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Done."))
         return
            
     def about(self, widget, data=None):
@@ -467,7 +475,10 @@ class gui:
             fname = dlg.get_filename()
         else:
             return
-        
+
+        stat_bar = self.gld.get_widget("statusbar")
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Installing %s") %fname)
         deps, conflicts = self.database.get_local_file_deps(fname)
 
         install = []
@@ -498,6 +509,10 @@ class gui:
     def _after_local_install(self, wid, data=None):
         self.database.refresh()
         self.models["foreigners"] = installed_list(self.database["foreigners"])
+
+        stat_bar = self.gld.get_widget("statusbar")
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Done."))
 
     def _local_confirm(self, fname, pacs_queue):
         dlg = local_confirm_dialog(self.gld.get_widget("main_win"),
@@ -547,14 +562,44 @@ class gui:
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Done."))
 
-    def upgrade_system(self, widget, data=None):        
-        dlg = upgrade_dialog()
-        dlg.connect("destroy", self._done_upgrade)
-        dlg.run()
+    def upgrade_system(self, widget, data=None):
+        to_upgrade = []
+        
+        for repo in self.database.values():
+            for pac in repo:
+                if pac.isold:
+                    to_upgrade.append(pac)
+                continue
+            continue
+
+        if to_upgrade:
+            confirm = self._upgrade_confirm(to_upgrade)
+
+            if confirm:
+                stat_bar = self.gld.get_widget("statusbar")
+                stat_bar.pop(self.stat_id)
+                stat_bar.push(self.stat_id, _("Refreshing database"))
+                dlg = upgrade_dialog(pacs)
+                dlg.connect("destroy", self._done_upgrade)
+                dlg.run()
+        else:
+            stat_bar = self.gld.get_widget("statusbar")
+            stat_bar.pop(self.stat_id)
+            stat_bar.push(self.stat_id,
+                          _("There isn't any packages to upgrade"))
         return
 
+    def _upgrade_confirm(self, to_upgrade):
+        dlg = upgrade_confirm_dialog(self.gld.get_widget("main_win"),
+                                     to_upgrade)
+        retcode = dlg.run()
+        return retcode
+
     def refresh_database(self, widget, data=None):
-        dlg = upgrade_dialog(True)
+        stat_bar = self.gld.get_widget("statusbar")
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Refreshing database"))
+        dlg = refresh_dialog()
         dlg.connect("destroy", self._done_upgrade)
         dlg.run()
         return
@@ -562,3 +607,6 @@ class gui:
     def _done_upgrade(self, widget, data=None):
         self.database.refresh()
         self._setup_pacs_models()
+        stat_bar = self.gld.get_widget("statusbar")
+        stat_bar.pop(self.stat_id)
+        stat_bar.push(self.stat_id, _("Done."))

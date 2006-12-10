@@ -39,6 +39,7 @@ from models import installed_list, all_list, whole_list, search_list
 class gui:
     def __init__(self, fname, database, uid):
 
+        # Setup the main gui: read glade file, connect signals
         self.gld = XML(fname, "main_win", "gtkpacman")
 
         h_dict = {"quit":           self.quit,
@@ -65,37 +66,41 @@ class gui:
         self.queues = {"add": [], "remove": []}
         self.search_iter = None
 
+        #Setup secondary gui elements
         self._setup_popup_menu(fname)
-        self._setup_avaible_actions(uid)
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
 
+        #Setup statusbar
         stat_bar = self.gld.get_widget("statusbar")
         self.stat_id = stat_bar.get_context_id("stat")
         stat_bar.push(self.stat_id, _("Done."))
 
+        #Check if root, else notufy it and deactivate some widgets
         if uid:
+            self._setup_avaible_actions()
             dlg = non_root_dialog()
             dlg.run()
             dlg.destroy()
 
-    def _setup_avaible_actions(self, uid):
-        if uid:
-            self.gld.get_widget("queue").set_sensitive(False)
-            self.gld.get_widget("immediate").set_sensitive(False)
-            self.gld.get_widget("add_install").set_sensitive(False)
-            self.gld.get_widget("remove_install").set_sensitive(False)
-            self.gld.get_widget("add_remove").set_sensitive(False)
-            self.gld.get_widget("remove_remove").set_sensitive(False)
-            self.gld.get_widget("execute").set_sensitive(False)
-            self.gld.get_widget("up_sys").set_sensitive(False)
-            self.gld.get_widget("up_db").set_sensitive(False)
-            self.popup_gld.get_widget("popup_add_install").set_sensitive(False)
-            self.popup_gld.get_widget("popup_remove_install").set_sensitive(False)
-            self.popup_gld.get_widget("popup_add_remove").set_sensitive(False)
-            self.popup_gld.get_widget("popup_remove_remove").set_sensitive(False)
-
+    def _setup_avaible_actions(self):
+        #Deactivate some widgets. Called if not root
+        self.gld.get_widget("queue").set_sensitive(False)
+        self.gld.get_widget("immediate").set_sensitive(False)
+        self.gld.get_widget("add_install").set_sensitive(False)
+        self.gld.get_widget("remove_install").set_sensitive(False)
+        self.gld.get_widget("add_remove").set_sensitive(False)
+        self.gld.get_widget("remove_remove").set_sensitive(False)
+        self.gld.get_widget("execute").set_sensitive(False)
+        self.gld.get_widget("up_sys").set_sensitive(False)
+        self.gld.get_widget("up_db").set_sensitive(False)
+        
+        self.popup_gld.get_widget("popup_add_install").set_sensitive(False)
+        self.popup_gld.get_widget("popup_remove_install").set_sensitive(False)
+        self.popup_gld.get_widget("popup_add_remove").set_sensitive(False)
+        self.popup_gld.get_widget("popup_remove_remove").set_sensitive(False)
+    
     def _adjust_queues (self):
         for name in self.queues["add"]:
             if name == "x-server":
@@ -118,7 +123,6 @@ class gui:
         return names
         
     def _setup_pacs_tree(self):
-
         pacs_tree = self.gld.get_widget("pacs_tree")
 
         pacs_tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),

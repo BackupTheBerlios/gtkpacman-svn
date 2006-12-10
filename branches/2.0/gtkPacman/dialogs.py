@@ -30,26 +30,29 @@ from gtk import BUTTONS_CLOSE
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import image_new_from_stock, ICON_SIZE_BUTTON, ICON_SIZE_DIALOG
 from gtk import main_iteration
+from gtk.gdk import pixbuf_new_from_file
 
 from terminal import terminal
 
 class non_root_dialog(MessageDialog):
 
-    def __init__(self):
+    def __init__(self, icon):
 
         MessageDialog.__init__(self, None,
                                DIALOG_MODAL, MESSAGE_WARNING, BUTTONS_CLOSE,
                                _("You must be root to fully use gtkpacman.\nSince you aren't root, gtkpacman will not allow any packages management operation (Install/Remove)"))
+        self.set_icon (pixbuf_new_from_file(icon))
 
 class confirm_dialog(Dialog):
 
-    def __init__(self, parent, queues):
+    def __init__(self, parent, queues, icon):
 
         Dialog.__init__(self, _("Confirm"), parent,
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                         (STOCK_OK, RESPONSE_ACCEPT,
                          STOCK_CANCEL, RESPONSE_REJECT))
 
+        self.set_icon(pixbuf_new_from_file(icon))
         self._setup_trees(queues)
         self._setup_layout()
 
@@ -144,12 +147,13 @@ class confirm_dialog(Dialog):
 
 class warning_dialog(Dialog):
 
-    def __init__(self, parent, pacs):
+    def __init__(self, parent, pacs, icon):
 
         Dialog.__init__(self, _("Warning!"), parent,
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                         (STOCK_YES, RESPONSE_YES, STOCK_NO, RESPONSE_REJECT))
 
+        self.set_icon(pixbuf_new_from_file(icon))
         self._setup_tree(pacs)
         self._setup_layout()
 
@@ -193,11 +197,12 @@ class warning_dialog(Dialog):
 
 class about_dialog(AboutDialog):
 
-    def __init__(self):
+    def __init__(self, icon):
         from os.path import exists, abspath, join
         from gtk.gdk import pixbuf_new_from_file
         AboutDialog.__init__(self)
 
+        self.set_icon(pixbuf_new_from_file(icon))
         self.set_name("gtkpacman")
         self.set_version("svn")
         self.set_copyright(_("Copyright (C)2005-2006 by Stefano Esposito.\nRights to copy, modify, and redistribute are granted under the GNU General Public License Terms"))

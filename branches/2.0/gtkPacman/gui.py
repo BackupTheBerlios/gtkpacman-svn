@@ -24,6 +24,7 @@ from gtk import CellRendererText, CellRendererPixbuf
 from gtk import ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT
+from gtk.gdk import pixbuf_new_from_file
 from gtk.glade import XML
 
 from dialogs import non_root_dialog, about_dialog
@@ -37,10 +38,11 @@ from dialogs import refresh_dialog
 from models import installed_list, all_list, whole_list, search_list
 
 class gui:
-    def __init__(self, fname, database, uid):
+    def __init__(self, fname, database, uid, icon):
 
         # Setup the main gui: read glade file, connect signals
         self.gld = XML(fname, "main_win", "gtkpacman")
+        self.gld.get_widget("main_win").set_icon(pixbuf_new_from_file(icon))
 
         h_dict = {"quit":           self.quit,
                   "add_install":    self.add_to_install_queue,
@@ -62,6 +64,7 @@ class gui:
 
 
         self.fname = fname
+        self.icon = icon
         self.database = database
         self.queues = {"add": [], "remove": []}
         self.search_iter = None
@@ -80,7 +83,7 @@ class gui:
         #Check if root, else notufy it and deactivate some widgets
         if uid:
             self._setup_avaible_actions()
-            dlg = non_root_dialog()
+            dlg = non_root_dialog(icon)
             dlg.run()
             dlg.destroy()
 
@@ -401,7 +404,7 @@ class gui:
 
                 pacs_queues["remove"].append(pac)
                 dlg = warning_dialog(self.gld.get_widget("main_win"),
-                                     req_pacs)
+                                     req_pacs, self.icon)
                 if dlg.run() == RESPONSE_YES:
                     pacs_queues["remove"].extend(req_pacs)
                 else:
@@ -431,7 +434,7 @@ class gui:
         return
 
     def _confirm(self, pacs_queues):
-        dlg = confirm_dialog(self.gld.get_widget("main_win"), pacs_queues)
+        dlg = confirm_dialog(self.gld.get_widget("main_win"), pacs_queues, self.icon)
         retcode = dlg.run()
         return retcode
 
@@ -445,7 +448,7 @@ class gui:
         return
            
     def about(self, widget, data=None):
-        dlg = about_dialog()
+        dlg = about_dialog(self.icon)
         dlg.run()
         dlg.destroy()
         return

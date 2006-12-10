@@ -69,6 +69,6 @@ if __name__ == "__main__":
     fname, icons = get_fname_and_icons()
     make_icons(icons)
     
-    gui = gui(fname, database, getuid())
+    gui = gui(fname, database, getuid(), icons["pacman"])
     
     main()

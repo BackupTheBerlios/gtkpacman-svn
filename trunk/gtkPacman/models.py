@@ -16,7 +16,7 @@
 #
 # gtkPacman is copyright (C)2005-2006 by Stefano Esposito
 
-from gtk import ListStore
+from gtk import ListStore, TreeStore
 
 class installed_list(ListStore):
 
@@ -95,3 +95,38 @@ class search_list(ListStore):
                 inst_ver = pac.inst_ver
 
             self.append([image, None, pac.name, inst_ver, pac.version, pac.repo])
+
+class file_list(TreeStore):
+
+    def __init__(self, files):
+
+        TreeStore.__init__(self, str)
+
+        f_dict = self._make_files_dict(files)
+
+        for par in f_dict.keys():
+            parent = self.append(None, [par])
+            for val in f_dict[par]:
+                self.append(parent, [val])
+                continue
+            continue
+
+    def _make_files_dict(self, files):
+
+        f_dict = {}
+        p_line = None
+
+        for fname in files.splitlines():
+            if p_line:
+                if fname.startswith(p_line):
+                    f_dict[p_line].append(fname)
+                else:
+                    p_line = fname
+                    f_dict[p_line] = []
+            else:
+                p_line = fname
+                f_dict[p_line] = []
+            continue
+
+        return f_dict
+            

@@ -35,7 +35,7 @@ from dialogs import local_confirm_dialog
 from dialogs import upgrade_dialog, upgrade_confirm_dialog
 from dialogs import refresh_dialog
 
-from models import installed_list, all_list, whole_list, search_list
+from models import installed_list, all_list, whole_list, search_list, file_list
 
 class gui:
     def __init__(self, fname, database, uid, icon):
@@ -74,6 +74,7 @@ class gui:
         self._setup_repos_tree()
         self._setup_pacs_models()
         self._setup_pacs_tree()
+        self._setup_files_tree()
 
         #Setup statusbar
         stat_bar = self.gld.get_widget("statusbar")
@@ -188,6 +189,14 @@ class gui:
         repos_tree.set_model(repos_model)
         return
 
+    def _setup_files_tree(self):
+
+        file_tree = self.gld.get_widget("files")
+        file_tree.insert_column_with_attributes(-1, "", CellRendererText(),
+                                                text=0)
+        return
+        
+
     def _setup_pacs_models(self):
         self.models = {}
 
@@ -297,9 +306,8 @@ class gui:
         sum_txt = self.gld.get_widget("summary")
         sum_buf = sum_txt.get_buffer()
 
-        file_txt = self.gld.get_widget("files")
-        file_buf = file_txt.get_buffer()
-        
+        file_tree = self.gld.get_widget("files")
+               
         model, t_iter = widget.get_selection().get_selected()
         name = model.get_value(t_iter, 2)
 
@@ -308,7 +316,9 @@ class gui:
             self.database.set_pac_properties(pac)
 
         sum_buf.set_text(pac.summary)
-        file_buf.set_text(pac.filelist)
+
+        file_model = file_list(pac.filelist)
+        file_tree.set_model(file_model)
         return
 
     def add_to_install_queue(self, widget, data=None):
@@ -395,24 +405,24 @@ class gui:
             pac = self.database.get_by_name(name)
             if not pac.prop_setted:
                 self.database.set_pac_properties(pac)
-                
+
+            pacs_queues["remove"].append(pac)
             if pac.req_by:
                 req_pacs = []
                 for req in pac.req_by.split(", "):
-                    req_pac = self.database.get_by_name(req)
-                    req_pacs.append(req_pac)
+                    if not (req in self.queues["remove"]):
+                        req_pac = self.database.get_by_name(req)
+                        req_pacs.append(req_pac)
 
-                pacs_queues["remove"].append(pac)
-                dlg = warning_dialog(self.gld.get_widget("main_win"),
+                if req_pacs:
+                    dlg = warning_dialog(self.gld.get_widget("main_win"),
                                      req_pacs, self.icon)
-                if dlg.run() == RESPONSE_YES:
-                    pacs_queues["remove"].extend(req_pacs)
-                else:
-                    self.queues["remove"].remove(name)
-                    pacs_queues["remove"].remove(pac)
-                dlg.destroy()
-            else:
-                pacs_queues["remove"].append(pac)
+                    if dlg.run() == RESPONSE_YES:
+                        pacs_queues["remove"].extend(req_pacs)
+                    else:
+                        self.queues["remove"].remove(name)
+                        pacs_queues["remove"].remove(pac)
+                    dlg.destroy()
             continue
 
         if not (pacs_queues["add"] or pacs_queues["remove"]):

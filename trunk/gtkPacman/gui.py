@@ -596,7 +596,7 @@ class gui:
                 stat_bar = self.gld.get_widget("statusbar")
                 stat_bar.pop(self.stat_id)
                 stat_bar.push(self.stat_id, _("Refreshing database"))
-                dlg = upgrade_dialog(pacs)
+                dlg = upgrade_dialog(to_upgrade)
                 dlg.connect("destroy", self._done_upgrade)
                 dlg.run()
         else:

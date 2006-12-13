@@ -85,7 +85,7 @@ class terminal(Terminal):
         self.feed_child(command)
 
     def do_upgrade(self):
-        self.terminal.fork_command()
+        self.fork_command()
         self.feed_child("pacman -Su --noconfirm;exit\n")
 
     def close(self, term, close_button):

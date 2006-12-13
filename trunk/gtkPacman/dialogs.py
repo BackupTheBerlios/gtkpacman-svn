@@ -29,7 +29,7 @@ from gtk import MESSAGE_WARNING, FILE_CHOOSER_ACTION_OPEN
 from gtk import BUTTONS_CLOSE
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import image_new_from_stock, ICON_SIZE_BUTTON, ICON_SIZE_DIALOG
-from gtk import main_iteration
+from gtk import main_iteration, expander_new_with_mnemonic
 from gtk.gdk import pixbuf_new_from_file
 
 from terminal import terminal
@@ -437,23 +437,25 @@ class upgrade_dialog(Window):
 
         self.terminal = terminal()
         self.terminal.connect("child-exited", lambda _: self.close_button.show())
+        self.expander = expander_new_with_mnemonic(_("_Terminal"))
+        self.expander.set_expanded(False)
+        self.expander.add(self.terminal)
+        
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
         self.vbox.pack_start(self.tree, False, False, 0)
-        self.vbox.pack_start(self.terminal, False, False, 0)
+        self.vbox.pack_start(self.expander, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
 
-        self.tree.show()
-        self.terminal.show()
-        self.vbox.show()
+        self.add(self.vbox)
         return
 
     def _setup_tree(self, pacs):
         self.model = ListStore(str, str, str)
 
         for pac in pacs:
-            self.model.append("yellow", pac.name, pac.version)
+            self.model.append(["yellow", pac.name, pac.version])
             continue
 
         self.tree = TreeView()
@@ -469,7 +471,7 @@ class upgrade_dialog(Window):
         return
     
     def run(self):
-        self.show()
+        self.show_all()
         self.terminal.do_upgrade()
 
 class upgrade_confirm_dialog(Dialog):

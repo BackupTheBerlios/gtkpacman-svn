@@ -234,7 +234,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"""))
 
 class do_dialog(Window):
 
-    def __init__(self, queues):
+    def __init__(self, queues, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
@@ -243,6 +243,7 @@ class do_dialog(Window):
         self.connect("delete-event", self._stop_closing)
         self.set_position(WIN_POS_CENTER)
 
+        self.set_icon(pixbuf_new_from_file(icon))
         self._setup_trees(queues)
         self._setup_layout()
 
@@ -350,18 +351,19 @@ class do_dialog(Window):
 
 class local_install_fchooser_dialog(FileChooserDialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent, icon):
         FileChooserDialog.__init__(self, _("Choose package to install"),
                                    parent, FILE_CHOOSER_ACTION_OPEN,
                                    (STOCK_OPEN, RESPONSE_ACCEPT,
                                     STOCK_CANCEL, RESPONSE_REJECT))
+        self.set_icon(pixbuf_new_from_file(icon))
 
 class local_confirm_dialog(confirm_dialog):
 
-    def __init__(self, parent, fname, pacs_queue):
+    def __init__(self, parent, fname, pacs_queue, icon):
         from os.path import basename
         
-        confirm_dialog.__init__(self, parent, pacs_queue)
+        confirm_dialog.__init__(self, parent, pacs_queue, icon)
         package = basename(fname)
 
         name_n_ver = package.split("-", package.count("-")-1)
@@ -372,10 +374,10 @@ class local_confirm_dialog(confirm_dialog):
 
 class local_install_dialog(do_dialog):
 
-    def __init__(self, fname, pacs_queue):
+    def __init__(self, fname, pacs_queue, icon):
         from os.path import basename
         
-        do_dialog.__init__(self, pacs_queue)
+        do_dialog.__init__(self, pacs_queue, icon)
 
         package = basename(fname)
         
@@ -395,13 +397,14 @@ class local_install_dialog(do_dialog):
     
 class search_dialog(Dialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent, icon):
 
         Dialog.__init__(self, _("Search for.."), parent,
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                         (STOCK_OK, RESPONSE_ACCEPT,
                          STOCK_CANCEL, RESPONSE_REJECT))
 
+        self.set_icon(pixbuf_new_from_file(icon))
         self._setup_layout()
 
     def _setup_layout(self):
@@ -421,7 +424,7 @@ class search_dialog(Dialog):
 
 class upgrade_dialog(Window):
 
-    def __init__(self, to_upgrade):
+    def __init__(self, to_upgrade, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
@@ -429,6 +432,7 @@ class upgrade_dialog(Window):
         self.set_property("destroy-with-parent", True)
         self.set_position(WIN_POS_CENTER)
 
+        self.set_icon(pixbuf_new_from_file(icon))
         self._setup_tree(to_upgrade)
         self._setup_layout()
 
@@ -476,13 +480,14 @@ class upgrade_dialog(Window):
 
 class upgrade_confirm_dialog(Dialog):
 
-    def __init__(self, parent, to_upgrade):
+    def __init__(self, parent, to_upgrade, icon):
 
         Dialog.__init__(self, _("Confirm Upgrade"), parent,
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                         (STOCK_OK, RESPONSE_ACCEPT,
                          STOCK_CANCEL, RESPONSE_REJECT))
 
+        self.set_icon(pixbuf_new_from_file(icon))
         self._setup_tree(to_upgrade)
         self._setup_layout()
 
@@ -523,7 +528,7 @@ class upgrade_confirm_dialog(Dialog):
 
 class refresh_dialog(Window):
 
-    def __init__(self):
+    def __init__(self, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
@@ -545,12 +550,11 @@ class refresh_dialog(Window):
 
         self.add(self.vbox)
 
-        self.terminal.show()
-        self.vbox.show()
+        self.set_icon(pixbuf_new_from_file(icon)
 
     def run(self):
 
-        self.show()
+        self.show_all()
         self.terminal.fork_command()
         self.terminal.feed_child("pacman -Sy;exit\n")
         

@@ -434,7 +434,7 @@ class gui:
             stat_bar = self.gld.get_widget("statusbar")
             stat_bar.pop(self.stat_id)
             stat_bar.push(self.stat_id, _("Executing queued operations"))
-            dlg = do_dialog(pacs_queues)
+            dlg = do_dialog(pacs_queues, self.icon)
             dlg.connect("destroy", self._refresh_trees_and_queues)
             dlg.run()
         else:
@@ -484,7 +484,8 @@ class gui:
         self.models["search"] = search_list(pacs)
 
     def add_from_local_file(self, widget, data=None):
-        dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"))
+        dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),
+                                            self.icon)
         response = dlg.run()
         dlg.destroy()
         
@@ -519,7 +520,7 @@ class gui:
 
         retcode = self._local_confirm(fname, pacs_queues)
         if retcode:
-            i_dlg = local_install_dialog(fname, pacs_queues)
+            i_dlg = local_install_dialog(fname, pacs_queues, self.icon)
             i_dlg.connect("destroy", self._after_local_install)
             i_dlg.run()
 
@@ -533,7 +534,7 @@ class gui:
 
     def _local_confirm(self, fname, pacs_queue):
         dlg = local_confirm_dialog(self.gld.get_widget("main_win"),
-                                   fname, pacs_queue)
+                                   fname, pacs_queue, self.icon)
         if dlg.run():
             retcode = True
         else:
@@ -596,7 +597,7 @@ class gui:
                 stat_bar = self.gld.get_widget("statusbar")
                 stat_bar.pop(self.stat_id)
                 stat_bar.push(self.stat_id, _("Refreshing database"))
-                dlg = upgrade_dialog(to_upgrade)
+                dlg = upgrade_dialog(to_upgrade, self.icon)
                 dlg.connect("destroy", self._done_upgrade)
                 dlg.run()
         else:
@@ -608,7 +609,7 @@ class gui:
 
     def _upgrade_confirm(self, to_upgrade):
         dlg = upgrade_confirm_dialog(self.gld.get_widget("main_win"),
-                                     to_upgrade)
+                                     to_upgrade, self.icon)
         retcode = dlg.run()
         return retcode
 
@@ -616,7 +617,7 @@ class gui:
         stat_bar = self.gld.get_widget("statusbar")
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Refreshing database"))
-        dlg = refresh_dialog()
+        dlg = refresh_dialog(self.icon)
         dlg.connect("destroy", self._done_upgrade)
         dlg.run()
         return

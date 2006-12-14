@@ -550,10 +550,9 @@ class refresh_dialog(Window):
 
         self.add(self.vbox)
 
-        self.set_icon(pixbuf_new_from_file(icon)
+        self.set_icon(pixbuf_new_from_file(icon))
 
     def run(self):
-
         self.show_all()
         self.terminal.fork_command()
         self.terminal.feed_child("pacman -Sy;exit\n")

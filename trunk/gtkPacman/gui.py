@@ -470,7 +470,7 @@ class gui:
             self.popup.popdown()
 
     def search(self, widget, data=None):
-        dlg = search_dialog(self.gld.get_widget("main_win"))
+        dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
         if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
         dlg.destroy()

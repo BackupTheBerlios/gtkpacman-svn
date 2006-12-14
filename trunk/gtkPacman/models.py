@@ -102,31 +102,22 @@ class file_list(TreeStore):
 
         TreeStore.__init__(self, str)
 
-        f_dict = self._make_files_dict(files)
+        prev = None
+        parent = None
+        for line in files.splitlines():
+            if prev:
+                if line.startswith(prev) and line.endswith("/"):
+                    parent = self.append(parent, [line])
 
-        for par in f_dict.keys():
-            parent = self.append(None, [par])
-            for val in f_dict[par]:
-                self.append(parent, [val])
-                continue
-            continue
-
-    def _make_files_dict(self, files):
-
-        f_dict = {}
-        p_line = None
-
-        for fname in files.splitlines():
-            if p_line:
-                if fname.startswith(p_line):
-                    f_dict[p_line].append(fname)
+                elif line.startswith(prev):
+                    self.append(parent, [line])
+                    
                 else:
-                    p_line = fname
-                    f_dict[p_line] = []
+                    parent = self.append(None, [line])
+                    
             else:
-                p_line = fname
-                f_dict[p_line] = []
+                prev = line
+                parent = self.append(None, [line])
             continue
 
-        return f_dict
-            
+                    

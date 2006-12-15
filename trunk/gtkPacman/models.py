@@ -102,22 +102,31 @@ class file_list(TreeStore):
 
         TreeStore.__init__(self, str)
 
-        prev = None
-        parent = None
+        splitted = []
         for line in files.splitlines():
-            if prev:
-                if line.startswith(prev) and line.endswith("/"):
-                    parent = self.append(parent, [line])
+            part = line.split("/")
+            try:
+                part.remove('')
+            except ValueError:
+                pass
+            splitted.append(part)
+            continue
 
-                elif line.startswith(prev):
-                    self.append(parent, [line])
-                    
-                else:
-                    parent = self.append(None, [line])
-                    
-            else:
-                prev = line
-                parent = self.append(None, [line])
+        nodes={}
+        for split in splitted:
+            last = None
+            for part in split:
+                if part in nodes.keys():
+                    if split.index(part) == len(split)-1:
+                        continue
+                    last = part
+                continue
+
+            if not last:
+                nodes[split[0]] = self.append(None, [split[0]])
+            else:                
+                idx = split.index(last)+1
+                nodes[split[idx]] = self.append(nodes[last], [split[idx]])
             continue
 
                     

@@ -22,7 +22,7 @@ def get_fname_and_icons():
 
     from os.path import exists, abspath, join
 
-    path = "/usr/share/gtkpacman/"
+    path = "/usr/share/gtkpacman"
     if not exists(path):
         path = abspath("data/")
 
@@ -35,7 +35,7 @@ def get_fname_and_icons():
     icons["pacman"] = join(path, "icons/pacman.png")
     
 
-    return fname, icons, path
+    return fname, icons
 
 def make_icons(icons):
     from gtk.gdk import pixbuf_new_from_file
@@ -54,6 +54,7 @@ def make_icons(icons):
 if __name__ == "__main__":
 
     from os import getuid
+    from os.path import exists
     from locale import setlocale, LC_ALL
     from gettext import install
     from gtk import main
@@ -61,12 +62,19 @@ if __name__ == "__main__":
     from gtkPacman import gui, database
 
 
-    fname, icons, path = get_fname_and_icons()
+    fname, icons = get_fname_and_icons()
+
     
     setlocale(LC_ALL, '')
-    bindtextdomain('gtkpacman', "%s/locale" %path)
+
+    if exists("/usr/share/locale/it/LC_MESSAGES/gtkpacman.mo"):
+        path="/usr/share/locale"
+    else:
+        path="data/locale"
+        
+    bindtextdomain('gtkpacman', path)
     textdomain('gtkpacman')
-    install('gtkpacman', "%s/locale" %path, unicode=1)
+    install('gtkpacman', path, unicode=1)
 
     database = database()
     

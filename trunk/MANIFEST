@@ -9,6 +9,7 @@ gtkPacman/dialogs.py
 gtkPacman/gui.py
 gtkPacman/pacman.py
 gtkPacman/terminal.py
+gtkPacman/models.py
 data/gtkpacman.glade
 data/icons/blank_box.png
 data/icons/green_box.png

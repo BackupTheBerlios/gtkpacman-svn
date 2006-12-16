@@ -78,8 +78,8 @@ class database(dict):
         #Get repos present on machine
         self.repos = self._get_repos()
 
-        self.repos.sort()
         self.set_pacs()
+        self.repos.sort()
         self.repos.append("foreigners")
 
         #Init some variable which will be usefull

@@ -562,6 +562,12 @@ class refresh_dialog(Window):
         
         self.terminal.fork_command()
         self.terminal.feed_child("pacman -Sy;exit\n")
-        
-        
-        
+
+class error_dialog(MessageDialog):
+
+    def __init__(self, parent, msg, icon):
+
+        MessageDialog.__init__(self, parent,
+                               DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
+                               MESSAGE_ERROR, BUTTONS_CLOSE, msg)
+        self.set_icon(pixbuf_new_from_file(icon))

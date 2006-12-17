@@ -388,7 +388,14 @@ class gui:
         pacs_queues = { "add": [], "remove": [] }
         
         for name in self.queues["add"]:
-            pac = self.database.get_by_name(name)
+            try:
+                pac = self.database.get_by_name(name)
+            except NameError:
+                dlg = error_dialog(self.gld.get_widget("main_win"), _("%s is not in the database.\nThis is probably a bug in gtkpacman. If you think it's so, please send me a bug report.") %name, self.icon)
+                dlg.run()
+                dlg.destroy()
+                continue
+            
             if not pac.prop_setted:
                 self.database.set_pac_properties(pac)
 
@@ -396,7 +403,15 @@ class gui:
             
             deps = pac.dependencies.split(", ")
             for dep in deps:
-                dep_pac = self.database.get_by_name(dep)
+                try:
+                    dep_pac = self.database.get_by_name(dep)
+                except NameError:
+                    dlg = error_dialog(self.gld.get_widget("main_win"),
+                                       _("%{dep}s is not in the database. %{dep}s is required by %{pkg}s.\nThis maybe either an error in %{pkg}s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %{pkg}s maintainer, else fill a bug report for gtkpacman, please."), self.icon)
+                    dlg.run()
+                    dlg.destroy()
+                    pacs_queues["add"].remove(pac)
+                    break
                 if not dep_pac.installed:
                     pacs_queues["add"].append(dep_pac)
             continue

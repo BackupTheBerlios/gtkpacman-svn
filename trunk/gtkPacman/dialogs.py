@@ -541,24 +541,24 @@ class refresh_dialog(Window):
         self.terminal = terminal()
         self.terminal.connect("child-exited",
                               lambda _: self.close_button.show())
+        self.terminal.show()
         
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
         self.vbox.pack_start(self.terminal, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
+        self.vbox.show()
 
         self.add(self.vbox)
 
         self.set_icon(pixbuf_new_from_file(icon))
 
     def run(self):
-        self.show_all()
+        self.show()
+        
         self.terminal.fork_command()
         self.terminal.feed_child("pacman -Sy;exit\n")
         
-    def _close(self, terminal, data=None):
-        self.close_button.show()
-        return
         
         

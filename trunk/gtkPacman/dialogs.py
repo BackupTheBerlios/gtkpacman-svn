@@ -316,6 +316,7 @@ class do_dialog(Window):
         self.hpaned = HPaned()
         self.hpaned.add1(self.inst_tree)
         self.hpaned.add2(self.rem_tree)
+        self.hpaned.show_all()
 
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
@@ -325,14 +326,15 @@ class do_dialog(Window):
 
         self.expander = Expander(_("Terminal"))
         self.expander.add(self.terminal)
+        self.expander.show_all()
 
         self.vbox = VBox(False, 0)
+        self.vbox.show()
+        
         self.vbox.pack_start(self.hpaned, False, False, 0)
         self.vbox.pack_start(self.expander, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
 
-        self.vbox.show_all()
-        self.close_button.hide()
         
         self.add(self.vbox)
 
@@ -341,9 +343,6 @@ class do_dialog(Window):
         self.show()
         self.terminal.do(self.queues)
         return
-
-    def close(self, widget):
-        self.destroy()
 
     def _stop_closing(self, widget, event):
         self.stop_emission("delete-event")
@@ -438,12 +437,15 @@ class upgrade_dialog(Window):
 
     def _setup_layout(self):
         self.vbox = VBox(False, 0)
+        self.vbox.show()
 
         self.terminal = terminal()
         self.terminal.connect("child-exited", lambda _: self.close_button.show())
+        
         self.expander = expander_new_with_mnemonic(_("_Terminal"))
         self.expander.set_expanded(False)
         self.expander.add(self.terminal)
+        self.expander.show_all()
         
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
@@ -463,6 +465,7 @@ class upgrade_dialog(Window):
             continue
 
         self.tree = TreeView()
+        self.tree.show()
 
         self.tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
                                                 stock_id = 0)
@@ -475,7 +478,7 @@ class upgrade_dialog(Window):
         return
     
     def run(self):
-        self.show_all()
+        self.show()
         self.terminal.do_upgrade()
 
 class upgrade_confirm_dialog(Dialog):

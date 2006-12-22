@@ -75,4 +75,24 @@ A PKGBUILD is also avaible on berlios.de for the dev releases. Tou use it downlo
 
 2. Usage
 
-(WORK IN PROGRESS)
+The gui of gtkpacman is pretty intuitive. In the main area you see the list of repos (on the left) the list of packages in the selected repo (on the right), and a notebook with the summary and filelist (if installed) of selected package. You can perform some actions immediatly, while some action will be queued and executed only when you click on the 'Execute' button.
+
+2.1 Queue Actions
+
+Those are actions which can envolve more than one package, i.e. install and remove of packages. When you select a package and click on the 'add to install queue', this package will be added to the install queue and will be installed when you'll execute the queued actions. The same for the remove queue. You can remove a package from the install or remove queue clicking on 'remove from add queue' or 'remove from remove queue'.
+
+2.2 Immediate Actions
+
+Those are actions which cannot envolve more than one package. They are: 'upgrade system', 'refresh database', 'install/upgrade from local file', 'clear cache' and 'empty cache'.
+The 'Upgrade system' action will upgrade all packages of which newer versions are avaible in the repos.
+The 'refresh database' action will update the repos' databases to the latest version avaible.
+The 'install/upgrade from local file' action, will prompt for a package file avaible locally on your system and it will install it.
+The 'clear cache' and 'empty cache' actions will remove old packages from the cache or empty it at all.
+
+3. Uninstall
+
+Uninstall is avaible only if you used a method which envolve the installation of an ArchLinux package. If it's so you have to do:
+
+	# pacman -R gtkpacman
+
+(It's theorically possible to use gtkpacman to remove gtkpacman, but i've not tested it)

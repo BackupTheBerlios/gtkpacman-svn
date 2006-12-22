@@ -16,3 +16,5 @@ data/icons/green_box.png
 data/icons/pacman.png
 data/icons/red_box.png
 data/icons/yellow_box.png
+data/locale/it.po
+data/locale/zw_TH.po

@@ -518,12 +518,11 @@ class gui:
     def add_from_local_file(self, widget, data=None):
         dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),
                                             self.icon)
-        response = dlg.run()
-        dlg.destroy()
-        
-        if response == RESPONSE_ACCEPT:
+        if dlg.run() == RESPONSE_ACCEPT:
             fname = dlg.get_filename()
+            dlg.destroy()
         else:
+            dlg.destroy()
             return
 
         stat_bar = self.gld.get_widget("statusbar")

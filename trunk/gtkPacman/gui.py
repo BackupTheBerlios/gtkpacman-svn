@@ -33,7 +33,7 @@ from dialogs import search_dialog
 from dialogs import local_install_dialog, local_install_fchooser_dialog
 from dialogs import local_confirm_dialog
 from dialogs import upgrade_dialog, upgrade_confirm_dialog
-from dialogs import refresh_dialog
+from dialogs import refresh_dialog, error_dialog
 
 from models import installed_list, all_list, whole_list, search_list, file_list
 
@@ -226,9 +226,12 @@ class gui:
             if model == _("All") or model == _("foreigners"):
                 self._refresh_model(model)
             else:
-                for mod in self.models[model].keys():
-                    self._refresh_model(model, mod)
-                    continue
+                try:
+                    for mod in self.models[model].keys():
+                        self._refresh_model(model, mod)
+                        continue
+                except AttributeError:
+                    pass
             continue
         return
 
@@ -403,14 +406,18 @@ class gui:
             
             deps = pac.dependencies.split(", ")
             for dep in deps:
+                if dep.count(">="):
+                    dep = dep.split(">=")[0]
+                    
                 try:
                     dep_pac = self.database.get_by_name(dep)
                 except NameError:
                     dlg = error_dialog(self.gld.get_widget("main_win"),
-                                       _("%{dep}s is not in the database. %{dep}s is required by %{pkg}s.\nThis maybe either an error in %{pkg}s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %{pkg}s maintainer, else fill a bug report for gtkpacman, please."), self.icon)
+                                       _("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
                     dlg.run()
                     dlg.destroy()
                     pacs_queues["add"].remove(pac)
+                    self.queues["add"].remove(name)
                     break
                 if not dep_pac.installed:
                     pacs_queues["add"].append(dep_pac)
@@ -450,7 +457,7 @@ class gui:
             stat_bar.pop(self.stat_id)
             stat_bar.push(self.stat_id, _("Executing queued operations"))
             dlg = do_dialog(pacs_queues, self.icon)
-            dlg.connect("destroy", self._refresh_trees_and_queues)
+            dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
             dlg.run()
         else:
             self.queues["add"] = []
@@ -463,10 +470,20 @@ class gui:
         retcode = dlg.run()
         return retcode
 
-    def _refresh_trees_and_queues(self, widget=None):
+    def _refresh_trees_and_queues(self, widget=None, pacs_queues=None):
+        self.database.refresh()
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []
+        for pac in pacs_queues["add"]:
+            pac.installed = True
+            self.database.set_pac_properties(pac)
+            continue
+        for pac in pacs_queues["remove"]:
+            pac.installed = False
+            self.database.set_pac_properties(pac)
+            continue
+        del(pacs_queues)
         stat_bar = self.gld.get_widget("statusbar")
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Done."))

@@ -26,7 +26,7 @@ from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT
 from gtk import MESSAGE_WARNING, FILE_CHOOSER_ACTION_OPEN
-from gtk import BUTTONS_CLOSE
+from gtk import BUTTONS_CLOSE, MESSAGE_ERROR
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import image_new_from_stock, ICON_SIZE_BUTTON, ICON_SIZE_DIALOG
 from gtk import main_iteration, expander_new_with_mnemonic

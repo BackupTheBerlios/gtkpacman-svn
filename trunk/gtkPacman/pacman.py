@@ -206,7 +206,7 @@ class database(dict):
         self._set_filelist(pac, path)
         pac.prop_setted = True
         return
-
+    
     def _set_summary(self, pac, path):
         desc_file = open("%s/desc" %path).read()
         

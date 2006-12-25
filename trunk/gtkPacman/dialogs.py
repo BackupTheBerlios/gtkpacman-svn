@@ -21,6 +21,7 @@ from time import sleep
 from gtk import Dialog, MessageDialog, AboutDialog, FileChooserDialog
 from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
 from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox, Entry
+from gtk import ScrolledWindow, VPaned
 from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
@@ -450,8 +451,17 @@ class upgrade_dialog(Window):
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
-        self.vbox.pack_start(self.tree, False, False, 0)
-        self.vbox.pack_start(self.expander, False, False, 0)
+        scr = ScrolledWindow()
+        scr.set_policy ("automatic", "automatic")
+        scr.add (self.tree)
+        scr.show()
+
+        vpaned = VPaned()
+        vpaned.add1(scr)
+        vpaned.add2(self.expander)
+        vpaned.show()
+
+        self.vbox.pack_start(vpaned, True, True, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
 
         self.add(self.vbox)
@@ -516,9 +526,14 @@ class upgrade_confirm_dialog(Dialog):
 
         self.label = Label(_("Are you sure yo want to upgrade those packages?\n"))
         self.label.show()
+
+        scr = ScrolledWindow()
+        scr.set_policy("automatic", "automatic")
+        scr.add(self.tree)
+        scr.show()
         
         self.vbox.pack_start(self.label, False, False, 0)
-        self.vbox.pack_start(self.tree, False, False, 0)
+        self.vbox.pack_start(scr, True, True, 0)
 
     def run(self):
         retcode = Dialog.run(self)

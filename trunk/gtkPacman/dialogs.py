@@ -431,6 +431,7 @@ class upgrade_dialog(Window):
         self.set_property("modal", True)
         self.set_property("destroy-with-parent", True)
         self.set_position(WIN_POS_CENTER)
+        self.set_default_size (300, 300)
 
         self.set_icon(pixbuf_new_from_file(icon))
         self._setup_tree(to_upgrade)
@@ -459,6 +460,7 @@ class upgrade_dialog(Window):
         vpaned = VPaned()
         vpaned.add1(scr)
         vpaned.add2(self.expander)
+        vpaned.set_position (260)
         vpaned.show()
 
         self.vbox.pack_start(vpaned, True, True, 0)
@@ -503,7 +505,7 @@ class upgrade_confirm_dialog(Dialog):
         self.set_icon(pixbuf_new_from_file(icon))
         self._setup_tree(to_upgrade)
         self._setup_layout()
-
+        
     def _setup_tree(self, pacs):
         self.model = ListStore(str, str, str)
 
@@ -527,6 +529,8 @@ class upgrade_confirm_dialog(Dialog):
         self.label = Label(_("Are you sure yo want to upgrade those packages?\n"))
         self.label.show()
 
+        self.set_default_size (300, 300)
+
         scr = ScrolledWindow()
         scr.set_policy("automatic", "automatic")
         scr.add(self.tree)
@@ -544,7 +548,7 @@ class upgrade_confirm_dialog(Dialog):
         else:
             return False
 
-class refresh_dialog(Window):
+class command_dialog(Window):
 
     def __init__(self, icon):
 
@@ -572,11 +576,11 @@ class refresh_dialog(Window):
 
         self.set_icon(pixbuf_new_from_file(icon))
 
-    def run(self):
+    def run(self, command):
         self.show()
         
         self.terminal.fork_command()
-        self.terminal.feed_child("pacman -Sy;exit\n")
+        self.terminal.feed_child("pacman --noconfirm -%s;exit\n" %command)
 
 class error_dialog(MessageDialog):
 

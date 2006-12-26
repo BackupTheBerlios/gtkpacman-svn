@@ -18,22 +18,18 @@
 
 import gettext
 
-from gtk import main, main_quit
-from gtk import TreeStore, TreeView, ListStore
-from gtk import CellRendererText, CellRendererPixbuf
-from gtk import ScrolledWindow
-from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE
+from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
+from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
+from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT
 from gtk.gdk import pixbuf_new_from_file
 from gtk.glade import XML
 
-from dialogs import non_root_dialog, about_dialog
-from dialogs import warning_dialog, confirm_dialog, do_dialog
-from dialogs import search_dialog
-from dialogs import local_install_dialog, local_install_fchooser_dialog
-from dialogs import local_confirm_dialog
-from dialogs import upgrade_dialog, upgrade_confirm_dialog
-from dialogs import refresh_dialog, error_dialog
+from dialogs import non_root_dialog, about_dialog, warning_dialog, do_dialog 
+from dialogs import confirm_dialog, search_dialog, upgrade_dialog
+from dialogs import upgrade_confirm_dialog, local_install_dialog
+from dialogs import local_install_fchooser_dialog, local_confirm_dialog
+from dialogs import command_dialog, error_dialog
 
 from models import installed_list, all_list, whole_list, search_list, file_list
 
@@ -573,41 +569,25 @@ class gui:
         return retcode
 
     def clear_cache(self, wid, data=None):
-        from gtk import Window, WINDOW_TOPLEVEL
-        from terminal import terminal
-        
         stat_bar = self.gld.get_widget("statusbar")
-
-        win = Window(WINDOW_TOPLEVEL)
-        term = terminal()
-        term.connect("child-exited", self._done)
-        win.add(term)
-        win.show_all()
-        
         stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Clearing Cache..."))
-        
-        term.fork_command("pacman", ["pacman", "-Sc"])
+        stat_bar.push(self.stat_id, _("Clearing cache..."))
+        dlg = command_dialog(self.icon)
+        dlg.connect("destroy", self._done)
+        dlg.run("Sc")
         return
 
     def empty_cache(self, wid, data=None):
-        from terminal import terminal
-        
         stat_bar = self.gld.get_widget("statusbar")
-        term = terminal()
-        term.connect("child-exited", self._done)
-
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Emptying cache..."))
-
-        term.fork_command("pacman", ["pacman", "-Scc"])
+        dlg = command_dialog()
+        dlg.connect("destroy", self._done)
+        dlg.run("Scc")
         return
 
-    def _done(self, terminal, data=None):
-        terminal.destroy()
-
+    def _done(self, widget, data=None):
         stat_bar = self.gld.get_widget("statusbar")
-
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Done."))
 
@@ -648,9 +628,9 @@ class gui:
         stat_bar = self.gld.get_widget("statusbar")
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Refreshing database"))
-        dlg = refresh_dialog(self.icon)
+        dlg = command_dialog(self.icon)
         dlg.connect("destroy", self._done_upgrade)
-        dlg.run()
+        dlg.run("Sy")
         return
 
     def _done_upgrade(self, widget, data=None):

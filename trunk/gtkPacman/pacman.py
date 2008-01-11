@@ -238,8 +238,11 @@ class database(dict):
         except ValueError:
             begin = desc.index("%SIZE%") + len("%SIZE%")
 
-        end = desc.index("%", begin)
-        size_s = desc[begin:end].strip()
+	try:
+		end = desc.index("%", begin)
+		size_s = desc[begin:end].strip()
+	except ValueError:
+		size_s = desc[begin:].strip()
         size_int = int(size_s)
         measure = "byte(s)"
 
@@ -275,22 +278,30 @@ class database(dict):
         return installdate
 
     def _get_reason(self, desc):
-        begin = desc.index("%REASON%") + len("%REASON%")
-        reason_int = int(desc[begin:].strip())
+        try:
+            begin = desc.index("%REASON%") + len("%REASON%")
+            reason_int = int(desc[begin:].strip())
 
-        if reason_int:
-            reason = _("Installed as a dependency for another package")
-        else:
-            reason = _("Excplicitly installed")
+            if reason_int:
+                reason = _("Installed as a dependency for another package")
+            else:
+                reason = _("Excplicitly installed")
 
-        return reason
+            return reason
+        except Exception:
+            pass
+        return ''
         
     def _get_description(self, desc):
         """Set description for the given pac"""
-        begin = desc.index("%DESC%") + len("%DESC%")
-        end = desc.index("%", begin)
-        description = unicode(desc[begin:end].strip(), errors="ignore")
-        return description
+        try:
+            begin = desc.index("%DESC%") + len("%DESC%")
+            end = desc.index("%", begin)
+            description = unicode(desc[begin:end].strip(), errors="ignore")
+            return description
+        except Exception:
+            pass
+        return ''
 
     def _get_dependencies(self, path):
         """Set dependencies list for the given pac"""

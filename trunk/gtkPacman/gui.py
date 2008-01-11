@@ -29,7 +29,7 @@ from dialogs import non_root_dialog, about_dialog, warning_dialog, do_dialog
 from dialogs import confirm_dialog, search_dialog, upgrade_dialog
 from dialogs import upgrade_confirm_dialog, local_install_dialog
 from dialogs import local_install_fchooser_dialog, local_confirm_dialog
-from dialogs import command_dialog, error_dialog
+from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 
 from models import installed_list, all_list, whole_list, search_list, file_list
 
@@ -166,7 +166,13 @@ class gui:
     def _setup_repos_tree(self):
 
         repos_tree = self.gld.get_widget("repos_tree")
+                
+        repos_tree.insert_column_with_attributes(-1, "", CellRendererText(),
+                                                 text=0)
+        repos_tree.set_model(self._make_repos_model())
+        return
 
+    def _make_repos_model (self):
         repos_model = TreeStore(str)
         all_it = repos_model.append(None, [_("All")])
 
@@ -179,12 +185,12 @@ class gui:
             continue
 
         repos_model.append(all_it, [_("foreigners")])
-        
-        repos_tree.insert_column_with_attributes(-1, "", CellRendererText(),
-                                                 text=0)
-        repos_tree.set_model(repos_model)
-        return
+        return repos_model
 
+    def _refresh_repos_tree (self):
+        self.gld.get_widget("repos_tree").set_model(self._make_repos_model())
+        return
+    
     def _setup_files_tree(self):
 
         file_tree = self.gld.get_widget("files")
@@ -327,6 +333,13 @@ class gui:
         name = model.get_value(l_iter, 2)
         if name in self.queues["add"]:
             return
+        if name in self.database.ignorePkg:
+            dlg = ignorepkg_dialog()
+            res = dlg.run()
+            dlg.destroy()
+            if res is RESPONSE_CANCEL:
+                return
+            
         if name in self.queues["remove"]:
             self.queues["remove"].remove(name)
 
@@ -468,6 +481,7 @@ class gui:
 
     def _refresh_trees_and_queues(self, widget=None, pacs_queues=None):
         self.database.refresh()
+        self._refresh_repos_tree()
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []
@@ -635,6 +649,7 @@ class gui:
 
     def _done_upgrade(self, widget, data=None):
         self.database.refresh()
+        self._refresh_repos_tree()
         self._setup_pacs_models()
         stat_bar = self.gld.get_widget("statusbar")
         stat_bar.pop(self.stat_id)

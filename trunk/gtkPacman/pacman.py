@@ -85,6 +85,7 @@ class database(dict):
         #Init some variable which will be usefull
         self.olds = []
         self.orphans = []
+        self.ignorePkg = []
 
     def _get_repos(self):
         conf_file = file("/etc/pacman.conf", "r").read()
@@ -103,6 +104,13 @@ class database(dict):
                     continue
                 else:
                     repos.append(repo)
+                continue
+            if line.startswith("IgnorePkg"):
+                begin = line.index("=")+1
+                end = line.lenght;
+                pkgs = line[begin:end].split(" ")
+                self.ignorePkg.extend(pkgs)
+                continue
             continue
         return repos
         

@@ -27,10 +27,10 @@ from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT
 from gtk import MESSAGE_WARNING, FILE_CHOOSER_ACTION_OPEN
-from gtk import BUTTONS_CLOSE, MESSAGE_ERROR
+from gtk import BUTTONS_CLOSE, BUTTONS_YES_NO, MESSAGE_ERROR, MESSAGE_QUESTION
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
-from gtk import image_new_from_stock, ICON_SIZE_BUTTON, ICON_SIZE_DIALOG
-from gtk import main_iteration, expander_new_with_mnemonic
+from gtk import RESPONSE_NO, image_new_from_stock, ICON_SIZE_BUTTON
+from gtk import ICON_SIZE_DIALOG, main_iteration, expander_new_with_mnemonic
 from gtk.gdk import pixbuf_new_from_file
 
 from terminal import terminal
@@ -42,6 +42,15 @@ class non_root_dialog(MessageDialog):
         MessageDialog.__init__(self, None,
                                DIALOG_MODAL, MESSAGE_WARNING, BUTTONS_CLOSE,
                                _("You must be root to fully use gtkpacman.\nSince you aren't root, gtkpacman will not allow any packages management operation (Install/Remove)"))
+        self.set_icon (pixbuf_new_from_file(icon))
+
+class ignorepkg_dialog(MessageDialog):
+
+    def __init__(self, icon):
+
+        MessageDialog.__init__(self, None,
+                               DIALOG_MODAL, MESSAGE_QUESTION, BUTTON_YES_NO,
+                               _("Package %s in in ignorePkg. Install it anyway?"))
         self.set_icon (pixbuf_new_from_file(icon))
 
 class confirm_dialog(Dialog):

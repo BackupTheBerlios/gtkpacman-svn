@@ -14,7 +14,7 @@
 # along with gtkPacman; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-# gtkPacman is copyright (C)2005-2007 by Stefano Esposito
+# gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
 from time import sleep
 
@@ -224,7 +224,7 @@ class about_dialog(AboutDialog):
         self.set_icon(pixbuf_new_from_file(icon))
         self.set_name("gtkpacman")
         self.set_version("2.0")
-        self.set_copyright(_("Copyright (C)2005-2006 by Stefano Esposito.\nRights to copy, modify, and redistribute are granted under the GNU General Public License Terms"))
+        self.set_copyright(_("Copyright (C)2005-2008 by Stefano Esposito.\nRights to copy, modify, and redistribute are granted under the GNU General Public License Terms"))
         self.set_comments(_("Gtk package manager based on pacman"))
         self.set_license(_("""gtkPacman is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

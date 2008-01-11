@@ -15,7 +15,7 @@
 # along with gtkPacman; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-# gtkPacman is copyright (C)2005-2007 by Stefano Esposito
+# gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
 # classes build, build_locale, install, install_locale are from FreeSpeak.
 # These classes are released under the same license of FreeSpeak. Refer to

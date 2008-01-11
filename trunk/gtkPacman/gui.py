@@ -14,7 +14,7 @@
 # along with gtkPacman; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-# gtkPacman is copyright (C)2005-2007 by Stefano Esposito
+# gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
 import gettext
 
@@ -347,7 +347,6 @@ class gui:
                    stat_bar.pop(self.stat_id)
                    stat_bar.push(self.stat_id, _("Executing queued operations"))
                    dlg = do_dialog(pacs_queues, self.icon)
-                   #dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
                    dlg.run()
            return
         if name in self.database.ignorePkg:

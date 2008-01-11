@@ -330,6 +330,16 @@ class do_dialog(Window):
 
         self.rem_tree.set_model(self.rem_model)
 
+    def _set_size (self, widget, event, data=None):
+        if self.expander.get_expanded():
+            self.size = self.get_size()
+            self.expander.add(self.terminal)
+            self.terminal.show()
+        else:
+            self.expander.remove(self.terminal)
+            self.resize(self.size[0], self.size[1])
+            self.show_all()
+
     def _setup_layout(self):
 
         self.hpaned = HPaned()
@@ -344,8 +354,8 @@ class do_dialog(Window):
         self.terminal.connect("child-exited", lambda _: self.close_button.show())
 
         self.expander = Expander(_("Terminal"))
-        self.expander.add(self.terminal)
-        self.expander.show_all()
+        self.expander.connect("notify::expanded", self._set_size)
+        self.expander.show()
 
         self.vbox = VBox(False, 0)
         self.vbox.show()

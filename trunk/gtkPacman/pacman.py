@@ -335,9 +335,12 @@ class database(dict):
         """Set list of packages that needs given pac"""
         depends = open("%s/depends" %path).read()
 
-        begin = depends.find("%REQUIREDBY%") + len("%REQUIREDBY%")
-        end = depends.find("%", begin) - len("%")
-
+        try:
+            begin = depends.index("%REQUIREDBY%") + len("%REQUIREDBY%")
+            end = depends.index("%", begin) - len("%")
+        except Exception:
+            return ''
+        
         reqs = depends[begin:end].strip().split("\n")
         req_by = ", ".join(reqs)
         return req_by

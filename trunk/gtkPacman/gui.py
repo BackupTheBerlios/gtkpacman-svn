@@ -158,7 +158,8 @@ class gui:
         popup_h_dict = { "add_install": self.add_to_install_queue,
                          "remove_install": self.remove_from_install_queue,
                          "add_remove": self.add_to_remove_queue,
-                         "remove_remove": self.remove_from_remove_queue }
+                         "remove_remove": self.remove_from_remove_queue,
+                         "search": self.search }
         self.popup_gld.signal_autoconnect(popup_h_dict)
         self.popup = self.popup_gld.get_widget("popup_menu")
 

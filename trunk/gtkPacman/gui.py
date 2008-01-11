@@ -21,7 +21,7 @@ import gettext
 from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
-from gtk import RESPONSE_YES, RESPONSE_ACCEPT
+from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK
 from gtk.gdk import pixbuf_new_from_file
 from gtk.glade import XML
 
@@ -30,6 +30,7 @@ from dialogs import confirm_dialog, search_dialog, upgrade_dialog
 from dialogs import upgrade_confirm_dialog, local_install_dialog
 from dialogs import local_install_fchooser_dialog, local_confirm_dialog
 from dialogs import command_dialog, error_dialog, ignorepkg_dialog
+from dialogs import holdpkg_dialog
 
 from models import installed_list, all_list, whole_list, search_list, file_list
 
@@ -334,11 +335,26 @@ class gui:
         name = model.get_value(l_iter, 2)
         if name in self.queues["add"]:
             return
+        if name in self.database.holdPkg:
+           dlg = holdpkg_dialog(name, self.icon)
+           res = dlg.run()
+           dlg.destroy()
+           if res == RESPONSE_OK:
+               pacs_queues = { "add": [self.database.get_by_name(name)], "remove": [] }
+               retcode = self._confirm(pacs_queues)
+               if retcode:
+                   stat_bar = self.gld.get_widget("statusbar")
+                   stat_bar.pop(self.stat_id)
+                   stat_bar.push(self.stat_id, _("Executing queued operations"))
+                   dlg = do_dialog(pacs_queues, self.icon)
+                   #dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
+                   dlg.run()
+           return
         if name in self.database.ignorePkg:
-            dlg = ignorepkg_dialog()
+            dlg = ignorepkg_dialog(name, self.icon)
             res = dlg.run()
             dlg.destroy()
-            if res is RESPONSE_CANCEL:
+            if res is RESPONSE_NO:
                 return
             
         if name in self.queues["remove"]:
@@ -397,7 +413,7 @@ class gui:
         model.set_value(l_iter, 1, None)
         return
 
-    def execute(self, widget, data=None):
+    def execute(self, widget=None, data=None):
         pacs_queues = { "add": [], "remove": [] }
         
         for name in self.queues["add"]:

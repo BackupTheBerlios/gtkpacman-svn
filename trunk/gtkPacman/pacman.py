@@ -76,6 +76,8 @@ class database(dict):
     def __init__(self):
         """Init database"""
         #Get repos present on machine
+        self.ignorePkg = []
+        self.holdPkg = []
         self.repos = self._get_repos()
 
         self.set_pacs()
@@ -85,7 +87,6 @@ class database(dict):
         #Init some variable which will be usefull
         self.olds = []
         self.orphans = []
-        self.ignorePkg = []
 
     def _get_repos(self):
         conf_file = file("/etc/pacman.conf", "r").read()
@@ -107,9 +108,13 @@ class database(dict):
                 continue
             if line.startswith("IgnorePkg"):
                 begin = line.index("=")+1
-                end = line.lenght;
-                pkgs = line[begin:end].split(" ")
+                pkgs = line[begin:].split(" ")
                 self.ignorePkg.extend(pkgs)
+                continue
+            if line.startswith("HoldPkg"):
+                begin = line.index("=")+1
+                pkgs = line[begin:].split(" ")
+                self.holdPkg.extend(pkgs)
                 continue
             continue
         return repos

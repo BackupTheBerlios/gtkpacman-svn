@@ -25,8 +25,8 @@ from gtk import ScrolledWindow, VPaned
 from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
-from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT
-from gtk import MESSAGE_WARNING, FILE_CHOOSER_ACTION_OPEN
+from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT, BUTTONS_OK_CANCEL
+from gtk import MESSAGE_WARNING, FILE_CHOOSER_ACTION_OPEN, MESSAGE_INFO
 from gtk import BUTTONS_CLOSE, BUTTONS_YES_NO, MESSAGE_ERROR, MESSAGE_QUESTION
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import RESPONSE_NO, image_new_from_stock, ICON_SIZE_BUTTON
@@ -46,13 +46,22 @@ class non_root_dialog(MessageDialog):
 
 class ignorepkg_dialog(MessageDialog):
 
-    def __init__(self, icon):
+    def __init__(self, name, icon):
 
         MessageDialog.__init__(self, None,
-                               DIALOG_MODAL, MESSAGE_QUESTION, BUTTON_YES_NO,
-                               _("Package %s in in ignorePkg. Install it anyway?"))
+                               DIALOG_MODAL, MESSAGE_QUESTION, BUTTONS_YES_NO,
+                               _("Package %s in in ignorePkg. Install it anyway?" %name))
         self.set_icon (pixbuf_new_from_file(icon))
 
+class holdpkg_dialog(MessageDialog):
+
+    def __init__(self, name, icon):
+
+        MessageDialog.__init__(self, None,
+                               DIALOG_MODAL, MESSAGE_INFO, BUTTONS_OK_CANCEL,
+                               _("Package %s is in HoldPkg. You should install it before any other package. gtkPacman will now install %s.") %(name,name))
+        self.set_icon (pixbuf_new_from_file(icon))
+        
 class confirm_dialog(Dialog):
 
     def __init__(self, parent, queues, icon):

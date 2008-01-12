@@ -137,12 +137,21 @@ class database(dict):
             inst_pacs[name] = ver
         return inst_pacs
 
+    def _get_pacman_version (self):
+        [stin, stout] = os.popen2("pacman --version|grep Pacman")
+        self.ver = stout.read().split('v')[1].split('-')[0].strip().split('.')
+
     def _get_repo_pacs(self, repo):
         self[repo] = []
         pacs = None
         #Grab all pacs in the col
+        if (self.ver[0] >= '3' and self.ver[1] >= '1'):
+            path = "/var/lib/pacman/sync"
+        else:
+            path = "/var/lib/pacman"
+        
         try:
-            pacs = os.listdir("/var/lib/pacman/%s" %repo)
+            pacs = os.listdir("%s/%s" %(path, repo))
         except OSError:
             self.repos.remove(repo)
             return

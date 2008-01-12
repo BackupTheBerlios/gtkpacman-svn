@@ -50,7 +50,7 @@ class ignorepkg_dialog(MessageDialog):
 
         MessageDialog.__init__(self, None,
                                DIALOG_MODAL, MESSAGE_QUESTION, BUTTONS_YES_NO,
-                               _("Package %s in in ignorePkg. Install it anyway?" %name))
+                               _("Package %s is in IgnorePkg. Install it anyway?" %name))
         self.set_icon (pixbuf_new_from_file(icon))
 
 class holdpkg_dialog(MessageDialog):
@@ -58,8 +58,8 @@ class holdpkg_dialog(MessageDialog):
     def __init__(self, name, icon):
 
         MessageDialog.__init__(self, None,
-                               DIALOG_MODAL, MESSAGE_INFO, BUTTONS_OK_CANCEL,
-                               _("Package %s is in HoldPkg. You should install it before any other package. gtkPacman will now install %s.") %(name,name))
+                               DIALOG_MODAL, MESSAGE_INFO, BUTTONS_YES_NO,
+                               _("Package %s is in HoldPkg. Are You sure you want to remove %s") %(name,name))
         self.set_icon (pixbuf_new_from_file(icon))
         
 class confirm_dialog(Dialog):

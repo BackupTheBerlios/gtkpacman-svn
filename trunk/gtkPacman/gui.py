@@ -21,7 +21,7 @@ import gettext
 from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
-from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK
+from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO
 from gtk.gdk import pixbuf_new_from_file
 from gtk.glade import XML
 
@@ -335,25 +335,14 @@ class gui:
         name = model.get_value(l_iter, 2)
         if name in self.queues["add"]:
             return
-        if name in self.database.holdPkg:
-           dlg = holdpkg_dialog(name, self.icon)
-           res = dlg.run()
-           dlg.destroy()
-           if res == RESPONSE_OK:
-               pacs_queues = { "add": [self.database.get_by_name(name)], "remove": [] }
-               retcode = self._confirm(pacs_queues)
-               if retcode:
-                   stat_bar = self.gld.get_widget("statusbar")
-                   stat_bar.pop(self.stat_id)
-                   stat_bar.push(self.stat_id, _("Executing queued operations"))
-                   dlg = do_dialog(pacs_queues, self.icon)
-                   dlg.run()
-           return
-        if name in self.database.ignorePkg:
+        
+        image = model.get_value(l_iter, 0)
+        
+        if name in self.database.ignorePkg and image == 'green':
             dlg = ignorepkg_dialog(name, self.icon)
             res = dlg.run()
             dlg.destroy()
-            if res is RESPONSE_NO:
+            if res == RESPONSE_NO:
                 return
             
         if name in self.queues["remove"]:
@@ -361,7 +350,7 @@ class gui:
 
         self.queues["add"].append(name)
 
-        image = model.get_value(l_iter, 0)
+        #image = model.get_value(l_iter, 0)
         if image == "red":
             model.set_value(l_iter, 1, STOCK_ADD)
         else:
@@ -389,6 +378,21 @@ class gui:
             return
                 
         image = model.get_value(l_iter, 0)
+        
+        if name in self.database.holdPkg:
+           dlg = holdpkg_dialog(name, self.icon)
+           res = dlg.run()
+           dlg.destroy()
+           if res == RESPONSE_YES:
+               pacs_queues = { "add":[], "remove": [self.database.get_by_name(name)]}
+               retcode = self._confirm(pacs_queues)
+               if retcode:
+                   stat_bar = self.gld.get_widget("statusbar")
+                   stat_bar.pop(self.stat_id)
+                   stat_bar.push(self.stat_id, _("Executing queued operations"))
+                   dlg = do_dialog(pacs_queues, self.icon)
+                   dlg.run()
+        return
 
         if image == "red":
             return
@@ -501,14 +505,15 @@ class gui:
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []
-        for pac in pacs_queues["add"]:
-            pac.installed = True
-            self.database.set_pac_properties(pac)
-            continue
-        for pac in pacs_queues["remove"]:
-            pac.installed = False
-            self.database.set_pac_properties(pac)
-            continue
+        if pacs_queues:
+            for pac in pacs_queues["add"]:
+                pac.installed = True
+                self.database.set_pac_properties(pac)
+                continue
+            for pac in pacs_queues["remove"]:
+                pac.installed = False
+                self.database.set_pac_properties(pac)
+                continue
         del(pacs_queues)
         stat_bar = self.gld.get_widget("statusbar")
         stat_bar.pop(self.stat_id)

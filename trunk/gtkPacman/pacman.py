@@ -312,8 +312,7 @@ class database(dict):
 
             return reason
         except Exception:
-            pass
-        return ''
+            return ("Excplicitly installed")
         
     def _get_description(self, desc):
         """Set description for the given pac"""
@@ -360,11 +359,14 @@ class database(dict):
         if not pac.installed:
             return _("%s is not installed") %pac.name
         
-        files = open("%s/files" %path).read()
-        begin = files.index("%FILES%") + len("%FILES%")
-        end = files.find("%", begin) - len("%")
-        filelist = files[begin:end].strip()
-        pac.filelist = filelist
+        try:
+	    files = open("%s/files" %path).read()
+	    begin = files.index("%FILES%") + len("%FILES%")
+	    end = files.find("%", begin) - len("%")
+	    filelist = files[begin:end].strip()
+	    pac.filelist = filelist
+	except ValueError:
+	    return
         return
     
     def set_orphans(self):

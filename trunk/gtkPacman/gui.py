@@ -524,12 +524,19 @@ class gui:
             self.popup.popdown()
 
     def search(self, widget, data=None):
+        keywords=""
         dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
         if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
         dlg.destroy()
 
-        pacs = self.database.get_by_keywords(keywords)
+        if keywords:
+            pacs = self.database.get_by_keywords(keywords)
+        else:
+            dlg = error_dialog(None, _("You should insert at least one keyword to search for"), self.icon)
+            dlg.run()
+            dlg.destroy()
+            return
         
         repos_model = self.gld.get_widget("repos_tree").get_model()
         if self.search_iter:

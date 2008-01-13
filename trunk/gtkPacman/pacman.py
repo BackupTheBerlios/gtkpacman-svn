@@ -78,6 +78,7 @@ class database(dict):
         #Get repos present on machine
         self.ignorePkg = []
         self.holdPkg = []
+        self._get_pacman_version()
         self.repos = self._get_repos()
 
         self.set_pacs()

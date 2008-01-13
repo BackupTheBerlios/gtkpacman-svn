@@ -349,8 +349,6 @@ class gui:
             self.queues["remove"].remove(name)
 
         self.queues["add"].append(name)
-
-        #image = model.get_value(l_iter, 0)
         if image == "red":
             model.set_value(l_iter, 1, STOCK_ADD)
         else:
@@ -383,16 +381,8 @@ class gui:
            dlg = holdpkg_dialog(name, self.icon)
            res = dlg.run()
            dlg.destroy()
-           if res == RESPONSE_YES:
-               pacs_queues = { "add":[], "remove": [self.database.get_by_name(name)]}
-               retcode = self._confirm(pacs_queues)
-               if retcode:
-                   stat_bar = self.gld.get_widget("statusbar")
-                   stat_bar.pop(self.stat_id)
-                   stat_bar.push(self.stat_id, _("Executing queued operations"))
-                   dlg = do_dialog(pacs_queues, self.icon)
-                   dlg.run()
-        return
+           if res == RESPONSE_NO:
+               return
 
         if image == "red":
             return

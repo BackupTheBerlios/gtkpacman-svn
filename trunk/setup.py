@@ -128,6 +128,8 @@ setup(cmdclass={'install': install,
                                              "data/icons/pacman.png",
                                              "data/icons/red_box.png",
                                              "data/icons/yellow_box.png"]),
-                  ('share/gtkpacman', ["data/gtkpacman.glade"])
+                  ('share/gtkpacman', ["data/gtkpacman.glade"]),
+                  ('share/applications', ["data/gtkpacman.desktop"]),
+                  ('share/pixmaps',  ["data/icons/pacman.png"])
                   ]
       )

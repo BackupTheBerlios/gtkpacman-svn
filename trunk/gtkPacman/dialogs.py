@@ -474,7 +474,8 @@ class upgrade_dialog(Window):
         
         self.expander = expander_new_with_mnemonic(_("_Terminal"))
         self.expander.set_expanded(False)
-        self.expander.add(self.terminal)
+        self.expander.connect("notify::expanded", self._set_size)
+        #self.expander.add(self.terminal)
         self.expander.show_all()
         
         self.close_button = Button(stock=STOCK_CLOSE)
@@ -495,6 +496,16 @@ class upgrade_dialog(Window):
         self.vbox.pack_start(self.close_button, False, False, 0)
 
         self.add(self.vbox)
+        return
+
+    def _set_size (self, widget, data=None, event=None):
+        if self.expander.get_expanded:
+            self.size = self.get_size()
+            self.expander.add(self.terminal)
+            self.terminal.show()
+        else:
+            self.expander.remove(self.terminal)
+            self.set_size(self.size[0], self.size[1])
         return
 
     def _setup_tree(self, pacs):

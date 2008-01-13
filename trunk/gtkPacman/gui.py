@@ -498,6 +498,7 @@ class gui:
         if pacs_queues:
             for pac in pacs_queues["add"]:
                 pac.installed = True
+                pac.inst_ver = pac.version
                 self.database.set_pac_properties(pac)
                 continue
             for pac in pacs_queues["remove"]:

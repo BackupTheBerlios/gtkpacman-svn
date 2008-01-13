@@ -211,7 +211,7 @@ class gui:
             self.database["foreigners"] = []
             self.models[_("foreigners")] = installed_list(self.database["foreigners"])
             
-        for repo in self.database.repos:
+        for repo in self.database.keys():
             if repo == _("foreigners"):
                 continue
             

@@ -101,7 +101,7 @@ class database(dict):
             if line.startswith("["):
                 begin = line.index("[") + len("[")
                 end = line.index("]")
-                repo = line[begin:end]
+                repo = line[begin:end].strip()
                 if repo == "options":
                     continue
                 else:

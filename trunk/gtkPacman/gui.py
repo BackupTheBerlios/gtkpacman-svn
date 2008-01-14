@@ -528,7 +528,10 @@ class gui:
         dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
         if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
-        dlg.destroy()
+            dlg.destroy()
+        else:
+            dlg.destroy()
+            return
 
         if keywords:
             pacs = self.database.get_by_keywords(keywords)

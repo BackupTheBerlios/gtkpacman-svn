@@ -224,7 +224,11 @@ class database(dict):
             repo = pac.repo
             
         pack_dir = "-".join((pac.name, version))
-        path = "/var/lib/pacman/%s/%s" %(repo, pack_dir)
+        if (self.ver[0] == 3 and self.ver[1] == 1) and not repo == "local":
+                path_to_db = "/var/lib/pacman/sync"
+        else:
+            path_to_db = "/var/lib/pacman"
+        path = "%s/%s/%s" %(path_to_db, repo, pack_dir)
         self._set_summary(pac, path)
         self._set_filelist(pac, path)
         pac.prop_setted = True

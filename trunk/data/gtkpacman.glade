@@ -4,7 +4,7 @@
 <glade-interface>
   <widget class="GtkWindow" id="main_win">
     <property name="visible">True</property>
-    <property name="title" translatable="yes">gtkpacman 2.0</property>
+    <property name="title" translatable="yes">gtkpacman 2.1</property>
     <property name="default_width">650</property>
     <property name="default_height">433</property>
     <signal name="destroy" handler="quit"/>

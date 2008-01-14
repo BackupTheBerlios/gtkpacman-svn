@@ -11,4 +11,4 @@ Exec=gksu gtkpacman
 Icon=/usr/share/gtkpacman/icons/pacman.png
 Terminal=false
 X-MultipleArgs=false
-Categories=GTK;Application;System;
+Categories=Application;System;

@@ -72,11 +72,11 @@ class terminal(Terminal):
         local = "%s -Uf %s" %(pacman, fname)
 
         if inst_pacs and rem_pacs:
-            command = "%(loc)s;%(pac)s -Sdf %(inst)s;%(pac)s -Rdf %(rem)s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs, "rem": rem_pacs}
+            command = "%(pac)s -Sdf %(inst)s;%(pac)s -Rdf %(rem)s;%(loc)s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs, "rem": rem_pacs}
         elif inst_pacs:
-            command = "%(loc)s;%(pac)s -Sdf %(inst)s;%(pac)s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs}
+            command = "%(pac)s -Sdf %(inst)s;%(pac)s;%(loc)s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs}
         elif rem_pacs:
-            command = "%(loc)s;%(pac)s -Rdf %(rem)s;exit\n" %{"pac": pacman, "loc": local, "rem": rem_pacs}
+            command = "%(loc)s;%(pac)s -Rdf %(rem)s;%(loc)s;exit\n" %{"pac": pacman, "loc": local, "rem": rem_pacs}
         else:
             command = "%s;exit\n" %local
 

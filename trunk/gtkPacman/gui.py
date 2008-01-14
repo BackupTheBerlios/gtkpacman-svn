@@ -274,11 +274,11 @@ class gui:
                 pacs_model = self.models[_("All")]
             if not self.repo_col:
                 self.repo_col = pacs_tree.insert_column_with_attributes(
-                    -1, "", CellRendererText(), text=5
+                    -1, _("Repo"), CellRendererText(), text=5
                     )
             if not self.inst_ver_col:
-                self.inst_ver_col = pacs_tree.insert_column_with_atrributes(
-                    -1, "", CellRendererText(), text=4
+                self.inst_ver_col = pacs_tree.insert_column_with_attributes(
+                    -1, _("Available Version"), CellRendererText(), text=4
                     )
                 
         elif selected == _("foreigners"):

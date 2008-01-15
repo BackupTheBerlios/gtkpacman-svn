@@ -16,7 +16,7 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-import os, string, re
+import os, string, re, time
 
 class package:
     """Class describing a package"""
@@ -295,6 +295,12 @@ class database(dict):
         end = desc.index("%", begin)
 
         builddate = desc[begin:end].strip()
+	
+	if builddate.isdigit():
+	    num = int(builddate)
+	    #date = time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(num))
+	    builddate = time.ctime(num)
+	    return builddate
         return builddate
 
     def _get_installdate(self, desc):
@@ -302,6 +308,12 @@ class database(dict):
         end = desc.index("%", begin)
 
         installdate = desc[begin:end].strip()
+	
+	if installdate.isdigit():
+	    num = int(installdate)
+	    #date = time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(num))
+	    installdate = time.ctime(num)
+	    return installdate
         return installdate
 
     def _get_reason(self, desc):

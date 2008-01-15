@@ -408,6 +408,7 @@ class gui:
 
     def execute(self, widget=None, data=None):
         pacs_queues = { "add": [], "remove": [] }
+        deps = []
         
         for name in self.queues["add"]:
             try:
@@ -423,7 +424,8 @@ class gui:
 
             pacs_queues["add"].append(pac)
             
-            deps = pac.dependencies.split(", ")
+            if pac.dependencies:
+                deps = pac.dependencies.split(", ")
             for dep in deps:
                 if dep.count(">="):
                     dep = dep.split(">=")[0]
@@ -505,6 +507,10 @@ class gui:
                 pac.installed = False
                 self.database.set_pac_properties(pac)
                 continue
+            sum_txt = self.gld.get_widget("summary")
+            sum_buf = sum_txt.get_buffer()        
+            sum_buf.set_text(pac.summary)
+            
         del(pacs_queues)
         stat_bar = self.gld.get_widget("statusbar")
         stat_bar.pop(self.stat_id)

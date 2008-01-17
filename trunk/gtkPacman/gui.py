@@ -247,7 +247,13 @@ class gui:
 
         for row in liststore:
             row[1] = None
-            if row[2] in self.queues["add"]:
+            if row[2] in self.queues["remove"] and model ==  _("foreigners"):
+                nr = 0
+                for l in liststore:
+                    nr += 1
+                    if row[2] == l[2]:
+                        del liststore[nr -1]
+            elif row[2] in self.queues["add"]:
                 row[0] = "green"
                 row[3] = row[4]
             elif row[2] in self.queues["remove"]:
@@ -505,11 +511,24 @@ class gui:
                 continue
             for pac in pacs_queues["remove"]:
                 pac.installed = False
+                if pac.repo == 'foreigners':
+                    del pac
+                    continue
                 self.database.set_pac_properties(pac)
                 continue
             sum_txt = self.gld.get_widget("summary")
-            sum_buf = sum_txt.get_buffer()        
-            sum_buf.set_text(pac.summary)
+            file_tree = self.gld.get_widget("files")
+            sum_buf = sum_txt.get_buffer()
+            tree = file_tree.get_model()
+            
+            try:
+                sum_buf.set_text(pac.summary)
+                file_model = file_list(pac.filelist)
+                file_tree.set_model(file_model)
+            except:
+                col = file_tree.get_columns()
+                tree.clear()
+                sum_buf.set_text('')
             
         del(pacs_queues)
         stat_bar = self.gld.get_widget("statusbar")

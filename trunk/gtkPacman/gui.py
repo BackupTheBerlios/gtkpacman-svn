@@ -247,11 +247,18 @@ class gui:
 
         for row in liststore:
             row[1] = None
-            if row[2] in self.queues["remove"] and model ==  _("foreigners"):
+            check = row[2][:]
+            if check in self.queues["remove"] and model ==  _("foreigners"):
                 nr = 0
-                for l in liststore:
+                for rm in liststore:
                     nr += 1
-                    if row[2] == l[2]:
+                    if check == rm[2]:
+                        del liststore[nr -1]
+            elif check in self.queues["remove"] and submodel ==  _("installed"):
+                nr = 0
+                for rm in liststore:
+                    nr += 1
+                    if check == rm[2]:
                         del liststore[nr -1]
             elif row[2] in self.queues["add"]:
                 row[0] = "green"
@@ -337,8 +344,12 @@ class gui:
     def add_to_install_queue(self, widget, data=None):
         tree = self.gld.get_widget("pacs_tree")
         model, l_iter = tree.get_selection().get_selected()
-
-        name = model.get_value(l_iter, 2)
+        
+        try:
+            name = model.get_value(l_iter, 2)
+        except TypeError:
+            return
+        
         if name in self.queues["add"]:
             return
         
@@ -365,7 +376,11 @@ class gui:
         tree = self.gld.get_widget("pacs_tree")
         model, l_iter = tree.get_selection().get_selected()
 
-        name = model.get_value(l_iter, 2)
+        try:
+            name = model.get_value(l_iter, 2)
+        except TypeError:
+            return
+        
         if not (name in self.queues["add"]):
             return
 
@@ -377,7 +392,11 @@ class gui:
         tree = self.gld.get_widget("pacs_tree")
         model, l_iter = tree.get_selection().get_selected()
 
-        name = model.get_value(l_iter, 2)
+        try:
+            name = model.get_value(l_iter, 2)
+        except TypeError:
+            return
+        
         if name in self.queues["remove"]:
             return
                 
@@ -404,7 +423,11 @@ class gui:
         tree = self.gld.get_widget("pacs_tree")
         model, l_iter = tree.get_selection().get_selected()
 
-        name = model.get_value(l_iter, 2)
+        try:
+            name = model.get_value(l_iter, 2)
+        except TypeError:
+            return
+        
         if not (name in self.queues["remove"]):
             return
 

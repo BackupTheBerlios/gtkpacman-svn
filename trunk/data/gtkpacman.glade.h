@@ -23,4 +23,4 @@ char *s = N_("_Help");
 char *s = N_("_Queue Actions");
 char *s = N_("_Search");
 char *s = N_("_Upgrade system");
-char *s = N_("gtkpacman 2.0");
+char *s = N_("gtkpacman 2.2");

@@ -436,6 +436,16 @@ class gui:
         return
 
     def execute(self, widget=None, data=None):
+        def _req_pac_check(to_check):
+            to_do = []
+            pac = self.database.get_by_name(to_check)
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
+            for req in pac.req_by.split(", "):
+                if len(req) >= 1:
+                    to_do.append(req)
+            return pac, to_do
+
         pacs_queues = { "add": [], "remove": [] }
         deps = []
         
@@ -481,10 +491,18 @@ class gui:
             pacs_queues["remove"].append(pac)
             if pac.req_by:
                 req_pacs = []
+                todo_list = []
                 for req in pac.req_by.split(", "):
                     if not (req in self.queues["remove"]):
-                        req_pac = self.database.get_by_name(req)
-                        req_pacs.append(req_pac)
+                        todo_list.append(req)
+                while todo_list:
+                    req = todo_list.pop(0)
+                    if not (req in self.queues["remove"]):
+                        done, to_do = _req_pac_check(req)
+                        req_pacs.append(done)
+                        if to_do:
+                            todo_list.extend(to_do)
+                    continue
 
                 if req_pacs:
                     dlg = warning_dialog(self.gld.get_widget("main_win"),

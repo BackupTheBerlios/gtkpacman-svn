@@ -181,8 +181,12 @@ class warning_dialog(Dialog):
         label = Label(_("This packages requires one of the packages you've selected for removal.\nDo you want to remove them all?"))
         label.show()
 
+        scr = ScrolledWindow()
+        scr.set_policy("auto", "auto")
+        scr.add(self.tree)
+
         self.vbox.pack_start(label, False, False, 0)
-        self.vbox.pack_start(self.tree, True, True, 0)
+        self.vbox.pack_start(scr, True, True, 0)
         return
 
     def _setup_tree(self, pacs):

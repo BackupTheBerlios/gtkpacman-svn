@@ -235,6 +235,7 @@ class database(dict):
         return
     
     def _set_summary(self, pac, path):
+
         desc_file = open("%s/desc" %path).read()
         
         desc = self._get_description(desc_file)
@@ -298,7 +299,6 @@ class database(dict):
 	
 	if builddate.isdigit():
 	    num = int(builddate)
-	    #date = time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(num))
 	    builddate = time.ctime(num)
 	    return builddate
         return builddate
@@ -311,7 +311,6 @@ class database(dict):
 	
 	if installdate.isdigit():
 	    num = int(installdate)
-	    #date = time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(num))
 	    installdate = time.ctime(num)
 	    return installdate
         return installdate
@@ -362,7 +361,7 @@ class database(dict):
 
         try:
             begin = depends.index("%REQUIREDBY%") + len("%REQUIREDBY%")
-            end = depends.index("%", begin) - len("%")
+            end = depends.find("%", begin) - len("%")
         except Exception:
             return ''
         

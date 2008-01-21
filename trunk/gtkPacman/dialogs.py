@@ -21,7 +21,7 @@ from time import sleep
 from gtk import Dialog, MessageDialog, AboutDialog, FileChooserDialog
 from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
 from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox, Entry
-from gtk import ScrolledWindow, VPaned
+from gtk import ScrolledWindow, VPaned, POLICY_AUTOMATIC
 from gtk import CellRendererPixbuf, CellRendererText
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
@@ -122,7 +122,6 @@ class confirm_dialog(Dialog):
         self.remove_tree.insert_column_with_attributes(-1, _("Version"),
                                                        CellRendererText(),
                                                        text=2)
-        
         for pac in queue:
             if pac.isold:
                 image = "yellow"
@@ -143,9 +142,18 @@ class confirm_dialog(Dialog):
         label.show()
         inst_frame = Frame(_("Packages to install"))
         rem_frame = Frame(_("Packages to remove"))
+
+        inst_scroll = ScrolledWindow()
+        inst_scroll.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
+
+        rem_scroll = ScrolledWindow()
+        rem_scroll.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
+
+        inst_scroll.add(self.install_tree)
+        rem_scroll.add(self.remove_tree)
         
-        inst_frame.add(self.install_tree)
-        rem_frame.add(self.remove_tree)
+        inst_frame.add(inst_scroll)
+        rem_frame.add(rem_scroll)
 
         hpaned.add1(inst_frame)
         hpaned.add2(rem_frame)
@@ -154,6 +162,7 @@ class confirm_dialog(Dialog):
 
         self.vbox.pack_start(label, False, False, 0)
         self.vbox.pack_start(hpaned, True, True, 0)
+        self.set_default_size(600,400)
         return
 
     def run(self):
@@ -182,7 +191,7 @@ class warning_dialog(Dialog):
         label.show()
 
         scr = ScrolledWindow()
-        scr.set_policy("auto", "auto")
+        scr.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
         scr.add(self.tree)
 
         self.vbox.pack_start(label, False, False, 0)

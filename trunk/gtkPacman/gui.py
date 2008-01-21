@@ -492,6 +492,7 @@ class gui:
             if pac.req_by:
                 req_pacs = []
                 todo_list = []
+                black_list = []
                 for req in pac.req_by.split(", "):
                     if not (req in self.queues["remove"]):
                         todo_list.append(req)
@@ -499,9 +500,12 @@ class gui:
                     req = todo_list.pop(0)
                     if not (req in self.queues["remove"]):
                         done, to_do = _req_pac_check(req)
-                        req_pacs.append(done)
-                        if to_do:
-                            todo_list.extend(to_do)
+                        if not done in req_pacs:
+                            req_pacs.append(done)
+                        for add in to_do:
+                            if not add in black_list:
+                                todo_list.append(add)
+                                black_list.append(add)
                     continue
 
                 if req_pacs:

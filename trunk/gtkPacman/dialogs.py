@@ -187,6 +187,8 @@ class warning_dialog(Dialog):
 
     def _setup_layout(self):
 
+        self.set_default_size(-1,250)
+        
         label = Label(_("This packages requires one of the packages you've selected for removal.\nDo you want to remove them all?"))
         label.show()
 
@@ -196,6 +198,7 @@ class warning_dialog(Dialog):
 
         self.vbox.pack_start(label, False, False, 0)
         self.vbox.pack_start(scr, True, True, 0)
+        self.vbox.show_all()
         return
 
     def _setup_tree(self, pacs):

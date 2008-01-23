@@ -188,9 +188,33 @@ class gui:
 
         repos_model.append(all_it, [_("foreigners")])
         return repos_model
+    
+    def _pacs_tree_exp_check(self):
+        self.expanded= []
+        def expander_check(model, path, iter, val=None):
+            is_expanded = repos_tree.row_expanded(path)
+            val = model.get_value(iter, 0)
+            if is_expanded:
+                self.expanded.append(path)
+        
+        repos_tree = self.gld.get_widget("repos_tree")
+        model = repos_tree.get_model()
+        iter = model.get_iter_root()
+        path = model.get_path(iter)
+        model.foreach(expander_check)
+        return self.expanded
 
     def _refresh_repos_tree (self):
-        self.gld.get_widget("repos_tree").set_model(self._make_repos_model())
+            
+        expanded = self._pacs_tree_exp_check()
+        
+        repos_tree = self.gld.get_widget("repos_tree")
+        repos_tree.set_model(self._make_repos_model())
+        
+        repos_tree = self.gld.get_widget("repos_tree")
+        for row in expanded:
+            repos_tree.expand_row(row, False) 
+            
         return
     
     def _setup_files_tree(self):

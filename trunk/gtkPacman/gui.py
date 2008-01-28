@@ -189,33 +189,29 @@ class gui:
 
         repos_model.append(all_it, [_("foreigners")])
         return repos_model
-    
+ 
     def _pacs_tree_exp_check(self):
-        self.expanded= []
-        def expander_check(model, path, iter, val=None):
+        expanded= []
+        def expander_check(model, path, iter):
             is_expanded = repos_tree.row_expanded(path)
-            val = model.get_value(iter, 0)
             if is_expanded:
-                self.expanded.append(path)
-        
+                expanded.append(path)
+
         repos_tree = self.gld.get_widget("repos_tree")
         model = repos_tree.get_model()
         iter = model.get_iter_root()
         path = model.get_path(iter)
         model.foreach(expander_check)
-        return self.expanded
+        return expanded
 
-    def _refresh_repos_tree (self):
-            
+    def _refresh_repos_tree (self):            
         expanded = self._pacs_tree_exp_check()
         
         repos_tree = self.gld.get_widget("repos_tree")
         repos_tree.set_model(self._make_repos_model())
         
-        repos_tree = self.gld.get_widget("repos_tree")
         for row in expanded:
-            repos_tree.expand_row(row, False) 
-            
+            repos_tree.expand_row(row, False)
         return
     
     def _setup_files_tree(self):
@@ -285,6 +281,10 @@ class gui:
                     nr += 1
                     if check == rm[2]:
                         del liststore[nr -1]
+            elif row[2] in self.queues["add"] and submodel =="all":
+                row[0] = "green"
+                row[3] = row[4]
+                self.models[model]["installed"].append(row)
             elif row[2] in self.queues["add"]:
                 row[0] = "green"
                 row[3] = row[4]
@@ -493,7 +493,6 @@ class gui:
             for dep in deps:
                 if dep.count(">="):
                     dep = dep.split(">=")[0]
-                    
                 try:
                     dep_pac = self.database.get_by_name(dep)
                 except NameError:
@@ -570,6 +569,12 @@ class gui:
     def _refresh_trees_and_queues(self, widget=None, pacs_queues=None):
         self.database.refresh()
         self._refresh_repos_tree()
+        
+        if pacs_queues:
+            for pac in pacs_queues["add"]:
+                if not pac.name in self.queues["add"]:
+                    self.queues["add"].append(pac.name)
+
         self._refresh_trees()
         self.queues["add"] = []
         self.queues["remove"] = []

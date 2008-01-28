@@ -631,12 +631,16 @@ class command_dialog(Window):
 
         self.set_icon(pixbuf_new_from_file(icon))
 
-    def run(self, command):
+    def run(self, command, pacman = True):
         self.show()
         
         self.terminal.fork_command()
-        self.terminal.feed_child("pacman --noconfirm -%s;exit\n" %command)
 
+        if pacman:
+            self.terminal.feed_child("pacman --noconfirm -%s;exit\n" %command)
+        else:
+            self.terminal.feed_child("%s;exit\n" %command)
+            
 class error_dialog(MessageDialog):
 
     def __init__(self, parent, msg, icon):
@@ -645,3 +649,52 @@ class error_dialog(MessageDialog):
                                DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                                MESSAGE_ERROR, BUTTONS_CLOSE, msg)
         self.set_icon(pixbuf_new_from_file(icon))
+
+class choose_pkgbuild_dialog(FileChooserDialog):
+
+    def __init__(self, parent, icon):
+
+        FileChooserDialog.__init__(self, _("Choose the buildscript"),
+                                   parent, FILE_CHOOSER_ACTION_OPEN,
+                                   (STOCK_OPEN, RESPONSE_ACCEPT,
+                                    STOCK_CANCEL, RESPONSE_REJECT))
+        self.set_icon(pixbuf_new_from_file(icon))
+
+    def run(self):
+        res = FileChooserDialog.run(self)
+        if res == RESPONSE_ACCEPT:
+            return self.get_filename()
+
+class change_user_dialog(Dialog):
+
+    def __init__(self, parent, icon):
+        Dialog.__init__(self, _("Confirm makepkg as root"),
+                        parent, DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
+                        (STOCK_OK, RESPONSE_ACCEPT,
+                         STOCK_CANCEL, RESPONSE_REJECT))
+
+        self.add_button(_("Run as root"), 1000)
+        
+        lab = Label(_("Running makepkg as root is a bad idea.\nSelect an alternate user or confirm that you want to run it as root"))
+
+        uname_frame = Frame(_("Username:"))
+        pwd_frame = Frame(_("Password"))
+
+        self.uname_entry = Entry()
+        
+        uname_frame.add(self.uname_entry)
+        
+        self.vbox.pack_start(lab)
+        self.vbox.pack_start(uname_frame)
+        self.vbox.show_all()
+
+    def run(self):
+        res = Dialog.run(self)
+        if res == 1000:
+            return "root"
+        elif res == RESPONSE_ACCEPT:
+            uname = self.uname_entry.get_text()
+            return uname
+        else:
+            self.destroy()
+            return "reject"

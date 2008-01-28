@@ -30,7 +30,7 @@ from dialogs import confirm_dialog, search_dialog, upgrade_dialog
 from dialogs import upgrade_confirm_dialog, local_install_dialog
 from dialogs import local_install_fchooser_dialog, local_confirm_dialog
 from dialogs import command_dialog, error_dialog, ignorepkg_dialog
-from dialogs import holdpkg_dialog
+from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
 from models import installed_list, all_list, whole_list, search_list, file_list
 
@@ -56,7 +56,8 @@ class gui:
                   "show_popup":     self.show_popup,
                   "about":          self.about,
                   "pacs_changed":   self.pacs_changed,
-                  "repo_changed":   self.repo_changed}
+                  "repo_changed":   self.repo_changed,
+                  "make_pkg":       self.make_package}
         self.gld.signal_autoconnect(h_dict)
 
 
@@ -770,3 +771,33 @@ class gui:
         stat_bar = self.gld.get_widget("statusbar")
         stat_bar.pop(self.stat_id)
         stat_bar.push(self.stat_id, _("Done."))
+
+    def make_package(self, widget):
+        from os import chdir, geteuid
+        from os.path import dirname
+        
+        dlg = choose_pkgbuild_dialog(self.gld.get_widget("main_win"), self.icon)
+        fname = dlg.run()
+        dlg.destroy()
+        
+        try:
+            dname = dirname(fname)
+        except:
+            return
+        chdir(dname)
+
+        cdlg = command_dialog(self.icon)
+
+        if geteuid() == 0:
+            dlg = change_user_dialog(self.gld.get_widget("main_win"), self.icon)
+            user = dlg.run()
+
+            if user == "root":
+                cdlg.run("makepkg --asroot -si")
+            elif user == "reject":
+                pass
+            else:
+                cdlg.run("su %s -c 'makepkg -si'" %user, False)
+            dlg.destroy()
+        else:
+            cdlg.run("makepkg -si", False)

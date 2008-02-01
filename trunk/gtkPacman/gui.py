@@ -778,8 +778,8 @@ class gui:
         stat_bar.push(self.stat_id, _("Done."))
 
     def make_package(self, widget):
-        from os import chdir, geteuid
-        from os.path import dirname
+        from os import chdir, geteuid, curdir
+        from os.path import dirname, abspath
         
         dlg = choose_pkgbuild_dialog(self.gld.get_widget("main_win"), self.icon)
         fname = dlg.run()
@@ -789,6 +789,8 @@ class gui:
             dname = dirname(fname)
         except:
             return
+
+        pwd = abspath(curdir)
         chdir(dname)
 
         cdlg = command_dialog(self.icon)
@@ -806,3 +808,4 @@ class gui:
             dlg.destroy()
         else:
             cdlg.run("makepkg -si", False)
+        chdir(pwd)

@@ -420,7 +420,8 @@ class database(dict):
             for pac in self[repo]:
                 if name == pac.name:
                     return pac
-        raise NameError, _("%s is not in the database") %name
+	print "Info: %s is not in the database..."  %name
+	return
 
     def search_by_name(self, name):
         """Return a list of packages wich contains 'name' in the name"""

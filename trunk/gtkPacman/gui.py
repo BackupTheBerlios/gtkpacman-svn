@@ -464,8 +464,11 @@ class gui:
         def _req_pac_check(to_check):
             to_do = []
             pac = self.database.get_by_name(to_check)
-            if not pac.prop_setted:
-                self.database.set_pac_properties(pac)
+	    try:
+		if not pac.prop_setted:
+		    self.database.set_pac_properties(pac)
+	    except:
+		return pac, to_do
             for req in pac.req_by.split(", "):
                 if len(req) >= 1:
                     to_do.append(req)
@@ -524,7 +527,7 @@ class gui:
                     req = todo_list.pop(0)
                     if not (req in self.queues["remove"]):
                         done, to_do = _req_pac_check(req)
-                        if not done in req_pacs:
+                        if done and not done in req_pacs:
                             req_pacs.append(done)
                         for add in to_do:
                             if not add in black_list:

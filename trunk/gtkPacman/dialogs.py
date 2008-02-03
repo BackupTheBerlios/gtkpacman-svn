@@ -155,14 +155,14 @@ class confirm_dialog(Dialog):
         inst_frame.add(inst_scroll)
         rem_frame.add(rem_scroll)
 
-        hpaned.add1(inst_frame)
-        hpaned.add2(rem_frame)
+        hpaned.pack1(inst_frame, False, False)
+        hpaned.pack2(rem_frame, False, False)
         
         hpaned.show_all()
 
         self.vbox.pack_start(label, False, False, 0)
         self.vbox.pack_start(hpaned, True, True, 0)
-        self.set_default_size(600,400)
+        self.set_default_size(600,300)
         return
 
     def run(self):
@@ -358,9 +358,20 @@ class do_dialog(Window):
 
     def _setup_layout(self):
 
+        self.set_default_size(600,200)
         self.hpaned = HPaned()
-        self.hpaned.add1(self.inst_tree)
-        self.hpaned.add2(self.rem_tree)
+        
+        inst_scroll = ScrolledWindow()
+        inst_scroll.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
+
+        rem_scroll = ScrolledWindow()
+        rem_scroll.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
+        
+        inst_scroll.add(self.inst_tree)
+        rem_scroll.add(self.rem_tree)
+        
+        self.hpaned.pack1(inst_scroll, False, False)
+        self.hpaned.pack2(rem_scroll, False, False)
         self.hpaned.show_all()
 
         self.close_button = Button(stock=STOCK_CLOSE)
@@ -376,7 +387,7 @@ class do_dialog(Window):
         self.vbox = VBox(False, 0)
         self.vbox.show()
         
-        self.vbox.pack_start(self.hpaned, False, False, 0)
+        self.vbox.pack_start(self.hpaned, True, True, 0)
         self.vbox.pack_start(self.expander, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
 

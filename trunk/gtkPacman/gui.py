@@ -16,13 +16,13 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-import gettext
+import gettext, gobject
 
 from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO
-from gtk.gdk import pixbuf_new_from_file
+from gtk.gdk import pixbuf_new_from_file, Cursor, WATCH
 from gtk.glade import XML
 
 from dialogs import non_root_dialog, about_dialog, warning_dialog, do_dialog 
@@ -626,29 +626,39 @@ class gui:
         else:
             self.popup.popdown()
 
-    def search(self, widget, data=None):
-        keywords=""
+    def search(self, widget, data=None):	
+	win = self.gld.get_widget("main_win")
+	wait_cursor = Cursor(WATCH)
+	        
         dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
+	
+	def _fork(window):
+	    dlg.destroy()
+	    repos_tree = self.gld.get_widget("repos_tree")
+	    repos_model = repos_tree.get_model()
+	    
+	    pacs = self.database.get_by_keywords(keywords)	    
+	    if self.search_iter:
+		repos_model.remove(self.search_iter)
+	    self.search_iter = repos_model.append(None, [_("Search results for '%s'") %keywords])
+	    self.models["search"] = search_list(pacs)
+	    repos_tree.set_cursor_on_cell((1))
+	    
+	    win.window.set_cursor(None)
+	
         if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
-            dlg.destroy()
-        else:
-            dlg.destroy()
-            return
-
-        if keywords:
-            pacs = self.database.get_by_keywords(keywords)
-        else:
-            dlg = error_dialog(None, _("You should insert at least one keyword to search for"), self.icon)
-            dlg.run()
-            dlg.destroy()
-            return
-        
-        repos_model = self.gld.get_widget("repos_tree").get_model()
-        if self.search_iter:
-            repos_model.remove(self.search_iter)
-        self.search_iter = repos_model.append(None, [_("Search results for '%s'") %keywords])
-        self.models["search"] = search_list(pacs)
+	    if keywords:
+		dlg.vbox.set_sensitive(False)
+		win.window.set_cursor(wait_cursor)
+		gobject.idle_add(_fork, win)
+	    else:
+		dlg.destroy()
+		error_dlg = error_dialog(None, _("You should insert at least one keyword to search for"), self.icon)
+		error_dlg.run()
+		error_dlg.destroy()		
+	else:
+	    dlg.destroy()
 
     def add_from_local_file(self, widget, data=None):
         dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),

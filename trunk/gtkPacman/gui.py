@@ -75,9 +75,7 @@ class gui:
         self._setup_files_tree()
 
         #Setup statusbar
-        stat_bar = self.gld.get_widget("statusbar")
-        self.stat_id = stat_bar.get_context_id("stat")
-        stat_bar.push(self.stat_id, _("Done."))
+	self._statusbar()
 
         #Check if root, else notufy it and deactivate some widgets
         if uid:
@@ -248,7 +246,7 @@ class gui:
 
     def _refresh_trees(self):
         for model in self.models.keys():
-            if model == _("All") or model == _("foreigners"):
+	    if model == _("All") or model == _("foreigners") or model == _("search"):
                 self._refresh_model(model)
             else:
                 try:
@@ -292,7 +290,7 @@ class gui:
                 row[0] = "red"
                 row[3] = "-"
             continue
-        return           
+        return
 
     def quit(self, widget, data=None):
         main_quit()
@@ -345,7 +343,9 @@ class gui:
                 self.inst_ver_col = pacs_tree.insert_column_with_attributes(
                     -1, _("Avaible Version"), CellRendererText(), text=4)
         pacs_tree.set_model(pacs_model)
-        return
+	
+	stat = (len(pacs_model), selected)
+	self._statusbar(msg=stat)
 
     def pacs_changed(self, widget, data=None):
         sum_txt = self.gld.get_widget("summary")
@@ -506,8 +506,11 @@ class gui:
                     pacs_queues["add"].remove(pac)
                     self.queues["add"].remove(name)
                     break
-                if not dep_pac.installed:
-                    pacs_queues["add"].append(dep_pac)
+                try:
+		    if not dep_pac.installed:
+			pacs_queues["add"].append(dep_pac)
+		except:
+		    pass
             continue
 
         for name in self.queues["remove"]:
@@ -552,9 +555,7 @@ class gui:
 
         retcode = self._confirm(pacs_queues)
         if retcode:
-            stat_bar = self.gld.get_widget("statusbar")
-            stat_bar.pop(self.stat_id)
-            stat_bar.push(self.stat_id, _("Executing queued operations"))
+	    self._statusbar(msg="Executing queued operations...")
             dlg = do_dialog(pacs_queues, self.icon)
             dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
             dlg.run()
@@ -609,11 +610,8 @@ class gui:
                 sum_buf.set_text('')
             
         del(pacs_queues)
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Done."))
-        return
-           
+	self._statusbar()
+	
     def about(self, widget, data=None):
         dlg = about_dialog(self.icon)
         dlg.run()
@@ -632,8 +630,7 @@ class gui:
 	        
         dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
 	
-	def _fork(window):
-	    dlg.destroy()
+	def _fork():	    
 	    repos_tree = self.gld.get_widget("repos_tree")
 	    repos_model = repos_tree.get_model()
 	    
@@ -644,19 +641,22 @@ class gui:
 	    self.models["search"] = search_list(pacs)
 	    repos_tree.set_cursor_on_cell((1))
 	    
+	    dlg.destroy()
 	    win.window.set_cursor(None)
 	
         if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
 	    if keywords:
 		dlg.vbox.set_sensitive(False)
+		self._statusbar(msg="Searching...")
 		win.window.set_cursor(wait_cursor)
-		gobject.idle_add(_fork, win)
+		dlg.window.set_cursor(wait_cursor)
+		gobject.idle_add(_fork)	
 	    else:
 		dlg.destroy()
 		error_dlg = error_dialog(None, _("You should insert at least one keyword to search for"), self.icon)
 		error_dlg.run()
-		error_dlg.destroy()		
+		error_dlg.destroy()
 	else:
 	    dlg.destroy()
 
@@ -669,10 +669,8 @@ class gui:
         else:
             dlg.destroy()
             return
-
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Installing %s") %fname)
+	
+	self._statusbar(msg="Installing %s" %fname)
         deps, conflicts = self.database.get_local_file_deps(fname)
 
         install = []
@@ -704,9 +702,7 @@ class gui:
         self.database.refresh()
         self.models["foreigners"] = installed_list(self.database["foreigners"])
 
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Done."))
+	self._statusbar()
 
     def _local_confirm(self, fname, pacs_queue):
         dlg = local_confirm_dialog(self.gld.get_widget("main_win"),
@@ -718,27 +714,21 @@ class gui:
         return retcode
 
     def clear_cache(self, wid, data=None):
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Clearing cache..."))
+	self._statusbar(msg="Clearing cache...")
         dlg = command_dialog(self.icon)
         dlg.connect("destroy", self._done)
         dlg.run("Sc")
         return
 
     def empty_cache(self, wid, data=None):
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Emptying cache..."))
-        dlg = command_dialog()
+	self._statusbar(msg="Emptying cache...")
+        dlg = command_dialog(self.icon)
         dlg.connect("destroy", self._done)
         dlg.run("Scc")
         return
 
     def _done(self, widget, data=None):
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Done."))
+	self._statusbar()
 
     def upgrade_system(self, widget, data=None):
         to_upgrade = []
@@ -754,17 +744,12 @@ class gui:
             confirm = self._upgrade_confirm(to_upgrade)
 
             if confirm:
-                stat_bar = self.gld.get_widget("statusbar")
-                stat_bar.pop(self.stat_id)
-                stat_bar.push(self.stat_id, _("Refreshing database"))
+		self._statusbar(msg="Refreshing database...")
                 dlg = upgrade_dialog(to_upgrade, self.icon)
                 dlg.connect("destroy", self._done_upgrade)
                 dlg.run()
         else:
-            stat_bar = self.gld.get_widget("statusbar")
-            stat_bar.pop(self.stat_id)
-            stat_bar.push(self.stat_id,
-                          _("There isn't any packages to upgrade"))
+	    self._statusbar(msg="There isn't any packages to upgrade")
         return
 
     def _upgrade_confirm(self, to_upgrade):
@@ -774,9 +759,7 @@ class gui:
         return retcode
 
     def refresh_database(self, widget, data=None):
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Refreshing database"))
+	self._statusbar(msg="Refreshing database...")
         dlg = command_dialog(self.icon)
         dlg.connect("destroy", self._done_upgrade)
         dlg.run("Sy")
@@ -786,9 +769,7 @@ class gui:
         self.database.refresh()
         self._refresh_repos_tree()
         self._setup_pacs_models()
-        stat_bar = self.gld.get_widget("statusbar")
-        stat_bar.pop(self.stat_id)
-        stat_bar.push(self.stat_id, _("Done."))
+	self._statusbar(msg="Updating compleated")
 
     def make_package(self, widget):
         from os import chdir, geteuid, curdir
@@ -822,3 +803,14 @@ class gui:
         else:
             cdlg.run("makepkg -si", False)
         chdir(pwd)
+	
+    def _statusbar(self, msg=None):
+	stat_bar = self.gld.get_widget("statusbar")
+
+	if type(msg) == type(()):
+	    str = "%s packages in [ %s ]" %(msg[0], msg[1])
+	elif msg == None:
+	    str =  "Done"
+	else:
+	    str = "%s " %msg
+	stat_bar.push(-1, str)

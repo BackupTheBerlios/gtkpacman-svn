@@ -10,6 +10,7 @@ char *s = N_("Execute queued operations");
 char *s = N_("Files");
 char *s = N_("Immediate Actions");
 char *s = N_("Install/Upgrade package from _local file");
+char *s = N_("Ma_ke a package and install it");
 char *s = N_("R_emove from remove queue");
 char *s = N_("Refresh _database");
 char *s = N_("Refresh database");

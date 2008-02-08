@@ -8,117 +8,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-18 15:41+0100\n"
+"POT-Creation-Date: 2008-02-08 11:17+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: gtkpacman.glade:7
-msgid "gtkpacman 2.2"
-msgstr ""
-
-#: gtkpacman.glade:21
-msgid "_File"
-msgstr ""
-
-#: gtkpacman.glade:41
-msgid "_Queue Actions"
-msgstr ""
-
-#: gtkpacman.glade:48 gtkpacman.glade:567
-msgid "_Add to install queue"
-msgstr ""
-
-#: gtkpacman.glade:64 gtkpacman.glade:583
-msgid "Remove from _install queue"
-msgstr ""
-
-#: gtkpacman.glade:85 gtkpacman.glade:604
-msgid "Add to _remove queue"
-msgstr ""
-
-#: gtkpacman.glade:101 gtkpacman.glade:620
-msgid "R_emove from remove queue"
-msgstr ""
-
-#: gtkpacman.glade:122
-msgid "E_xecute"
-msgstr ""
-
-#: gtkpacman.glade:142
-msgid "Immediate Actions"
-msgstr ""
-
-#: gtkpacman.glade:149
-msgid "_Upgrade system"
-msgstr ""
-
-#: gtkpacman.glade:165
-msgid "Refresh _database"
-msgstr ""
-
-#: gtkpacman.glade:186
-msgid "Install/Upgrade package from _local file"
-msgstr ""
-
-#: gtkpacman.glade:200
-msgid "Clear cache"
-msgstr ""
-
-#: gtkpacman.glade:216
-msgid "Empty cache"
-msgstr ""
-
-#: gtkpacman.glade:236
-msgid "_Help"
-msgstr ""
-
-#: gtkpacman.glade:266
-msgid "Add to install queue"
-msgstr ""
-
-#: gtkpacman.glade:278
-msgid "Delete from install queue"
-msgstr ""
-
-#: gtkpacman.glade:299
-msgid "Add to remove queue"
-msgstr ""
-
-#: gtkpacman.glade:311
-msgid "Delete from remove queue"
-msgstr ""
-
-#: gtkpacman.glade:332
-msgid "Execute queued operations"
-msgstr ""
-
-#: gtkpacman.glade:353
-msgid "Upgrade system"
-msgstr ""
-
-#: gtkpacman.glade:365
-msgid "Refresh database"
-msgstr ""
-
-#: gtkpacman.glade:386
-msgid "Search packages"
-msgstr ""
-
-#: gtkpacman.glade:486
-msgid "Summary"
-msgstr ""
-
-#: gtkpacman.glade:516
-msgid "Files"
-msgstr ""
-
-#: gtkpacman.glade:641
-msgid "_Search"
-msgstr ""
 
 #: ../gtkPacman/dialogs.py:44
 msgid ""
@@ -142,50 +38,50 @@ msgid "Confirm"
 msgstr ""
 
 #: ../gtkPacman/dialogs.py:91 ../gtkPacman/dialogs.py:119
-#: ../gtkPacman/dialogs.py:296 ../gtkPacman/dialogs.py:324
-#: ../gtkPacman/gui.py:133
+#: ../gtkPacman/dialogs.py:312 ../gtkPacman/dialogs.py:340
+#: ../gtkPacman/gui.py:132
 msgid "Package"
 msgstr ""
 
 #: ../gtkPacman/dialogs.py:94 ../gtkPacman/dialogs.py:122
-#: ../gtkPacman/dialogs.py:299
+#: ../gtkPacman/dialogs.py:315
 msgid "Version"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:142
+#: ../gtkPacman/dialogs.py:141
 msgid "Are you sure you want to install/remove those packages?"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:144
+#: ../gtkPacman/dialogs.py:143
 msgid "Packages to install"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:145
+#: ../gtkPacman/dialogs.py:144
 msgid "Packages to remove"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:171
+#: ../gtkPacman/dialogs.py:180
 msgid "Warning!"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:181
+#: ../gtkPacman/dialogs.py:192
 msgid ""
 "This packages requires one of the packages you've selected for removal.\n"
 "Do you want to remove them all?"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:227
+#: ../gtkPacman/dialogs.py:243
 msgid ""
 "Copyright (C)2005-2008 by Stefano Esposito.\n"
 "Rights to copy, modify, and redistribute are granted under the GNU General "
 "Public License Terms"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:228
+#: ../gtkPacman/dialogs.py:244
 msgid "Gtk package manager based on pacman"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:229
+#: ../gtkPacman/dialogs.py:245
 msgid ""
 "gtkPacman is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -202,89 +98,106 @@ msgid ""
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:327 ../gtkPacman/gui.py:135
+#: ../gtkPacman/dialogs.py:343 ../gtkPacman/gui.py:134
 msgid "Installed Version"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:356
+#: ../gtkPacman/dialogs.py:383
 msgid "Terminal"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:383
+#: ../gtkPacman/dialogs.py:410
 msgid "Choose package to install"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:430
+#: ../gtkPacman/dialogs.py:457
 msgid "Search for.."
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:440
+#: ../gtkPacman/dialogs.py:467
 msgid "Insert keywords:"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:475
+#: ../gtkPacman/dialogs.py:502
 msgid "_Terminal"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:539
+#: ../gtkPacman/dialogs.py:566
 msgid "Confirm Upgrade"
 msgstr ""
 
-#: ../gtkPacman/dialogs.py:568
+#: ../gtkPacman/dialogs.py:595
 msgid "Are you sure yo want to upgrade those packages?\n"
 msgstr ""
 
-#: ../gtkPacman/gui.py:79 ../gtkPacman/gui.py:559 ../gtkPacman/gui.py:644
-#: ../gtkPacman/gui.py:676 ../gtkPacman/gui.py:726
-msgid "Done."
+#: ../gtkPacman/dialogs.py:668
+msgid "Choose the buildscript"
 msgstr ""
 
-#: ../gtkPacman/gui.py:138 ../gtkPacman/gui.py:321
+#: ../gtkPacman/dialogs.py:682
+msgid "Confirm makepkg as root"
+msgstr ""
+
+#: ../gtkPacman/dialogs.py:687
+msgid "Run as root"
+msgstr ""
+
+#: ../gtkPacman/dialogs.py:689
+msgid ""
+"Running makepkg as root is a bad idea.\n"
+"Select an alternate user or confirm that you want to run it as root"
+msgstr ""
+
+#: ../gtkPacman/dialogs.py:691
+msgid "Username:"
+msgstr ""
+
+#: ../gtkPacman/dialogs.py:692
+msgid "Password"
+msgstr ""
+
+#: ../gtkPacman/gui.py:137 ../gtkPacman/gui.py:344
 msgid "Avaible Version"
 msgstr ""
 
-#: ../gtkPacman/gui.py:141 ../gtkPacman/gui.py:290
+#: ../gtkPacman/gui.py:140 ../gtkPacman/gui.py:313
 msgid "Repo"
 msgstr ""
 
-#: ../gtkPacman/gui.py:145 ../gtkPacman/gui.py:179 ../gtkPacman/gui.py:207
-#: ../gtkPacman/gui.py:230 ../gtkPacman/gui.py:287
+#: ../gtkPacman/gui.py:144 ../gtkPacman/gui.py:178 ../gtkPacman/gui.py:226
+#: ../gtkPacman/gui.py:249 ../gtkPacman/gui.py:310
 msgid "All"
 msgstr ""
 
-#: ../gtkPacman/gui.py:185 ../gtkPacman/gui.py:223 ../gtkPacman/gui.py:309
-#: ../gtkPacman/gui.py:314
+#: ../gtkPacman/gui.py:184 ../gtkPacman/gui.py:242 ../gtkPacman/gui.py:332
+#: ../gtkPacman/gui.py:337
 msgid "all"
 msgstr ""
 
-#: ../gtkPacman/gui.py:186 ../gtkPacman/gui.py:224 ../gtkPacman/gui.py:257
-#: ../gtkPacman/gui.py:309
+#: ../gtkPacman/gui.py:185 ../gtkPacman/gui.py:243 ../gtkPacman/gui.py:276
+#: ../gtkPacman/gui.py:332
 msgid "installed"
 msgstr ""
 
-#: ../gtkPacman/gui.py:189 ../gtkPacman/gui.py:209 ../gtkPacman/gui.py:212
-#: ../gtkPacman/gui.py:215 ../gtkPacman/gui.py:230 ../gtkPacman/gui.py:251
-#: ../gtkPacman/gui.py:297
+#: ../gtkPacman/gui.py:188 ../gtkPacman/gui.py:228 ../gtkPacman/gui.py:231
+#: ../gtkPacman/gui.py:234 ../gtkPacman/gui.py:249 ../gtkPacman/gui.py:270
+#: ../gtkPacman/gui.py:320
 msgid "foreigners"
 msgstr ""
 
-#: ../gtkPacman/gui.py:284
+#: ../gtkPacman/gui.py:249
+msgid "search"
+msgstr ""
+
+#: ../gtkPacman/gui.py:307
 msgid "Search"
 msgstr ""
 
-#: ../gtkPacman/gui.py:294
+#: ../gtkPacman/gui.py:317
 msgid "Available Version"
 msgstr ""
 
-#: ../gtkPacman/gui.py:446
-#, python-format
-msgid ""
-"%s is not in the database.\n"
-"This is probably a bug in gtkpacman. If you think it's so, please send me a "
-"bug report."
-msgstr ""
-
-#: ../gtkPacman/gui.py:466
+#: ../gtkPacman/gui.py:470
 #, python-format
 msgid ""
 "%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\n"
@@ -293,38 +206,64 @@ msgid ""
 "report for gtkpacman, please."
 msgstr ""
 
-#: ../gtkPacman/gui.py:508
-msgid "Executing queued operations"
+#: ../gtkPacman/gui.py:504
+#, python-format
+msgid ""
+"%s is not in the database.\n"
+"This is probably a bug in gtkpacman. If you think it's so, please send me a "
+"bug report."
 msgstr ""
 
-#: ../gtkPacman/gui.py:587
-msgid "You should insert at least one keyword to search for"
+#: ../gtkPacman/gui.py:576
+msgid "Executing queued operations..."
 msgstr ""
 
-#: ../gtkPacman/gui.py:595
+#: ../gtkPacman/gui.py:658
 #, python-format
 msgid "Search results for '%s'"
 msgstr ""
 
-#: ../gtkPacman/gui.py:610
+#: ../gtkPacman/gui.py:669
+#, python-format
+msgid "Searching for %s..."
+msgstr ""
+
+#: ../gtkPacman/gui.py:675
+msgid "You should insert at least one keyword to search for"
+msgstr ""
+
+#: ../gtkPacman/gui.py:691
 #, python-format
 msgid "Installing %s"
 msgstr ""
 
-#: ../gtkPacman/gui.py:658
+#: ../gtkPacman/gui.py:735
 msgid "Clearing cache..."
 msgstr ""
 
-#: ../gtkPacman/gui.py:667
+#: ../gtkPacman/gui.py:742
 msgid "Emptying cache..."
 msgstr ""
 
-#: ../gtkPacman/gui.py:694 ../gtkPacman/gui.py:714
-msgid "Refreshing database"
+#: ../gtkPacman/gui.py:765 ../gtkPacman/gui.py:780
+msgid "Refreshing database..."
 msgstr ""
 
-#: ../gtkPacman/gui.py:702
+#: ../gtkPacman/gui.py:770
 msgid "There isn't any packages to upgrade"
+msgstr ""
+
+#: ../gtkPacman/gui.py:790
+msgid "Updating compleated"
+msgstr ""
+
+#: ../gtkPacman/gui.py:829
+#, python-format
+msgid "%s packages in [ %s ]"
+msgstr ""
+
+#: ../gtkPacman/gui.py:831
+msgid "Done"
 msgstr ""
 
 #: ../gtkPacman/pacman.py:55
@@ -339,7 +278,7 @@ msgstr ""
 msgid "inst_ver must be a string"
 msgstr ""
 
-#: ../gtkPacman/pacman.py:251
+#: ../gtkPacman/pacman.py:252
 #, python-format
 msgid ""
 "Description: %s\n"
@@ -352,7 +291,7 @@ msgid ""
 "Reason: %s"
 msgstr ""
 
-#: ../gtkPacman/pacman.py:255
+#: ../gtkPacman/pacman.py:256
 #, python-format
 msgid ""
 "Description: %s\n"
@@ -360,20 +299,15 @@ msgid ""
 "Size (compressed): %s"
 msgstr ""
 
-#: ../gtkPacman/pacman.py:325
+#: ../gtkPacman/pacman.py:324
 msgid "Installed as a dependency for another package"
 msgstr ""
 
-#: ../gtkPacman/pacman.py:327
+#: ../gtkPacman/pacman.py:326
 msgid "Excplicitly installed"
 msgstr ""
 
-#: ../gtkPacman/pacman.py:376
+#: ../gtkPacman/pacman.py:375
 #, python-format
 msgid "%s is not installed"
-msgstr ""
-
-#: ../gtkPacman/pacman.py:424
-#, python-format
-msgid "%s is not in the database"
 msgstr ""

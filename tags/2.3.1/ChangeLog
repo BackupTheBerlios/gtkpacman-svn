@@ -1,0 +1,395 @@
+2008-01-15 14:30  ragnarok
+
+	* gtkPacman/pacman.py: Applied date converting patch from seti
+
+2008-01-15 01:44  ragnarok
+
+	* gtkPacman/gui.py: Applied patch to summary and dep check by seti
+
+2008-01-14 18:08  ragnarok
+
+	* gtkPacman/gui.py: Fixed foreigners->search results bug
+
+2008-01-14 16:37  ragnarok
+
+	* data/gtkpacman.desktop: Fixed desktop entry
+
+2008-01-14 16:22  ragnarok
+
+	* data/gtkpacman.glade: Updated title of the main window to
+	  gtkpacman 2.1
+
+2008-01-14 16:20  ragnarok
+
+	* gtkPacman/dialogs.py: Added seti to credits. Updated title of the
+	  main window to gtkpacman 2.1
+
+2008-01-14 15:10  ragnarok
+
+	* gtkPacman/pacman.py, gtkpacman: Fixed search bug with pacman
+	  3.1.x
+
+2008-01-14 14:55  ragnarok
+
+	* gtkPacman/pacman.py: Fixed search bug with pacman 3.1
+
+2008-01-14 14:48  ragnarok
+
+	* data/locale/it.po, data/locale/messages.pot: Updated
+	  messages.pot. Updated italian translation
+
+2008-01-14 14:44  ragnarok
+
+	* data/gtkpacman.glade, data/gtkpacman.glade.h, gtkPacman/gui.py:
+	  Applied patch by seti that the error dialog won't appear if th
+	  user cancel the research. Applied patch by seti that adds an
+	  accelerator for search (Ctrl+S)
+
+2008-01-14 14:28  ragnarok
+
+	* gtkPacman/terminal.py: When an Upgrade/install from local file
+	  requires removale of a package, remove it before
+	  upgrading/installing from local file
+
+2008-01-13 22:43  ragnarok
+
+	* gtkPacman/gui.py, gtkPacman/pacman.py: Applied patches by seti to
+	  failing search when no keyword inputted and to ValueError on
+	  filelist recovery. Added an error dialog when the user doesn't
+	  insert a keyword in search dialog
+
+2008-01-13 16:39  ragnarok
+
+	* gtkPacman/gui.py, gtkPacman/pacman.py: Probably fixed KeyError on
+	  startup in some configurations
+
+2008-01-13 16:29  ragnarok
+
+	* gtkPacman/dialogs.py: Fixed the upgrade_dialog
+
+2008-01-13 16:19  ragnarok
+
+	* gtkPacman/gui.py: Applied patch to update process by seti
+
+2008-01-13 16:15  ragnarok
+
+	* data/gtkpacman.desktop: Added desktop entry
+
+2008-01-13 16:15  ragnarok
+
+	* setup.py: Added desktop entry
+
+2008-01-13 12:44  ragnarok
+
+	* gtkPacman/gui.py, gtkPacman/pacman.py: Fixed holdPkg and version
+	  rerieval
+
+2008-01-12 22:46  ragnarok
+
+	* gtkPacman/dialogs.py: Applied dialogs_patch.diff by seti
+
+2008-01-12 22:42  ragnarok
+
+	* gtkPacman/gui.py: Applied gui_patch.diff by seti
+
+2008-01-12 21:20  ragnarok
+
+	* gtkPacman/pacman.py: Fixed path issue for pacman 3.1.x
+
+2008-01-11 22:48  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/pacman.py: Fixed req_by bug.
+	  Fixed do_dialog expansion bug (patch by seti)
+
+2008-01-11 21:32  ragnarok
+
+	* data/locale/it.po, data/locale/zh_TW.po: Added it.po, updated
+	  zh_TW.po
+
+2008-01-11 21:26  ragnarok
+
+	* data/locale/messages.pot, gtkPacman/__init__.py,
+	  gtkPacman/dialogs.py, gtkPacman/gui.py, gtkPacman/models.py,
+	  gtkPacman/pacman.py, gtkPacman/terminal.py, gtkpacman, setup.py:
+	  Release 2.1
+
+2008-01-11 18:37  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/gui.py, gtkPacman/pacman.py:
+	  Implemented HoldPkg check. Fixed IgnorePkg check
+
+2008-01-11 15:06  ragnarok
+
+	* gtkPacman/gui.py: Fixed search from popup menu
+
+2008-01-11 14:56  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/gui.py, gtkPacman/pacman.py:
+	  Implemented IgnorePkg check and cleaning of the repos tree after
+	  an action
+
+2008-01-11 13:59  ragnarok
+
+	* gtkPacman/pacman.py: Fixed search
+
+2007-01-01 23:37  ragnarok
+
+	* MANIFEST, README, data/locale/messages.pot, data/locale/zh_TW.po,
+	  gtkPacman/__init__.py, gtkPacman/dialogs.py, gtkPacman/gui.py,
+	  gtkPacman/models.py, gtkPacman/pacman.py, gtkPacman/terminal.py,
+	  gtkpacman, setup.py: Adjusted copyright years
+
+2006-12-30 17:56  ragnarok
+
+	* data/gtkpacman.glade, gtkPacman/dialogs.py, setup.py: ready for
+	  the 2.0 release
+
+2006-12-26 15:14  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/gui.py: Fixed clear_cache and
+	  empty_cache bugs
+
+2006-12-25 16:29  ragnarok
+
+	* gtkPacman/dialogs.py: Improved upgrade dialogs layout
+
+2006-12-23 15:35  ragnarok
+
+	* gtkPacman/gui.py, gtkPacman/terminal.py: Fixed bug in install
+	  from local file
+
+2006-12-23 13:54  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/gui.py, gtkPacman/pacman.py:
+	  Fixed a bug in error_dialog usage. Filelist of freshely installed
+	  packages is now available
+
+2006-12-22 20:22  ragnarok
+
+	* INSTALL: Documentation ready
+
+2006-12-22 18:35  ragnarok
+
+	* INSTALL, MANIFEST, data/locale/zh_TW.po: Updated zh_TW.po.
+	  Preparing documentation for release
+
+2006-12-17 18:39  ragnarok
+
+	* data/locale/messages.pot, data/locale/zh_TW.po: Updated
+	  messages.pot. Updated it.po. Added zh_TW.po
+
+2006-12-17 18:20  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/gui.py: Added error managing for
+	  not found packages
+
+2006-12-17 13:16  ragnarok
+
+	* gtkPacman/dialogs.py: Fixed close button showing in several
+	  dialogs
+
+2006-12-17 13:12  ragnarok
+
+	* gtkPacman/dialogs.py: Fixed close button showing in refresh
+	  dialog
+
+2006-12-16 17:22  ragnarok
+
+	* gtkpacman, setup.py: Locales are now built and installed from .po
+	  by setu.py, thanks to FreeSpeak setu.py code. Fixed it.po.
+
+2006-12-16 15:32  ragnarok
+
+	* data/gtkpacman.glade.h, data/locale/messages.pot: Generated
+	  messages.pot
+
+2006-12-16 13:49  ragnarok
+
+	* MANIFEST, gtkPacman/pacman.py, setup.py: Fixed a bug which
+	  happens on some machines and which misread self.repos
+
+2006-12-15 15:04  ragnarok
+
+	* gtkPacman/models.py: Filelist now working properly
+
+2006-12-14 17:16  ragnarok
+
+	* data/gtkpacman.glade, gtkPacman/dialogs.py, gtkPacman/gui.py,
+	  gtkPacman/models.py: Fixed search dialog. Working on filelist
+	  model
+
+2006-12-13 18:19  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/gui.py: Added pacman icon to all
+	  dialogs
+
+2006-12-13 18:11  ragnarok
+
+	* gtkPacman/dialogs.py, gtkPacman/gui.py, gtkPacman/terminal.py:
+	  Fixed and improved upgrade
+
+2006-12-12 15:32  ragnarok
+
+	* gtkpacman: Relativized locales path
+
+2006-12-12 15:28  ragnarok
+
+	* data/gtkpacman.glade, gtkPacman/gui.py, gtkPacman/models.py:
+	  Filelist is now a treestore. Improved required_by removal
+	  handling
+
+2006-12-12 11:48  ragnarok
+
+	* .: Moved branches/2.0 to trunk
+
+2006-12-10 21:27  ragnarok
+
+	* : Added pacman icon to main window and dialogs
+
+2006-12-10 21:01  ragnarok
+
+	* : added some comments. _setup_avaible_actions is called only if
+	  non root
+
+2006-04-29 10:56  ragnarok
+
+	* : Reimplemented upgrade system
+
+2006-04-28 21:41  ragnarok
+
+	* : Fixed search bug
+
+2006-04-27 22:59  ragnarok
+
+	* : Added models.py
+
+2006-04-27 22:32  ragnarok
+
+	* : Upgrade system and refresh database features added
+
+2006-04-25 21:38  ragnarok
+
+	* : Updated messages.pot. Added clear and empty cache features
+
+2006-04-25 15:16  ragnarok
+
+	* : Added 'add from local file' feature
+
+2006-04-21 23:34  ragnarok
+
+	* : First writing of 'add_from_local_file'
+
+2006-04-19 15:36  ragnarok
+
+	* : Fixed search bug
+
+2006-04-19 14:20  ragnarok
+
+	* : Implemented search
+
+2006-04-19 12:43  ragnarok
+
+	* : Fixed install/remove bugs
+
+2006-04-18 13:54  ragnarok
+
+	* : Fixed repos bug. Added popup menu
+
+2006-04-18 13:22  ragnarok
+
+	* : Fixed foreigners bug
+
+2006-04-18 10:37  ragnarok
+
+	* : Fixed foreigners bug
+
+2006-04-18 10:32  ragnarok
+
+	* : Fixed foreigers bug
+
+2006-04-17 19:11  ragnarok
+
+	* : Improved non_root_dialog's sentence
+
+2006-04-17 19:00  ragnarok
+
+	* : Changed 'non_root' behaviour
+
+2006-04-17 18:28  ragnarok
+
+	* : Improved warning and confirm response callbacks
+
+2006-04-16 19:37  ragnarok
+
+	* : Implemented warning
+
+2006-04-16 18:37  ragnarok
+
+	* : Splitted Pacman menus in two menus
+
+2006-04-16 18:09  ragnarok
+
+	* : Fixed set_servers issue
+
+2006-04-16 17:53  ragnarok
+
+	* : Fixed problems during installation
+
+2006-04-01 20:09  ragnarok
+
+	* : Refined previous garbage collection
+
+2006-04-01 20:09  ragnarok
+
+	* : Garbage collected
+
+2006-04-01 20:08  ragnarok
+
+	* : Fixed various bug in warning
+
+2006-04-01 19:39  ragnarok
+
+	* : Fixed warning_dialog error
+
+2006-04-01 19:10  ragnarok
+
+	* : Added release files
+
+2006-04-01 19:05  ragnarok
+
+	* : Ready to release
+
+2006-04-01 19:03  ragnarok
+
+	* : Preparing for release
+
+2006-04-01 17:56  ragnarok
+
+	* : An unimmaginable amount of work. 2.0-alpha1 ready
+
+2006-03-05 16:49  ragnarok
+
+	* : Added localizzation
+
+2006-03-05 16:49  ragnarok
+
+	* : Added localizzation
+
+2006-03-05 16:08  ragnarok
+
+	* : Resumed all package secondary props in a string called summary
+	  readable by humans. Added cursor_changed signal callback.
+	  Displaying summary and filelist information feature implemented
+
+2006-03-03 23:38  ragnarok
+
+	* : Some cleaning in the repo
+
+2006-03-03 23:36  ragnarok
+
+	* : Some minor changes to the gui
+
+2006-03-01 17:09  ragnarok
+
+	* : added 2.0 branch
+

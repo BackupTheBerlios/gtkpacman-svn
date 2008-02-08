@@ -515,21 +515,21 @@ class gui:
                 dep_todo_list = []
                 dep_black_list = []
                 deps = pac.dependencies.split(", ")
-            for dep in deps:
-                if not dep in self.queues["add"]:
-		    dep_todo_list.append(dep)
-	    while dep_todo_list:
-		dep = dep_todo_list.pop(0)
-		if dep.count(">="):
-                    dep = dep.split(">=")[0]
-		if not (dep in self.queues["add"]):
-		    done, to_do = _req_pac_check(dep, "dep")
-		    if done and not done in pacs_queues["add"]:
-			pacs_queues["add"].append(done)
-		    for add in to_do:
-			if not add in dep_black_list:
-			    dep_todo_list.append(add)
-			    dep_black_list.append(add)
+		for dep in deps:
+		    if not dep in self.queues["add"]:
+			dep_todo_list.append(dep)
+		while dep_todo_list:
+		    dep = dep_todo_list.pop(0)
+		    if dep.count(">="):
+			dep = dep.split(">=")[0]
+		    if not (dep in self.queues["add"]):
+			done, to_do = _req_pac_check(dep, "dep")
+			if done and not done in pacs_queues["add"]:
+			    pacs_queues["add"].append(done)
+			for add in to_do:
+			    if not add in dep_black_list:
+				dep_todo_list.append(add)
+				dep_black_list.append(add)
 
         for name in self.queues["remove"]:
             pac = self.database.get_by_name(name)
@@ -695,8 +695,10 @@ class gui:
         remove = []
         
         for dep in deps:
+	    if dep.count(">="):
+		dep = dep.split(">=")[0]
             dep_pkg = self.database.get_by_name(dep)
-            if not dep_pkg.installed:
+            if dep_pkg and not dep_pkg.installed:
                 install.append(dep_pkg)
             continue
 

@@ -461,17 +461,37 @@ class gui:
         return
 
     def execute(self, widget=None, data=None):
-        def _req_pac_check(to_check):
+        def _req_pac_check(to_check, flag):
             to_do = []
-            pac = self.database.get_by_name(to_check)
+	    try:
+		pac = self.database.get_by_name(to_check)
+	    except NameError:
+		dlg = error_dialog(self.gld.get_widget("main_win"),
+		_("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
+		dlg.run()
+		dlg.destroy()
+		pacs_queues["add"].remove(pac)
+		self.queues["add"].remove(name)
+		return
 	    try:
 		if not pac.prop_setted:
 		    self.database.set_pac_properties(pac)
 	    except:
 		return pac, to_do
-            for req in pac.req_by.split(", "):
-                if len(req) >= 1:
-                    to_do.append(req)
+	    
+	    if flag == "req":
+		for req in pac.req_by.split(", "):
+		    if len(req) >= 1:
+			to_do.append(req)
+	    else:
+		if not pac.installed:
+		    for dep in pac.dependencies.split(", "):
+			if len(dep) >= 1:
+			    to_do.append(dep)
+			else:
+			    pac = None
+		    return pac, to_do
+		pac = None
             return pac, to_do
 
         pacs_queues = { "add": [], "remove": [] }
@@ -492,26 +512,24 @@ class gui:
             pacs_queues["add"].append(pac)
             
             if pac.dependencies:
+                dep_todo_list = []
+                dep_black_list = []
                 deps = pac.dependencies.split(", ")
             for dep in deps:
-                if dep.count(">="):
+                if not dep in self.queues["add"]:
+		    dep_todo_list.append(dep)
+	    while dep_todo_list:
+		dep = dep_todo_list.pop(0)
+		if dep.count(">="):
                     dep = dep.split(">=")[0]
-                try:
-                    dep_pac = self.database.get_by_name(dep)
-                except NameError:
-                    dlg = error_dialog(self.gld.get_widget("main_win"),
-                                       _("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
-                    dlg.run()
-                    dlg.destroy()
-                    pacs_queues["add"].remove(pac)
-                    self.queues["add"].remove(name)
-                    break
-                try:
-		    if not dep_pac.installed:
-			pacs_queues["add"].append(dep_pac)
-		except:
-		    pass
-            continue
+		if not (dep in self.queues["add"]):
+		    done, to_do = _req_pac_check(dep, "dep")
+		    if done and not done in pacs_queues["add"]:
+			pacs_queues["add"].append(done)
+		    for add in to_do:
+			if not add in dep_black_list:
+			    dep_todo_list.append(add)
+			    dep_black_list.append(add)
 
         for name in self.queues["remove"]:
             pac = self.database.get_by_name(name)
@@ -521,21 +539,21 @@ class gui:
             pacs_queues["remove"].append(pac)
             if pac.req_by:
                 req_pacs = []
-                todo_list = []
-                black_list = []
+                req_todo_list = []
+                req_black_list = []
                 for req in pac.req_by.split(", "):
                     if not (req in self.queues["remove"]):
-                        todo_list.append(req)
-                while todo_list:
-                    req = todo_list.pop(0)
+                        req_todo_list.append(req)
+                while req_todo_list:
+                    req = req_todo_list.pop(0)
                     if not (req in self.queues["remove"]):
-                        done, to_do = _req_pac_check(req)
+                        done, to_do = _req_pac_check(req, "req")
                         if done and not done in req_pacs:
                             req_pacs.append(done)
                         for add in to_do:
-                            if not add in black_list:
-                                todo_list.append(add)
-                                black_list.append(add)
+                            if not add in req_black_list:
+                                req_todo_list.append(add)
+                                req_black_list.append(add)
                     continue
 
                 if req_pacs:

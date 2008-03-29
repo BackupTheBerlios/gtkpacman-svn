@@ -46,6 +46,7 @@ class package:
         self.req_by = ""
         self.dependencies = ""
         self.prop_setted = False
+	self.flag = None
         
     def set_version(self, version):
         """Set package's version"""
@@ -191,6 +192,7 @@ class database(dict):
     def set_pacs(self):
         """Grab all pacs from machine db, instatiate a package obj for each
         of them and order them by cols"""
+	self["local"] = []
         self.inst_pacs = self._get_installed()
         
         for repo in self.repos:
@@ -201,7 +203,11 @@ class database(dict):
             
             for pac in pacs:
                 pac_obj = self._make_pac(pac, repo)
-                self[repo].append(pac_obj)
+		if pac_obj.installed:
+		    self[repo].append(pac_obj)
+		    self["local"].append(pac_obj)
+		else:
+		    self[repo].append(pac_obj)
                 continue
             continue
         
@@ -213,44 +219,39 @@ class database(dict):
             ver = self.inst_pacs[pac]
             self["foreigners"].append(package(pac, ver, ver, "foreigners"))
         return
-
+    
     def set_pac_properties(self, pac):
         """Set the properties for the given pac"""
-        if pac.installed:
-            version = pac.inst_ver
-            repo = "local"
-        else:
-            version = pac.version
-            repo = pac.repo
-            
-        pack_dir = "-".join((pac.name, version))
-        if not (self.ver[0] == 3 and self.ver[1] == 1) and repo == "local":
-            path_to_db = "/var/lib/pacman"
-        else:
-            path_to_db = "/var/lib/pacman/sync"
-        path = "%s/%s/%s" %(path_to_db, repo, pack_dir)
-        self._set_summary(pac, path)
-        self._set_filelist(pac, path)
-        pac.prop_setted = True
-        return
-    
-    def _set_summary(self, pac, path):
+	if pac.installed:
+	    raw_desc = self._get_raw_desc(pac, "desc")
+	    raw_depends = self._get_raw_desc(pac, "depends")
+	    raw_files = self._get_raw_desc(pac, "files")
+	    
+	    pac.req_by = self._search_raw_desc(pac.name, None)
+	    self._set_filelist(pac, raw_files)
+	else:
+	    raw_desc = self._get_raw_desc(pac, "desc")
+	    raw_depends = self._get_raw_desc(pac, "depends")
 
-        desc_file = open("%s/desc" %path).read()
+        self._set_summary(pac, raw_desc, raw_depends)
         
-        desc = self._get_description(desc_file)
-        deps = self._get_dependencies(path)
-        size = self._get_size(desc_file)
+        pac.prop_setted = True
+    
+    def _set_summary(self, pac, raw_desc, raw_depends=None):
+        
+        desc = self._get_description(raw_desc)
+        deps = self._get_dependencies(raw_depends)
+        size = self._get_size(raw_desc)
 
         if pac.installed:
-            req_by = self._get_req_by(path)
-            packager = self._get_packager(desc_file)
-            builddate = self._get_builddate(desc_file)
-            installdate = self._get_installdate(desc_file)
-            reason = self._get_reason(desc_file)
+	    if not pac.req_by:
+		pac.req_by = self._get_req_by(raw_depends)
+            packager = self._get_packager(raw_desc)
+            builddate = self._get_builddate(raw_desc)
+            installdate = self._get_installdate(raw_desc)
+            reason = self._get_reason(raw_desc)
 
-            summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, req_by, size, packager, builddate, installdate, reason)
-            pac.req_by = req_by
+            summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, pac.req_by, size, packager, builddate, installdate, reason)
 
         else:
             summary = _("Description: %s\nDepends on: %s\nSize (compressed): %s") %(desc, deps, size)
@@ -340,9 +341,8 @@ class database(dict):
             pass
         return ''
 
-    def _get_dependencies(self, path):
+    def _get_dependencies(self, deps):
         """Set dependencies list for the given pac"""
-        deps = open("%s/depends" %path).read()
 
         dependencies = []
         try:
@@ -355,9 +355,9 @@ class database(dict):
         deps = ", ".join(depends)
         return deps
     
-    def _get_req_by(self, path):
+    def _get_req_by(self, depends):
         """Set list of packages that needs given pac"""
-        depends = open("%s/depends" %path).read()
+        #depends = open("%s/depends" %path).read()
 
         try:
             begin = depends.index("%REQUIREDBY%") + len("%REQUIREDBY%")
@@ -369,13 +369,13 @@ class database(dict):
         req_by = ", ".join(reqs)
         return req_by
 
-    def _set_filelist(self, pac, path):
+    def _set_filelist(self, pac, files):
         """Set installed files list for the given pac"""
         if not pac.installed:
             return _("%s is not installed") %pac.name
         
         try:
-	    files = open("%s/files" %path).read()
+	    #files = open("%s/files" %path).read()
 	    begin = files.index("%FILES%") + len("%FILES%")
 	    end = files.find("%", begin) - len("%")
 	    filelist = files[begin:end].strip()
@@ -446,13 +446,63 @@ class database(dict):
             continue
         return
     
+    def _get_raw_desc(self, pac, to_get):
+	if pac.installed:
+            version = pac.inst_ver
+            repo = "local"
+	else:
+	    version = pac.version
+            repo = pac.repo
+	
+	if not (self.ver[0] == 3 and self.ver[1] == 1) and repo == "local":
+            path_to_db = "/var/lib/pacman"
+        else:
+            path_to_db = "/var/lib/pacman/sync"
+	    
+	pack_dir = "-".join((pac.name, version))
+	path = "%s/%s/%s" %(path_to_db, repo, pack_dir)
+	    
+	try:
+	    raw_file = open("%s/%s" %(path, to_get)).read()
+	except IOError:
+	    print "Warning: can't open %path" %path
+	    
+	return raw_file
+    
+    def _search_raw_desc(self, pac, search):
+	if search:
+	    raw_desc = self._get_raw_desc(pac, "desc")
+	    desc = self._get_description(raw_desc)
+	    return desc
+	else:
+	    stack = []
+	    req_by = ''
+	    req = ""
+	    for package in self["local"]:
+		if not package.req_by:
+		    raw_desc = self._get_raw_desc(package, "depends")
+		    req_by = self._get_dependencies(raw_desc)
+		for p in req_by.split(','):
+		    p = p.strip()
+		    if '=<' in p:
+			p = p.split('=<')[0]
+		    if '>=' in p:
+			p = p.split('>=')[0]
+		    if p == pac and package.name not in stack and package.name != pac:
+			stack.append(package.name)
+	    if stack:
+		for name in stack:
+		    req = req + ", " + name
+		req = req[2:]
+	return req	    
+    
     def get_by_desc(self, desc):
         """Return pacs which description match with desc"""
         pacs = []
         for repo in self.repos:
             for pac in self[repo]:
-                if not pac.prop_setted:
-                    self.set_pac_properties(pac)
+		if not pac.description:
+		    pac.description = self._search_raw_desc(pac, True)
                 if pac.description.count(desc):
                     pacs.append(pac)
                 continue
@@ -523,9 +573,11 @@ class database(dict):
         for line in infos_lines:
             sides = line.split(" = ")
             if sides[0] == "depend":
-                deps.append(sides[1])
+		if sides[1]:
+		    deps.append(sides[1])
             elif sides[0] == "conflict":
-                conflicts.append(sides[1])
+		if sides[1]:
+		    conflicts.append(sides[1])
             continue
 
         system("rm -rf /tmp/gtkpacman")

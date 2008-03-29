@@ -421,9 +421,10 @@ class local_confirm_dialog(confirm_dialog):
         confirm_dialog.__init__(self, parent, pacs_queue, icon)
         package = basename(fname)
 
-        name_n_ver = package.split("-", package.count("-")-1)
-        version = name_n_ver.pop()
-        name = "-".join(name_n_ver)
+        name_n_ver = package.rsplit("-", 3)
+        name = name_n_ver.pop(0)
+        del name_n_ver[-1]
+        version = '-'.join(name_n_ver)
 
         self.install_model.prepend(["red", name, version])
 

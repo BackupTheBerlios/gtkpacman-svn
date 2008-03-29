@@ -23,69 +23,73 @@ class terminal(Terminal):
     def __init__(self):
 
         Terminal.__init__(self)
+        self.fork_command()
         self.set_sensitive(False)
-
+    
+    def _constructCmds(self, queues):
+        inst = ''
+        inst_dep = ''
+        rm = ''
+        
+        for pac in queues["add"]:
+            # Package should be installed as dependancy if flag == 11. 
+            # Add it inst_dep
+            if pac.flag == 11:
+                inst_dep = inst_dep + ' ' + pac.name
+            # Otherwise add it to inst
+            else:
+                inst = inst + ' ' +pac.name
+        
+        for pac in queues["remove"]:
+            rm = rm + ' ' + pac.name
+        
+        return inst, inst_dep, rm
+        
     def do(self, queues):
-        names_queues = { "add": [], "remove": []}
-
-        for pac in queues["add"]:
-            names_queues["add"].append(pac.name)
-            continue
-        for pac in queues["remove"]:
-            names_queues["remove"].append(pac.name)
-            continue
-
-        inst_pacs = " ".join(names_queues["add"])
-        rem_pacs = " ".join(names_queues["remove"])
-
+        inst, inst_dep, rm = self._constructCmds(queues)
         pacman = "pacman --noconfirm"
-        
-        if inst_pacs and rem_pacs:
-            command = "%s -Sdf %s;%s -Rdf %s;exit\n" %(pacman, inst_pacs, pacman, rem_pacs)
-
-        elif inst_pacs:
-            command = "%s -Sdf %s;exit\n" %(pacman, inst_pacs)
-
-        elif rem_pacs:
-            command = "%s -Rdf %s;exit\n" %(pacman, rem_pacs)
-
-        else:
-            command = "exit\n"
+        commands = []
             
-        self.fork_command()
-        self.feed_child(command)
-
-    def do_local(self, fname, queues):
-        names_queues = { "add": [], "remove": []}
+        if inst:
+            cmd_inst = "%s -Sdf %s \n" %(pacman, inst)
+            commands.append(cmd_inst)            
+        if inst_dep:
+            cmd_inst_dep = "%s -Sdf --asdep %s \n" %(pacman, inst_dep)
+            commands.append(cmd_inst_dep)
+        if rm:
+            cmd_rem = "%s -Rdf %s \n" %(pacman, rm)
+            commands.append(cmd_rem)
+            
+        commands.append("exit \n")                
+        map(self.execute, commands)
         
-        for pac in queues["add"]:
-            names_queues["add"].append(pac.name)
-            continue
-        for pac in queues["remove"]:
-            names_queues["remove"].append(pac.name)
-            continue
-
-        inst_pacs = " ".join(names_queues["add"])
-        rem_pacs = " ".join(names_queues["remove"])
-
-        pacman = "pacman --noconfirm"
+    def do_local(self, fname, queues):
+        inst, inst_dep, rm = self._constructCmds(queues)
+        pacman = "pacman --noconfirm" 
         local = "%s -Uf %s" %(pacman, fname)
-
-        if inst_pacs and rem_pacs:
-            command = "%(pac)s -Sdf %(inst)s;%(pac)s -Rdf %(rem)s;%(loc)s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs, "rem": rem_pacs}
-        elif inst_pacs:
-            command = "%(pac)s -Sdf %(inst)s;%(pac)s;%(loc)s;exit\n" %{"pac": pacman, "loc": local, "inst": inst_pacs}
-        elif rem_pacs:
-            command = "%(loc)s;%(pac)s -Rdf %(rem)s;%(loc)s;exit\n" %{"pac": pacman, "loc": local, "rem": rem_pacs}
-        else:
-            command = "%s;exit\n" %local
-
-        self.fork_command()
-        self.feed_child(command)
+        commands = []
+        
+        if inst:
+            cmd_inst = "%s -Sdf %s \n" %(pacman, inst)
+            commands.append(cmd_inst)
+        if inst_dep:
+            cmd_inst_dep = "%s -Sdf --asdep %s \n" %(pacman, inst_dep)
+            commands.append(cmd_inst_dep)
+        if rm:
+            cmd_rem = "%s -Rdf %s \n" %(pacman, rm)
+            commands.append(cmd_rem)
+        
+        cmd_inst_file = "%s \n" %local
+        commands.append(cmd_inst_file)
+        commands.append("exit \n")
+        map(self.execute, commands)
 
     def do_upgrade(self):
-        self.fork_command()
-        self.feed_child("pacman -Su --noconfirm;exit\n")
+        self.execute("pacman -Su --noconfirm;exit\n")
+
+    def execute(self, cmd):
+        # Insert commands to terminal
+        self.feed_child(cmd)
 
     def close(self, term, close_button):
         close_button.show()

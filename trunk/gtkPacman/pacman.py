@@ -46,7 +46,9 @@ class package:
         self.req_by = ""
         self.dependencies = ""
         self.prop_setted = False
-	self.flag = None
+	self.summary = ''
+	# Flag is for marking package as " install as dependency ", ( flag = 11 )
+	self.flag = None 
         
     def set_version(self, version):
         """Set package's version"""
@@ -232,8 +234,11 @@ class database(dict):
 	else:
 	    raw_desc = self._get_raw_desc(pac, "desc")
 	    raw_depends = self._get_raw_desc(pac, "depends")
-
-        self._set_summary(pac, raw_desc, raw_depends)
+	
+	if raw_desc:
+	    self._set_summary(pac, raw_desc, raw_depends)
+	else:
+	    return
         
         pac.prop_setted = True
     
@@ -464,8 +469,9 @@ class database(dict):
 	    
 	try:
 	    raw_file = open("%s/%s" %(path, to_get)).read()
-	except IOError:
-	    print "Warning: can't open %path" %path
+	except IOError, msg:
+	    print "!! Warning: can't open %s \n\t" %path, msg
+	    return None
 	    
 	return raw_file
     

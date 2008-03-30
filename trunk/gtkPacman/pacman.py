@@ -207,7 +207,9 @@ class database(dict):
                 pac_obj = self._make_pac(pac, repo)
 		if pac_obj.installed:
 		    self[repo].append(pac_obj)
-		    self["local"].append(pac_obj)
+		    ver = pac_obj.inst_ver
+		    pac_local = package(pac_obj.name, ver, inst_ver=ver, repo='local', inst=True, isold=False)
+		    self["local"].append(pac_local)
 		else:
 		    self[repo].append(pac_obj)
                 continue
@@ -380,12 +382,11 @@ class database(dict):
             return _("%s is not installed") %pac.name
         
         try:
-	    #files = open("%s/files" %path).read()
 	    begin = files.index("%FILES%") + len("%FILES%")
 	    end = files.find("%", begin) - len("%")
 	    filelist = files[begin:end].strip()
 	    pac.filelist = filelist
-	except ValueError:
+	except (ValueError, AttributeError):
 	    return
         return
     

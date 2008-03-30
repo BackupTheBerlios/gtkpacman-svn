@@ -64,6 +64,10 @@ class whole_list(ListStore):
         
         for r_list in pacs:
             for pac in r_list:
+		# We don't want to add pacs from local repo or we will have duplicates
+		if pac.repo == 'local':
+		    continue
+		    
                 if not (pac.isold or pac.installed):
                     image = "red"
                     inst_ver = "-"

@@ -240,7 +240,8 @@ class gui:
             inst_mod = installed_list(self.database[repo])
 
             self.models[repo][_("all")] = all_mod
-            self.models[repo][_("installed")] = inst_mod
+	    if repo != _('local'):
+		self.models[repo][_("installed")] = inst_mod
             continue
         return
 
@@ -274,12 +275,19 @@ class gui:
                     if check == rm[2]:
                         del liststore[nr -1]
             elif check in self.queues["remove"] and submodel ==  _("installed"):
-                nr = 0
-                for rm in liststore:
-                    nr += 1
-                    if check == rm[2]:
-                        del liststore[nr -1]
-            elif row[2] in self.queues["add"] and submodel =="all":
+                #nr = 0
+                #for rm in liststore:
+                    #nr += 1
+                    #if check == rm[2]:
+                        #del liststore[nr -1]
+		itr = liststore.get_iter_first()
+		while itr:
+		    rm = liststore.get_value(itr, 2)
+		    # We delete row if match
+		    if check == rm:
+			liststore.remove(itr)
+		    itr = liststore.iter_next(itr)
+            elif row[2] in self.queues["add"] and row[0] == 'red' and submodel =="all":
                 row[0] = "green"
                 row[3] = row[4]
                 self.models[model]["installed"].append(row)
@@ -596,6 +604,9 @@ class gui:
             for pac in pacs_queues["add"]:
                 if not pac.name in self.queues["add"]:
                     self.queues["add"].append(pac.name)
+	    for pac in pacs_queues["remove"]:
+                if not pac.name in self.queues["remove"]:
+                    self.queues["remove"].append(pac.name)
 
         self._refresh_trees()
         self.queues["add"] = []
@@ -705,7 +716,8 @@ class gui:
         for conflict in conflicts:
             try:
                 conflict_pkg = self.database.get_by_name(conflict)
-                remove.append(conflict_pkg)
+		if conflict_pkg:
+		    remove.append(conflict_pkg)
             except NameError:
                 pass
             continue

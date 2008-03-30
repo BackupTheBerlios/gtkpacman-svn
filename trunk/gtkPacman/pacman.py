@@ -306,9 +306,11 @@ class database(dict):
         builddate = desc[begin:end].strip()
 	
 	if builddate.isdigit():
-	    num = int(builddate)
-	    builddate = time.ctime(num)
-	    return builddate
+	    try:
+		num = int(builddate)
+		builddate = time.ctime(num)
+	    except ValueError:
+		return builddate
         return builddate
 
     def _get_installdate(self, desc):

@@ -231,7 +231,7 @@ class database(dict):
 	    raw_depends = self._get_raw_desc(pac, "depends")
 	    raw_files = self._get_raw_desc(pac, "files")
 	    
-	    pac.req_by = self._search_raw_desc(pac.name, None)
+	    pac.req_by = self._search_reqby(pac.name)
 	    self._set_filelist(pac, raw_files)
 	else:
 	    raw_desc = self._get_raw_desc(pac, "desc")
@@ -266,6 +266,30 @@ class database(dict):
         pac.summary = summary
         pac.dependencies = deps
         pac.description = desc
+	
+    def _get_raw_desc(self, pac, to_get):
+	if pac.installed:
+            version = pac.inst_ver
+            repo = "local"
+	else:
+	    version = pac.version
+            repo = pac.repo
+	
+	if not (self.ver[0] == 3 and self.ver[1] == 1) and repo == "local":
+            path_to_db = "/var/lib/pacman"
+        else:
+            path_to_db = "/var/lib/pacman/sync"
+	    
+	pack_dir = "-".join((pac.name, version))
+	path = "%s/%s/%s" %(path_to_db, repo, pack_dir)
+	    
+	try:
+	    raw_file = open("%s/%s" %(path, to_get)).read()
+	except IOError, msg:
+	    print "!! Warning: can't open %s \n\t" %path, msg
+	    return None
+	    
+	return raw_file
 
     def _get_size(self, desc):
 
@@ -366,8 +390,7 @@ class database(dict):
     
     def _get_req_by(self, depends):
         """Set list of packages that needs given pac"""
-        #depends = open("%s/depends" %path).read()
-
+	
         try:
             begin = depends.index("%REQUIREDBY%") + len("%REQUIREDBY%")
             end = depends.find("%", begin) - len("%")
@@ -452,58 +475,36 @@ class database(dict):
                     self.olds.append(pac)
                 continue
             continue
-        return
+        return   
     
-    def _get_raw_desc(self, pac, to_get):
-	if pac.installed:
-            version = pac.inst_ver
-            repo = "local"
-	else:
-	    version = pac.version
-            repo = pac.repo
-	
-	if not (self.ver[0] == 3 and self.ver[1] == 1) and repo == "local":
-            path_to_db = "/var/lib/pacman"
-        else:
-            path_to_db = "/var/lib/pacman/sync"
-	    
-	pack_dir = "-".join((pac.name, version))
-	path = "%s/%s/%s" %(path_to_db, repo, pack_dir)
-	    
-	try:
-	    raw_file = open("%s/%s" %(path, to_get)).read()
-	except IOError, msg:
-	    print "!! Warning: can't open %s \n\t" %path, msg
-	    return None
-	    
-	return raw_file
+    def _search_reqby(self, pac_name):
+	# Search in local repo for pac_name in descriptions files. 
+	# If found than pack.name is requied by pack_name
+	stack = []
+	req_by = ''
+	req = ""
+	for package in self["local"]:
+	    if not package.req_by:
+		raw_desc = self._get_raw_desc(package, "depends")
+		req_by = self._get_dependencies(raw_desc)
+	    for p in req_by.split(','):
+		p = p.strip()
+		if '=<' in p:
+		    p = p.split('=<')[0]
+		if '>=' in p:
+		    p = p.split('>=')[0]
+		if p == pac_name and package.name not in stack and package.name != pac_name:
+		    stack.append(package.name)
+	if stack:
+	    for name in stack:
+		req = req + ", " + name
+	    req = req[2:]
+	return req	
     
-    def _search_raw_desc(self, pac, search):
-	if search:
-	    raw_desc = self._get_raw_desc(pac, "desc")
-	    desc = self._get_description(raw_desc)
-	    return desc
-	else:
-	    stack = []
-	    req_by = ''
-	    req = ""
-	    for package in self["local"]:
-		if not package.req_by:
-		    raw_desc = self._get_raw_desc(package, "depends")
-		    req_by = self._get_dependencies(raw_desc)
-		for p in req_by.split(','):
-		    p = p.strip()
-		    if '=<' in p:
-			p = p.split('=<')[0]
-		    if '>=' in p:
-			p = p.split('>=')[0]
-		    if p == pac and package.name not in stack and package.name != pac:
-			stack.append(package.name)
-	    if stack:
-		for name in stack:
-		    req = req + ", " + name
-		req = req[2:]
-	return req	    
+    def _search_keyword(self, pac):
+	raw_desc = self._get_raw_desc(pac, "desc")
+	desc = self._get_description(raw_desc)
+	return desc
     
     def get_by_desc(self, desc):
         """Return pacs which description match with desc"""
@@ -511,7 +512,7 @@ class database(dict):
         for repo in self.repos:
             for pac in self[repo]:
 		if not pac.description:
-		    pac.description = self._search_raw_desc(pac, True)
+		    pac.description = self._search_keyword(pac)
                 if pac.description.count(desc):
                     pacs.append(pac)
                 continue

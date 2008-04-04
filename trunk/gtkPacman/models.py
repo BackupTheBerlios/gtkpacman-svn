@@ -16,7 +16,8 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-from gtk import ListStore, TreeStore
+from gtk import ListStore, TreeStore, TreeView
+import gtk
 
 class installed_list(ListStore):
 
@@ -132,5 +133,36 @@ class file_list(TreeStore):
                 idx = split.index(last)+1
                 nodes[split[idx]] = self.append(nodes[last], [split[idx]])
             continue
+	
+class PacViewModel( ListStore):
+    def __init__(self, queue):
+	ListStore.__init__(self, str, str, str)
+	
+	for pac in queue:
+	    version = pac.inst_ver
+            if pac.isold:
+                image = "yellow"
+            elif pac.installed:
+                image = "green"
+            else:
+                image = "red"
+		version = pac.version
 
-                    
+	    self.append([image, pac.name, version])
+	
+class PacView( TreeView):
+    def __init__(self, queue):
+	TreeView.__init__( self, PacViewModel(queue))
+	self.set_property( "enable-search", False)
+	
+	pix = gtk.CellRendererPixbuf()
+	column = gtk.TreeViewColumn( '', pix, stock_id=0)
+	self.append_column( column)
+	
+	cell = gtk.CellRendererText()
+	column = gtk.TreeViewColumn( 'Package', cell, text=1)
+	self.append_column( column)
+	
+	cell = gtk.CellRendererText()
+	column = gtk.TreeViewColumn( 'Version', cell, text=2)
+	self.append_column( column)

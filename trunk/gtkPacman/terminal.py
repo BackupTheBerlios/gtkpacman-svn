@@ -85,7 +85,8 @@ class terminal(Terminal):
         map(self.execute, commands)
 
     def do_upgrade(self):
-        self.execute("pacman -Su --noconfirm;exit\n")
+        self.execute("pacman -Su --noconfirm \n")
+        self.execute("exit \n")
 
     def execute(self, cmd):
         # Insert commands to terminal

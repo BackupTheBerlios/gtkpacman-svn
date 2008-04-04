@@ -31,8 +31,10 @@ from gtk import BUTTONS_CLOSE, BUTTONS_YES_NO, MESSAGE_ERROR, MESSAGE_QUESTION
 from gtk import RESPONSE_ACCEPT, RESPONSE_REJECT, RESPONSE_YES, RESPONSE_CLOSE
 from gtk import RESPONSE_NO, image_new_from_stock, ICON_SIZE_BUTTON
 from gtk import ICON_SIZE_DIALOG, main_iteration, expander_new_with_mnemonic
+from gtk import WIN_POS_CENTER_ON_PARENT
 from gtk.gdk import pixbuf_new_from_file
 
+from models import PacView
 from terminal import terminal
 
 class non_root_dialog(MessageDialog):
@@ -77,63 +79,8 @@ class confirm_dialog(Dialog):
 
     def _setup_trees(self, queues):
 
-        self._setup_install_tree(queues["add"])
-        self._setup_remove_tree (queues["remove"])
-
-    def _setup_install_tree(self, queue):
-        
-        self.install_tree = TreeView()
-        self.install_model = ListStore(str, str, str)
-
-        self.install_tree.insert_column_with_attributes(-1, "",
-                                                        CellRendererPixbuf(),
-                                                        stock_id=0)
-        self.install_tree.insert_column_with_attributes(-1, _("Package"),
-                                                        CellRendererText(),
-                                                        text=1)
-        self.install_tree.insert_column_with_attributes(-1, _("Version"),
-                                                        CellRendererText(),
-                                                        text=2)
-
-        for pac in queue:
-            if pac.isold:
-                image = "yellow"
-            elif pac.installed:
-                image = "green"
-            else:
-                image = "red"
-
-            self.install_model.append([image, pac.name, pac.version])
-            continue
-        self.install_tree.set_model(self.install_model)
-        return
-
-    def _setup_remove_tree(self, queue):
-        
-        self.remove_tree = TreeView()
-        self.remove_model = ListStore(str, str, str)
-
-        self.remove_tree.insert_column_with_attributes(-1, "",
-                                                       CellRendererPixbuf(),
-                                                       stock_id=0)
-        self.remove_tree.insert_column_with_attributes(-1, _("Package"),
-                                                       CellRendererText(),
-                                                       text=1)
-        self.remove_tree.insert_column_with_attributes(-1, _("Version"),
-                                                       CellRendererText(),
-                                                       text=2)
-        for pac in queue:
-            if pac.isold:
-                image = "yellow"
-            elif pac.installed:
-                image = "green"
-            else:
-                image = "red"
-
-            self.remove_model.append([image, pac.name, pac.version])
-            continue
-        self.remove_tree.set_model(self.remove_model)
-        return
+        self.install_tree = PacView(queues["add"])
+        self.remove_tree = PacView(queues["remove"])
 
     def _setup_layout(self):
 
@@ -202,31 +149,8 @@ class warning_dialog(Dialog):
         return
 
     def _setup_tree(self, pacs):
-        self.tree = TreeView()
-        self.model = ListStore(str, str, str)
 
-        self.tree.insert_column_with_attributes(-1, "",
-                                                CellRendererPixbuf(),
-                                                stock_id=0)
-        self.tree.insert_column_with_attributes(-1, "",
-                                                CellRendererText(),
-                                                text=1)
-        self.tree.insert_column_with_attributes(-1, "",
-                                                CellRendererText(),
-                                                text=2)
-
-        for pac in pacs:
-            if pac.isold:
-                image = "yellow"
-            elif pac.installed:
-                image = "green"
-            else:
-                image = "red"
-
-            self.model.append([image, pac.name, pac.inst_ver])
-            continue
-
-        self.tree.set_model(self.model)
+        self.tree = PacView(pacs)
         self.tree.show_all()
         return
 
@@ -269,14 +193,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"""))
 
 class do_dialog(Window):
 
-    def __init__(self, queues, icon):
+    def __init__(self, parent, queues, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
         self.set_property("destroy-with-parent", True)
         self.set_modal(True)
+        self.set_transient_for(parent)
         self.connect("delete-event", self._stop_closing)
-        self.set_position(WIN_POS_CENTER)
+        self.set_position(WIN_POS_CENTER_ON_PARENT)
 
         self.set_icon(pixbuf_new_from_file(icon))
         self._setup_trees(queues)
@@ -286,65 +211,8 @@ class do_dialog(Window):
 
     def _setup_trees(self, queues):
 
-        self._setup_install_tree(queues["add"])
-        self._setup_remove_tree(queues["remove"])
-
-    def _setup_install_tree(self, add_queue):
-
-        self.inst_model = ListStore(str, str, str)
-
-        for pac in add_queue:
-            if pac.isold:
-                image = "yellow"
-            elif pac.installed:
-                image = "green"
-            else:
-                image = "red"
-
-            self.inst_model.append([image, pac.name, pac.version])
-            continue
-
-        self.inst_tree = TreeView()
-
-        self.inst_tree.insert_column_with_attributes(-1, "",
-                                                     CellRendererPixbuf(),
-                                                     stock_id = 0)
-        self.inst_tree.insert_column_with_attributes(-1, _("Package"),
-                                                     CellRendererText(),
-                                                     text = 1)
-        self.inst_tree.insert_column_with_attributes(-1, _("Version"),
-                                                     CellRendererText(),
-                                                     text = 2)
-        self.inst_tree.set_model(self.inst_model)
-
-    def _setup_remove_tree(self, remove_queue):
-
-        self.rem_model = ListStore(str, str, str)
-
-        for pac in remove_queue:
-            if pac.isold:
-                image = "yellow"
-            elif pac.installed:
-                image = "green"
-            else:
-                image = "red"
-
-            self.rem_model.append([image, pac.name, pac.inst_ver])
-            continue
-
-        self.rem_tree = TreeView()
-
-        self.rem_tree.insert_column_with_attributes(-1, "",
-                                                    CellRendererPixbuf(),
-                                                    stock_id = 0)
-        self.rem_tree.insert_column_with_attributes(-1, _("Package"),
-                                                    CellRendererText(),
-                                                    text = 1)
-        self.rem_tree.insert_column_with_attributes(-1, _("Installed Version"),
-                                                    CellRendererText(),
-                                                    text = 2)
-
-        self.rem_tree.set_model(self.rem_model)
+        self.install_tree = PacView(queues["add"])
+        self.remove_tree = PacView(queues["remove"])
 
     def _set_size (self, widget, event, data=None):
         if self.expander.get_expanded():
@@ -367,8 +235,8 @@ class do_dialog(Window):
         rem_scroll = ScrolledWindow()
         rem_scroll.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
         
-        inst_scroll.add(self.inst_tree)
-        rem_scroll.add(self.rem_tree)
+        inst_scroll.add(self.install_tree)
+        rem_scroll.add(self.remove_tree)
         
         self.hpaned.pack1(inst_scroll, False, False)
         self.hpaned.pack2(rem_scroll, False, False)
@@ -574,21 +442,8 @@ class upgrade_confirm_dialog(Dialog):
         self._setup_layout()
         
     def _setup_tree(self, pacs):
-        self.model = ListStore(str, str, str)
 
-        for pac in pacs:
-            self.model.append(["yellow", pac.name, pac.version])
-            continue
-
-        self.tree = TreeView()
-        self.tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
-                                                stock_id = 0)
-        self.tree.insert_column_with_attributes(-1, "Package",
-                                                CellRendererText(), text = 1)
-        self.tree.insert_column_with_attributes(-1, "Version",
-                                                CellRendererText(), text = 2)
-
-        self.tree.set_model(self.model)
+        self.tree = PacView( pacs)
         self.tree.show()
 
     def _setup_layout(self):
@@ -645,13 +500,12 @@ class command_dialog(Window):
 
     def run(self, command, pacman = True):
         self.show()
-        
-        self.terminal.fork_command()
 
         if pacman:
-            self.terminal.feed_child("pacman --noconfirm -%s;exit\n" %command)
+            self.terminal.execute( "pacman --noconfirm -%s \n" %command)
+            self.terminal.execute( "exit \n")
         else:
-            self.terminal.feed_child("%s;exit\n" %command)
+            self.terminal.execute( "exit \n")
             
 class error_dialog(MessageDialog):
 

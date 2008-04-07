@@ -148,7 +148,7 @@ class gui:
             col.set_reorderable(True)
             col.set_sort_column_id(sort_id)
             col.set_clickable(True)
-            col.set_resizable(True)
+            col.set_resizable(False)
             sort_id += 1
             continue
         return
@@ -338,8 +338,10 @@ class gui:
             
         del(pacs_queues)
 	self._statusbar()
+	self.gld.get_widget("main_win").set_sensitive(True)
+	
     
-#----------------------------- Callbacks ------------------------------#
+    #----------------------------- Callbacks ------------------------------#
     def show_popup(self, widget, event, data=None):
         if event.button == 3:
             self.popup.popup(None, None, None, event.button, event.time)
@@ -420,6 +422,7 @@ class gui:
         dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),
                                             self.icon)
         if dlg.run() == RESPONSE_ACCEPT:
+	    self.gld.get_widget("main_win").set_sensitive(False)
             fname = dlg.get_filename()
             dlg.destroy()
         else:
@@ -456,39 +459,8 @@ class gui:
             i_dlg = local_install_dialog(fname, pacs_queues, self.icon)
             i_dlg.connect("destroy", self._after_local_install)
             i_dlg.run()
-	    
-    def make_package(self, widget):
-        from os import chdir, geteuid, curdir
-        from os.path import dirname, abspath
-        
-        dlg = choose_pkgbuild_dialog(self.gld.get_widget("main_win"), self.icon)
-        fname = dlg.run()
-        dlg.destroy()
-        
-        try:
-            dname = dirname(fname)
-        except:
-            return
-
-        pwd = abspath(curdir)
-        chdir(dname)
-
-        cdlg = command_dialog(self.icon)
-
-        if geteuid() == 0:
-            dlg = change_user_dialog(self.gld.get_widget("main_win"), self.icon)
-            user = dlg.run()
-
-            if user == "root":
-                cdlg.run("makepkg --asroot -si")
-            elif user == "reject":
-                pass
-            else:
-                cdlg.run("su %s -c 'makepkg -si'" %user, False)
-            dlg.destroy()
-        else:
-            cdlg.run("makepkg -si", False)
-        chdir(pwd)
+	self.gld.get_widget("main_win").set_sensitive(True)
+	self._statusbar()
 
     def add_to_install_queue(self, widget, data=None):
         tree = self.gld.get_widget("pacs_tree")
@@ -585,6 +557,7 @@ class gui:
         return
     
     def refresh_database(self, widget, data=None):
+	self.gld.get_widget("main_win").set_sensitive(False)
 	self._statusbar(_("Refreshing database..."))
         dlg = command_dialog(self.icon)
         dlg.connect("destroy", self._done_upgrade)
@@ -602,18 +575,21 @@ class gui:
             continue
 
         if to_upgrade:
+	    self.gld.get_widget("main_win").set_sensitive(False)
             confirm = self._upgrade_confirm(to_upgrade)
 
             if confirm:
 		self._statusbar(_("Refreshing database..."))
-                dlg = upgrade_dialog(to_upgrade, self.icon)
+                dlg = upgrade_dialog( self.gld.get_widget("main_win"), to_upgrade, self.icon)
                 dlg.connect("destroy", self._done_upgrade)
                 dlg.run()
         else:
 	    self._statusbar(_("There isn't any packages to upgrade"))
+	    self.gld.get_widget("main_win").set_sensitive(True)
         return
     
     def clear_cache(self, wid, data=None):
+	self.gld.get_widget("main_win").set_sensitive(False)
 	self._statusbar(msg=_("Clearing cache..."))
         dlg = command_dialog(self.icon)
         dlg.connect("destroy", self._done)
@@ -621,11 +597,47 @@ class gui:
         return
     
     def empty_cache(self, wid, data=None):
+	self.gld.get_widget("main_win").set_sensitive(False)
 	self._statusbar(_("Emptying cache..."))
         dlg = command_dialog(self.icon)
         dlg.connect("destroy", self._done)
         dlg.run("Scc")
         return
+    
+    def make_package(self, widget):
+        from os import chdir, geteuid, curdir
+        from os.path import dirname, abspath
+        
+        dlg = choose_pkgbuild_dialog(self.gld.get_widget("main_win"), self.icon)
+        fname = dlg.run()
+        dlg.destroy()
+        
+        try:
+            dname = dirname(fname)
+        except:
+	    self.gld.get_widget("main_win").set_sensitive(True)
+            return
+
+	self.gld.get_widget("main_win").set_sensitive(False)
+        pwd = abspath(curdir)
+        chdir(dname)
+
+        cdlg = command_dialog(self.icon)
+
+        if geteuid() == 0:
+            dlg = change_user_dialog(self.gld.get_widget("main_win"), self.icon)
+            user = dlg.run()
+
+            if user == "root":
+                cdlg.run("makepkg --asroot -si")
+            elif user == "reject":
+                pass
+            else:
+                cdlg.run("su %s -c 'makepkg -si'" %user, False)
+            dlg.destroy()
+        else:
+            cdlg.run("makepkg -si", False)
+        chdir(pwd)
     
     def search(self, widget, data=None):	
 	win = self.gld.get_widget("main_win")
@@ -670,120 +682,41 @@ class gui:
         return
     
     def execute(self, widget=None, data=None):
-        def _req_pac_check(to_check, flag):
-            to_do = []
-	    try:
-		pac = self.database.get_by_name(to_check)
-	    except NameError:
-		dlg = error_dialog(self.gld.get_widget("main_win"),
-		_("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
-		dlg.run()
-		dlg.destroy()
-		pacs_queues["add"].remove(pac)
-		self.queues["add"].remove(name)
-		return
-	    try:
-		if not pac.prop_setted:
-		    self.database.set_pac_properties(pac)
-	    except:
-		return pac, to_do
-	    
-	    if flag == "req":
-		for req in pac.req_by.split(", "):
-		    if len(req) >= 1:
-			to_do.append(req)
-	    else:
-		if not pac.installed:
-		    for dep in pac.dependencies.split(", "):
-			if len(dep) >= 1:
-			    to_do.append(dep)
-			else:
-			    pac = None
-		    return pac, to_do
-		pac = None
-            return pac, to_do
-
         pacs_queues = { "add": [], "remove": [] }
-        deps = []
-        
-        for name in self.queues["add"]:
-            try:
-                pac = self.database.get_by_name(name)
-            except NameError:
-                dlg = error_dialog(self.gld.get_widget("main_win"), _("%s is not in the database.\nThis is probably a bug in gtkpacman. If you think it's so, please send me a bug report.") %name, self.icon)
-                dlg.run()
-                dlg.destroy()
-                continue
-            
-            if not pac.prop_setted:
-                self.database.set_pac_properties(pac)
-
-            pacs_queues["add"].append(pac)
-            
-            if pac.dependencies:
-                dep_todo_list = []
-                dep_black_list = []
-                deps = pac.dependencies.split(", ")
-		for dep in deps:
-		    if not dep in self.queues["add"]:
-			dep_todo_list.append(dep)
-		while dep_todo_list:
-		    dep = dep_todo_list.pop(0)
-		    if dep.count(">="):
-			dep = dep.split(">=")[0]
-		    if not (dep in self.queues["add"]):
-			done, to_do = _req_pac_check(dep, "dep")
-			if done and not done in pacs_queues["add"]:
-			    pacs_queues["add"].append(done)
-			for add in to_do:
-			    if not add in dep_black_list:
-				dep_todo_list.append(add)
-				dep_black_list.append(add)
-
-        for name in self.queues["remove"]:
-            pac = self.database.get_by_name(name)
-            if not pac.prop_setted:
-                self.database.set_pac_properties(pac)
-
-            pacs_queues["remove"].append(pac)
-            if pac.req_by:
-                req_pacs = []
-                req_todo_list = []
-                req_black_list = []
-                for req in pac.req_by.split(", "):
-                    if not (req in self.queues["remove"]):
-                        req_todo_list.append(req)
-                while req_todo_list:
-                    req = req_todo_list.pop(0)
-                    if not (req in self.queues["remove"]):
-                        done, to_do = _req_pac_check(req, "req")
-                        if done and not done in req_pacs:
-                            req_pacs.append(done)
-                        for add in to_do:
-                            if not add in req_black_list:
-                                req_todo_list.append(add)
-                                req_black_list.append(add)
-                    continue
-
-                if req_pacs:
-                    dlg = warning_dialog(self.gld.get_widget("main_win"),
-                                     req_pacs, self.icon)
-                    if dlg.run() == RESPONSE_YES:
-                        pacs_queues["remove"].extend(req_pacs)
-                    else:
-                        self.queues["remove"].remove(name)
-                        pacs_queues["remove"].remove(pac)
-                    dlg.destroy()
-            continue
-
-        if not (pacs_queues["add"] or pacs_queues["remove"]):
+	deps = []
+        req_pacs = []
+	
+	if self.queues['add']:
+            pacs_queues['add'] = self._execute_queue_add()
+	    
+	if self.queues['remove']:
+            pacs_queues['remove'], req_pacs = self._execute_queue_remove()
+	    
+	if not (pacs_queues["add"] or pacs_queues["remove"]):
             self._refresh_trees_and_queues()
             return
+	
+	self.gld.get_widget("main_win").set_sensitive(False)
+	if req_pacs:
+	    dlg = warning_dialog(self.gld.get_widget("main_win"),
+			     req_pacs, self.icon)
+	    if dlg.run() == RESPONSE_YES:
+		pacs_queues["remove"].extend(req_pacs)
+		dlg.destroy()
+	    else:
+		#self.queues["remove"].remove(name)
+		#pacs_queues["remove"].remove(pac)
+		self.queues['remove'] = []
+		pacs_queues['remove'] = []
+		dlg.destroy()
+		self._refresh_trees_and_queues()
+		return
 
         retcode = self._confirm(pacs_queues)
+	
         if retcode:
 	    self._statusbar(_("Executing queued operations..."))
-            dlg = do_dialog(pacs_queues, self.icon)
+            dlg = do_dialog( self.gld.get_widget("main_win"), pacs_queues, self.icon)
             dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
             dlg.run()
         else:
@@ -792,8 +725,102 @@ class gui:
             self._refresh_trees_and_queues()
         return
     
-#------------------------- Callbacks End -----------------------------#   
+    #------------------------- Callbacks End -----------------------------#   
+    def _execute_queue_add(self):
+	queue = []
+	add_queue = self.queues["add"][:]
+	
+	for name in add_queue:
+	    pac = self.database.get_by_name(name)
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
 
+            queue.append(pac)
+            
+            if pac.dependencies:
+                dep_todo_list = []
+                dep_black_list = []
+                deps = pac.dependencies.split(", ")
+		for dep in deps:
+		    if not dep in queue:
+			dep_todo_list.append(dep)
+		while dep_todo_list:
+		    dep = dep_todo_list.pop(0)
+		    if dep.count(">="):
+			dep = dep.split(">=")[0]
+		    if not (dep in self.queues["add"]):
+			done, to_do = self._execute_dep_check(dep, "dep")
+			if done and not done in queue:
+			    queue.append(done)
+			for add in to_do:
+			    if not add in dep_black_list:
+				dep_todo_list.append(add)
+				dep_black_list.append(add)
+	return queue
+	
+    def _execute_queue_remove(self):
+	queue = []
+	req_pacs = []
+	remove_queue = self.queues["remove"][:]
+	
+	for name in remove_queue:
+            pac = self.database.get_by_name(name)
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
+
+	    queue.append(pac)
+            if pac.req_by:
+                req_todo_list = []
+                req_black_list = []
+                for req in pac.req_by.split(", "):
+                    if not (req in self.queues["remove"]):
+                        req_todo_list.append(req)
+                while req_todo_list:
+                    req = req_todo_list.pop(0)
+                    if not (req in self.queues["remove"]):
+                        done, to_do = self._execute_dep_check(req, "req")
+                        if done and not done in req_pacs:
+                            req_pacs.append(done)
+                        for add in to_do:
+                            if not add in req_black_list:
+                                req_todo_list.append(add)
+                                req_black_list.append(add)
+	return queue, req_pacs
+				
+    def _execute_dep_check(self, to_check, flag):
+	to_do = []
+	try:
+	    pac = self.database.get_by_name(to_check)
+	except NameError:
+	    dlg = error_dialog(self.gld.get_widget("main_win"),
+	    _("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
+	    dlg.run()
+	    dlg.destroy()
+	    pacs_queues["add"].remove(pac)
+	    self.queues["add"].remove(name)
+	    return
+	try:
+	    if not pac.prop_setted:
+		self.database.set_pac_properties(pac)
+	except:
+	    return pac, to_do
+	
+	if flag == "req":
+	    for req in pac.req_by.split(", "):
+		if len(req) >= 1:
+		    to_do.append(req)
+	else:
+	    if not pac.installed:
+		for dep in pac.dependencies.split(", "):
+		    if len(dep) >= 1:
+			to_do.append(dep)
+		    else:
+			pac = None
+		return pac, to_do
+	    pac = None
+    
+	return pac, to_do
+				
     def _confirm(self, pacs_queues):
         dlg = confirm_dialog(self.gld.get_widget("main_win"), pacs_queues, self.icon)
         retcode = dlg.run()
@@ -802,6 +829,7 @@ class gui:
     def _after_local_install(self, wid, data=None):
         self.database.refresh()
         self.models["foreigners"] = installed_list(self.database["foreigners"])
+	self.gld.get_widget("main_win").set_sensitive(True)
 
 	self._statusbar()
 
@@ -825,8 +853,10 @@ class gui:
         self._refresh_repos_tree()
         self._setup_pacs_models()
 	self._statusbar(_("Updating compleated"))
+	self.gld.get_widget("main_win").set_sensitive(True)
 	
     def _done(self, widget, data=None):
+	self.gld.get_widget("main_win").set_sensitive(True)
 	self._statusbar()
 	
     def quit(self, widget, data=None):

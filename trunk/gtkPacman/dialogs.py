@@ -293,8 +293,9 @@ class local_confirm_dialog(confirm_dialog):
         name = name_n_ver.pop(0)
         del name_n_ver[-1]
         version = '-'.join(name_n_ver)
-
-        self.install_model.prepend(["red", name, version])
+        
+        model = self.install_tree.get_model()
+        model.prepend(["red", name, version])
 
 class local_install_dialog(do_dialog):
 
@@ -348,13 +349,14 @@ class search_dialog(Dialog):
 
 class upgrade_dialog(Window):
 
-    def __init__(self, to_upgrade, icon):
+    def __init__(self, parent, to_upgrade, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
         self.set_property("modal", True)
+        self.set_transient_for(parent)
         self.set_property("destroy-with-parent", True)
-        self.set_position(WIN_POS_CENTER)
+        self.set_position(WIN_POS_CENTER_ON_PARENT)
         self.set_default_size (300, 300)
 
         self.set_icon(pixbuf_new_from_file(icon))
@@ -371,58 +373,35 @@ class upgrade_dialog(Window):
         self.expander = expander_new_with_mnemonic(_("_Terminal"))
         self.expander.set_expanded(False)
         self.expander.connect("notify::expanded", self._set_size)
-        #self.expander.add(self.terminal)
         self.expander.show_all()
         
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
         scr = ScrolledWindow()
-        scr.set_policy ("automatic", "automatic")
-        scr.add (self.tree)
-        scr.show()
+        scr.set_policy (POLICY_AUTOMATIC, POLICY_AUTOMATIC)
+        scr.add(self.tree)
+        scr.show_all()
 
-        vpaned = VPaned()
-        vpaned.add1(scr)
-        vpaned.add2(self.expander)
-        vpaned.set_position (260)
-        vpaned.show()
-
-        self.vbox.pack_start(vpaned, True, True, 0)
+        self.vbox.pack_start( scr, True, True, 0)
+        self.vbox.pack_start( self.expander, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
 
         self.add(self.vbox)
         return
 
     def _set_size (self, widget, data=None, event=None):
-        if self.expander.get_expanded:
+        if self.expander.get_expanded():
             self.size = self.get_size()
             self.expander.add(self.terminal)
             self.terminal.show()
         else:
             self.expander.remove(self.terminal)
-            self.set_size(self.size[0], self.size[1])
+            self.resize(self.size[0], self.size[1])
         return
 
     def _setup_tree(self, pacs):
-        self.model = ListStore(str, str, str)
-
-        for pac in pacs:
-            self.model.append(["yellow", pac.name, pac.version])
-            continue
-
-        self.tree = TreeView()
-        self.tree.show()
-
-        self.tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
-                                                stock_id = 0)
-        self.tree.insert_column_with_attributes(-1, "Package",
-                                                CellRendererText(), text = 1)
-        self.tree.insert_column_with_attributes(-1, "Version",
-                                                CellRendererText(), text = 2)
-
-        self.tree.set_model(self.model)
-        return
+        self.tree = PacView(pacs)
     
     def run(self):
         self.show()

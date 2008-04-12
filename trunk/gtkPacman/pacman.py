@@ -18,6 +18,9 @@
 
 import os, string, re, time
 
+path_repo = str()
+path_local = "/var/lib/pacman/local"
+
 class package:
     """Class describing a package"""
     def __init__(self,
@@ -46,7 +49,7 @@ class package:
         self.req_by = ""
         self.dependencies = ""
         self.prop_setted = False
-	self.summary = ''
+	self.summary = ""
 	# Flag is for marking package as " install as dependency ", ( flag = 11 )
 	self.flag = None 
         
@@ -146,13 +149,13 @@ class database(dict):
         self.ver = stout.read().split('v')[1].split('-')[0].strip().split('.')
 
     def _get_repo_pacs(self, repo):
-        self[repo] = []
+	global path_repo
         pacs = None
         #Grab all pacs in the col
         if (self.ver[0] >= '3' and self.ver[1] >= '1'):
-            path = "/var/lib/pacman/sync"
+            path_repo = path = "/var/lib/pacman/sync"
         else:
-            path = "/var/lib/pacman"
+            path_repo = path = "/var/lib/pacman"
         
         try:
             pacs = os.listdir("%s/%s" %(path, repo))
@@ -265,26 +268,20 @@ class database(dict):
 
         pac.summary = summary
         pac.dependencies = deps
-        pac.description = desc
+        #pac.description = desc
 	
-    def _get_raw_desc(self, pac, to_get):
+    def _get_raw_desc(self, pac, desc_f):
+	global path_repo
+	repo = pac.repo
 	if pac.installed:
-            version = pac.inst_ver
-            repo = "local"
+	    name_n_ver = pac.name + '-' + pac.inst_ver
+	    path = '/var/lib/pacman/local/%s/%s' %(name_n_ver, desc_f)
 	else:
-	    version = pac.version
-            repo = pac.repo
-	
-	if not (self.ver[0] == 3 and self.ver[1] == 1) and repo == "local":
-            path_to_db = "/var/lib/pacman"
-        else:
-            path_to_db = "/var/lib/pacman/sync"
-	    
-	pack_dir = "-".join((pac.name, version))
-	path = "%s/%s/%s" %(path_to_db, repo, pack_dir)
-	    
+	    name_n_ver = pac.name + '-' + pac.version
+	    path = "%s/%s/%s/%s" %(path_repo, repo, name_n_ver, desc_f)
+
 	try:
-	    raw_file = open("%s/%s" %(path, to_get)).read()
+	    raw_file = open(path).read()
 	except IOError, msg:
 	    print "!! Warning: can't open %s \n\t" %path, msg
 	    return None
@@ -499,12 +496,7 @@ class database(dict):
 	    for name in stack:
 		req = req + ", " + name
 	    req = req[2:]
-	return req	
-    
-    def _search_keyword(self, pac):
-	raw_desc = self._get_raw_desc(pac, "desc")
-	desc = self._get_description(raw_desc)
-	return desc
+	return req
     
     def get_by_desc(self, desc):
         """Return pacs which description match with desc"""
@@ -512,11 +504,10 @@ class database(dict):
         for repo in self.repos:
             for pac in self[repo]:
 		if not pac.description:
-		    pac.description = self._search_keyword(pac)
-                if pac.description.count(desc):
-                    pacs.append(pac)
-                continue
-            continue
+		    d = self._get_raw_desc( pac, 'desc')
+		    pac.description = self._get_description( d)
+		if pac.description.count(desc):
+		    pacs.append(pac)
         return pacs
     
     def get_by_keywords(self, keywords):

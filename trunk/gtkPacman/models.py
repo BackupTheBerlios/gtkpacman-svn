@@ -17,7 +17,7 @@
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
 from gtk import ListStore, TreeStore, TreeView
-import gtk
+from gtk import CellRendererPixbuf, CellRendererText, TreeViewColumn
 
 class installed_list(ListStore):
 
@@ -154,15 +154,17 @@ class PacView( TreeView):
     def __init__(self, queue):
 	TreeView.__init__( self, PacViewModel(queue))
 	self.set_property( "enable-search", False)
+	self.set_headers_clickable(True)
 	
-	pix = gtk.CellRendererPixbuf()
-	column = gtk.TreeViewColumn( '', pix, stock_id=0)
+	pix = CellRendererPixbuf()
+	column = TreeViewColumn( '', pix, stock_id=0)
 	self.append_column( column)
 	
-	cell = gtk.CellRendererText()
-	column = gtk.TreeViewColumn( 'Package', cell, text=1)
+	cell = CellRendererText()
+	column = TreeViewColumn( 'Package', cell, text=1)
 	self.append_column( column)
 	
-	cell = gtk.CellRendererText()
-	column = gtk.TreeViewColumn( 'Version', cell, text=2)
+	cell = CellRendererText()
+	column = TreeViewColumn( 'Version', cell, text=2)
 	self.append_column( column)
+	

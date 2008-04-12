@@ -451,13 +451,14 @@ class upgrade_confirm_dialog(Dialog):
 
 class command_dialog(Window):
 
-    def __init__(self, icon):
+    def __init__(self, parent, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
         self.set_property("skip-taskbar-hint", True)
         self.set_property("destroy-with-parent", True)
         self.set_modal(True)
-        self.set_position(WIN_POS_CENTER)
+        self.set_transient_for( parent)
+        self.set_position( WIN_POS_CENTER_ON_PARENT)
 
         self.vbox = VBox(False, 0)
         

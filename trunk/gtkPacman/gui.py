@@ -124,6 +124,7 @@ class gui:
         
     def _setup_pacs_tree(self):
         pacs_tree = self.gld.get_widget("pacs_tree")
+	pacs_tree.set_reorderable(False)
 
         pacs_tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
                                                 stock_id=0)
@@ -148,7 +149,7 @@ class gui:
             col.set_reorderable(True)
             col.set_sort_column_id(sort_id)
             col.set_clickable(True)
-            col.set_resizable(False)
+            col.set_resizable(True)
             sort_id += 1
             continue
         return
@@ -400,23 +401,25 @@ class gui:
 	self._statusbar(stat)
 
     def pacs_changed(self, widget, data=None):
-        sum_txt = self.gld.get_widget("summary")
-        sum_buf = sum_txt.get_buffer()
+	def _fork():	    
+	    pac = self.database.get_by_name(name)
+	    if not pac.prop_setted:
+		self.database.set_pac_properties(pac)
 
-        file_tree = self.gld.get_widget("files")
+	    sum_buf.set_text(pac.summary)
+	    file_model = file_list(pac.filelist)
+	    file_tree.set_model(file_model)
+	    self._statusbar()
+		
+        sum_txt = self.gld.get_widget("summary")
+	file_tree = self.gld.get_widget("files")
+        sum_buf = sum_txt.get_buffer()        
                
         model, t_iter = widget.get_selection().get_selected()
         name = model.get_value(t_iter, 2)
-
-        pac = self.database.get_by_name(name)
-        if not pac.prop_setted:
-            self.database.set_pac_properties(pac)
-
-        sum_buf.set_text(pac.summary)
-
-        file_model = file_list(pac.filelist)
-        file_tree.set_model(file_model)
-        return
+		
+	gobject.idle_add(_fork)
+	self._statusbar("Please Wait")        
     
     def add_from_local_file(self, widget, data=None):
         dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),
@@ -557,9 +560,10 @@ class gui:
         return
     
     def refresh_database(self, widget, data=None):
-	self.gld.get_widget("main_win").set_sensitive(False)
+	main_window = self.gld.get_widget("main_win")
+	main_window.set_sensitive(False)
 	self._statusbar(_("Refreshing database..."))
-        dlg = command_dialog(self.icon)
+        dlg = command_dialog(main_window, self.icon)
         dlg.connect("destroy", self._done_upgrade)
         dlg.run("Sy")
         return
@@ -583,23 +587,27 @@ class gui:
                 dlg = upgrade_dialog( self.gld.get_widget("main_win"), to_upgrade, self.icon)
                 dlg.connect("destroy", self._done_upgrade)
                 dlg.run()
+	    else:
+		self.gld.get_widget("main_win").set_sensitive(True)
         else:
 	    self._statusbar(_("There isn't any packages to upgrade"))
 	    self.gld.get_widget("main_win").set_sensitive(True)
         return
     
     def clear_cache(self, wid, data=None):
-	self.gld.get_widget("main_win").set_sensitive(False)
+	main_window = self.gld.get_widget("main_win")
+	main_window.set_sensitive(False)
 	self._statusbar(msg=_("Clearing cache..."))
-        dlg = command_dialog(self.icon)
+        dlg = command_dialog(main_window, self.icon)
         dlg.connect("destroy", self._done)
         dlg.run("Sc")
         return
     
     def empty_cache(self, wid, data=None):
-	self.gld.get_widget("main_win").set_sensitive(False)
+	main_window = self.gld.get_widget("main_win")
+	main_window.set_sensitive(False)
 	self._statusbar(_("Emptying cache..."))
-        dlg = command_dialog(self.icon)
+        dlg = command_dialog(main_window, self.icon)
         dlg.connect("destroy", self._done)
         dlg.run("Scc")
         return
@@ -748,6 +756,8 @@ class gui:
 		    dep = dep_todo_list.pop(0)
 		    if dep.count(">="):
 			dep = dep.split(">=")[0]
+		    if dep.count('<'):
+			dep = dep.split('<')[0]		    
 		    if not (dep in self.queues["add"]):
 			done, to_do = self._execute_dep_check(dep, "dep")
 			if done and not done in queue:

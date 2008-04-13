@@ -485,6 +485,7 @@ class command_dialog(Window):
             self.terminal.execute( "pacman --noconfirm -%s \n" %command)
             self.terminal.execute( "exit \n")
         else:
+            self.terminal.execute( command)
             self.terminal.execute( "exit \n")
             
 class error_dialog(MessageDialog):

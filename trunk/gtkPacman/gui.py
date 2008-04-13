@@ -630,21 +630,22 @@ class gui:
         pwd = abspath(curdir)
         chdir(dname)
 
-        cdlg = command_dialog(self.icon)
+        cdlg = command_dialog(self.gld.get_widget("main_win"), self.icon)
+	cdlg.connect("destroy", self._done)
 
         if geteuid() == 0:
             dlg = change_user_dialog(self.gld.get_widget("main_win"), self.icon)
             user = dlg.run()
 
             if user == "root":
-                cdlg.run("makepkg --asroot -si")
+                cdlg.run("makepkg --asroot -si \n", False)
             elif user == "reject":
                 pass
             else:
-                cdlg.run("su %s -c 'makepkg -si'" %user, False)
+                cdlg.run("su %s -c 'makepkg -si' \n" %user, False)
             dlg.destroy()
         else:
-            cdlg.run("makepkg -si", False)
+            cdlg.run("makepkg -si \n", False)
         chdir(pwd)
     
     def search(self, widget, data=None):	

@@ -478,13 +478,6 @@ class gui:
             return
         
         image = model.get_value(l_iter, 0)
-        
-        if name in self.database.ignorePkg and image == 'green':
-            dlg = ignorepkg_dialog(name, self.icon)
-            res = dlg.run()
-            dlg.destroy()
-            if res == RESPONSE_NO:
-                return
             
         if name in self.queues["remove"]:
             self.queues["remove"].remove(name)
@@ -524,15 +517,7 @@ class gui:
         if name in self.queues["remove"]:
             return
                 
-        image = model.get_value(l_iter, 0)
-        
-        if name in self.database.holdPkg:
-           dlg = holdpkg_dialog(name, self.icon)
-           res = dlg.run()
-           dlg.destroy()
-           if res == RESPONSE_NO:
-               return
-
+        image = model.get_value(l_iter, 0)	
         if image == "red":
             return
 
@@ -580,6 +565,15 @@ class gui:
 
         if to_upgrade:
 	    self.gld.get_widget("main_win").set_sensitive(False)
+	    b_list = self._blacklist( to_upgrade, 0x01)
+	    if b_list:
+		dlg = ignorepkg_dialog( b_list, self.icon)
+		res = dlg.run()
+		dlg.destroy()
+		if res == RESPONSE_NO:
+		    self._done(None)
+		    return
+	    
             confirm = self._upgrade_confirm(to_upgrade)
 
             if confirm:
@@ -697,9 +691,27 @@ class gui:
 	
 	if self.queues['add']:
             pacs_queues['add'] = self._execute_queue_add()
+	    # Check if packages are listed as ignorePkg
+	    b_list = self._blacklist( pacs_queues['add'], 0x01)
+	    if b_list:
+		dlg = ignorepkg_dialog( b_list, self.icon)
+		res = dlg.run()
+		dlg.destroy()
+		if res == RESPONSE_NO:
+		    self._done(None)
+		    return
 	    
 	if self.queues['remove']:
             pacs_queues['remove'], req_pacs = self._execute_queue_remove()
+	    # Check if packages are listed as holdPkg
+	    b_list = self._blacklist( pacs_queues['remove'], 0x02)
+	    if b_list:
+		dlg = holdpkg_dialog( b_list, self.icon)
+		res = dlg.run()
+		dlg.destroy()
+		if res == RESPONSE_NO:
+		    self._done(None)
+		    return
 	    
 	if not (pacs_queues["add"] or pacs_queues["remove"]):
             self._refresh_trees_and_queues()
@@ -858,6 +870,26 @@ class gui:
                                      to_upgrade, self.icon)
         retcode = dlg.run()
         return retcode
+    
+    def _blacklist(self, pacs, key=None):
+	""" Here we check if packages are not in hold or ignore list.
+	    If they are then we return them.
+	"""
+	blacklist = []
+	if pacs and key == 0x01:
+	    for bp in self.database.ignorePkg:
+		for p in pacs:
+		    if p.name == bp:
+			blacklist.append(p.name)
+	elif pacs and key == 0x02:
+	    for bp in self.database.holdPkg:
+		for p in pacs:
+		    if p.name == bp:
+			blacklist.append(p.name)
+	else:
+	    return None
+	
+	return blacklist
 
     def _done_upgrade(self, widget, data=None):
         self.database.refresh()

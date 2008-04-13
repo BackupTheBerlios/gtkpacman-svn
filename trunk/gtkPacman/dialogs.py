@@ -52,7 +52,7 @@ class ignorepkg_dialog(MessageDialog):
         name = str( name)
         MessageDialog.__init__(self, None,
                                DIALOG_MODAL, MESSAGE_QUESTION, BUTTONS_YES_NO,
-                               _("Courent package (s) are listed as IgnorePkg.\n%s\n Are you sure you want to continue?" %name[1:-1]))
+                               _("Current package(s) are listed as IgnorePkg.\n%s\n Are you sure you want to continue?" %name[1:-1]))
         self.set_icon (pixbuf_new_from_file(icon))
 
 class holdpkg_dialog(MessageDialog):
@@ -61,7 +61,7 @@ class holdpkg_dialog(MessageDialog):
 
         MessageDialog.__init__(self, None,
                                DIALOG_MODAL, MESSAGE_INFO, BUTTONS_YES_NO,
-                               _("Courent package (s) are listed as HoldPkg.\n%s\nAre You sure you want to continue?") %name)
+                               _("Current package(s) are listed as HoldPkg.\n%s\nAre You sure you want to continue?") %name)
         self.set_icon (pixbuf_new_from_file(icon))
         
 class confirm_dialog(Dialog):
@@ -136,7 +136,7 @@ class warning_dialog(Dialog):
 
         self.set_default_size(-1,250)
         
-        label = Label(_("This packages requires one of the packages you've selected for removal.\nDo you want to remove them all?"))
+        label = Label(_("These packages are required by package(s) you've selected for removal.\nDo you want to remove them all?"))
         label.show()
 
         scr = ScrolledWindow()
@@ -180,7 +180,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"""))
         self.set_website("http://gtkpacman.berlios.de")
-        self.set_authors(["Stefano Esposito <stefano.esposito87@gmail.com>", "'Seti' <seti4ever@gmail.com"])
+        self.set_authors(["Stefano Esposito <stefano.esposito87@gmail.com>", "'Seti' <seti4ever@gmail.com>"])
         self.set_artists(["James D <jamesgecko@gmail.com>"])
 
         path = "/usr/share/gtkpacman/"
@@ -427,13 +427,13 @@ class upgrade_confirm_dialog(Dialog):
 
     def _setup_layout(self):
 
-        self.label = Label(_("Are you sure yo want to upgrade those packages?\n"))
+        self.label = Label(_("Are you sure you want to upgrade those packages?\n"))
         self.label.show()
 
         self.set_default_size (300, 300)
 
         scr = ScrolledWindow()
-        scr.set_policy("automatic", "automatic")
+        scr.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
         scr.add(self.tree)
         scr.show()
         

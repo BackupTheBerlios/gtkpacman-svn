@@ -136,7 +136,7 @@ class warning_dialog(Dialog):
 
         self.set_default_size(-1,250)
         
-        label = Label(_("These packages are required by package(s) you've selected for removal.\nDo you want to remove them all?"))
+        label = Label(_("These packages require the package(s) you've selected for removal.\nDo you want to remove them all?"))
         label.show()
 
         scr = ScrolledWindow()

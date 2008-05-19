@@ -260,11 +260,21 @@ class database(dict):
             builddate = self._get_builddate(raw_desc)
             installdate = self._get_installdate(raw_desc)
             reason = self._get_reason(raw_desc)
-
-            summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, pac.req_by, size, packager, builddate, installdate, reason)
+            #summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, pac.req_by, size, packager, builddate, installdate, reason)
+	    summary = ":: %s" %( desc ),\
+		    ":: %s"%( deps ),\
+		    ":: %s" %( pac.req_by ),\
+		    ":: %s" %( packager ),\
+		    ":: %s" %( builddate ),\
+		    ":: %s" %( installdate ),\
+		    ":: %s" %( size),\
+		    ":: %s" %( reason )
 
         else:
-            summary = _("Description: %s\nDepends on: %s\nSize (compressed): %s") %(desc, deps, size)
+            #summary = _("Description: %s\nDepends on: %s\nSize (compressed): %s") %(desc, deps, size)
+	    summary = ":: %s" %( desc ),\
+		    ":: %s" %( deps ),\
+		    ":: %s" %( size )
 
         pac.summary = summary
         pac.dependencies = deps

@@ -16,23 +16,26 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-import gettext, gobject
+import gettext, gobject, pango
 
 from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO
+from gtk import TextBuffer, TextTag
 from gtk.gdk import pixbuf_new_from_file, Cursor, WATCH
 from gtk.glade import XML
 
 from dialogs import non_root_dialog, about_dialog, warning_dialog, do_dialog 
 from dialogs import confirm_dialog, search_dialog, upgrade_dialog
-from dialogs import upgrade_confirm_dialog, local_install_dialog
+from dialogs import upgrade_confirm_dialog, local_install_dialog, info_dialog
 from dialogs import local_install_fchooser_dialog, local_confirm_dialog
 from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
 from models import installed_list, all_list, whole_list, search_list, file_list
+
+#from threading import Thread
 
 class gui:
     def __init__(self, fname, database, uid, icon):
@@ -76,6 +79,9 @@ class gui:
 
         #Setup statusbar
 	self._statusbar()
+	
+	#gobject.timeout_add( 3000, self._on_idle, gobject.PRIORITY_LOW)
+	#gobject.idle_add(self._on_idle)
 
         #Check if root, else notufy it and deactivate some widgets
         if uid:
@@ -406,7 +412,8 @@ class gui:
 	    if not pac.prop_setted:
 		self.database.set_pac_properties(pac)
 
-	    sum_buf.set_text(pac.summary)
+	    #sum_buf.set_text(pac.summary)
+	    self._set_pac_summary(pac)
 	    file_model = file_list(pac.filelist)
 	    file_tree.set_model(file_model)
 	    self._statusbar()
@@ -419,7 +426,7 @@ class gui:
         name = model.get_value(t_iter, 2)
 		
 	gobject.idle_add(_fork)
-	self._statusbar("Please Wait")        
+	self._statusbar("Please Wait...")      
     
     def add_from_local_file(self, widget, data=None):
         dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),
@@ -689,6 +696,9 @@ class gui:
 	deps = []
         req_pacs = []
 	
+	# Check if pacman is old
+	self._pacman_check()
+	
 	if self.queues['add']:
             pacs_queues['add'] = self._execute_queue_add()
 	    # Check if packages are listed as ignorePkg
@@ -905,6 +915,23 @@ class gui:
     def quit(self, widget, data=None):
         main_quit()
         return
+    def _pacman_check(self):
+	"""Check if pacman is old, if true than update pacman
+	"""
+	# TODO ************************************************
+	# I'm not sure if this will be default action for when checking if pacman is old.
+	for pac in self.database['core']:
+	    # 
+	    if pac.name == 'pacman' and pac.installed == False:
+		dlg = info_dialog( self.gld.get_widget('main_win'), "Warning:: Pacman is not installed,\n This isn't right, REPORT IT PLEASE", self.icon)
+		dlg.run()
+		dlg.destroy()
+	    if pac.name == 'pacman' and pac.isold == True:
+		#self.queues['add'].insert(0, pac)
+		dlg = info_dialog( self.gld.get_widget('main_win'), 'There is newer Pacman version', self.icon)
+		dlg.run()
+		dlg.destroy()
+		
     def _statusbar(self, msg=None):
 	stat_bar = self.gld.get_widget("statusbar")
 
@@ -915,3 +942,73 @@ class gui:
 	else:
 	    str = "%s " %msg
 	stat_bar.push(-1, str)
+    
+    def _set_pac_summary(self, pac):
+        sum_txt = self.gld.get_widget("summary")
+        file_tree = self.gld.get_widget("files")
+        
+        #text_buffer = TextBuffer()
+        #text_buffer.set_text(pac.summary)
+        #sum_txt.set_buffer(text_buffer)
+        
+        text_buffer = TextBuffer()
+        tag_table = text_buffer.get_tag_table()
+        heading_tag = TextTag("heading")
+        heading_tag.set_property("weight", pango.WEIGHT_BOLD)
+        heading_tag.set_property("foreground", "grey")
+	
+	description_tag = TextTag("desc_tag")
+        description_tag.set_property("indent", -15)
+        
+        center_tag = TextTag("center")
+        #center_tag.set_property("indent", 800)
+        center_tag.set_property("foreground", "blue")
+        #center_tag.set_property("left-margin", 90)
+        tag_table.add(heading_tag)
+        tag_table.add(center_tag)
+	tag_table.add(description_tag)
+        
+        iter = text_buffer.get_start_iter()
+        #iter, eob = text_buffer.get_bounds()
+        
+        if pac.installed:
+            text_buffer.insert_with_tags_by_name(iter, "Description\n", 'heading')
+            text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Size\n", 'heading')
+            text_buffer.insert(iter, pac.summary[6] + "\n")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Install Reason\n", 'heading')
+            text_buffer.insert(iter, pac.summary[7] + "\n")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Required By\n", 'heading')
+            text_buffer.insert_with_tags_by_name(iter, pac.summary[2] + "\n", "desc_tag")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Depends On\n", 'heading')
+            text_buffer.insert_with_tags_by_name(iter, pac.summary[1] + "\n", "desc_tag")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Packager\n", 'heading')
+            text_buffer.insert_with_tags_by_name(iter, pac.summary[3] + "\n", "desc_tag")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
+            text_buffer.insert(iter, pac.summary[5] + "\n")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Build Date\n", 'heading')
+            text_buffer.insert(iter, pac.summary[4])
+            
+            sum_txt.set_buffer(text_buffer)
+    
+            file_model = file_list(pac.filelist)
+            file_tree.set_model(file_model)
+        else:            
+            text_buffer.insert_with_tags_by_name(iter, "Description\n", "heading")
+            text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Depends On\n", "heading")
+            text_buffer.insert_with_tags_by_name(iter, pac.summary[1] + "\n", "desc_tag")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
+            text_buffer.insert(iter, pac.summary[2])
+            #text_buffer.insert_with_tags_by_name(iter, pac.summary[2], "center")
+            
+            sum_txt.set_buffer(text_buffer)

@@ -6,7 +6,7 @@
     <property name="visible">True</property>
     <property name="title" translatable="yes">gtkpacman 2.4dev</property>
     <property name="default_width">650</property>
-    <property name="default_height">433</property>
+    <property name="default_height">440</property>
     <signal name="destroy" handler="quit"/>
     <signal name="delete_event" handler="quit"/>
     <child>

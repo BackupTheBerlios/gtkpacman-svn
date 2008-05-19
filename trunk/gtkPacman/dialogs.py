@@ -496,6 +496,15 @@ class error_dialog(MessageDialog):
                                DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                                MESSAGE_ERROR, BUTTONS_CLOSE, msg)
         self.set_icon(pixbuf_new_from_file(icon))
+    
+class info_dialog(MessageDialog):
+    
+    def __init__(self, parent, msg, icon):
+        MessageDialog.__init__(self, parent,
+                               DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
+                               MESSAGE_INFO, BUTTONS_CLOSE, msg)
+        self.set_property("title", "Pacman Info")
+        self.set_icon(pixbuf_new_from_file(icon))
 
 class choose_pkgbuild_dialog(FileChooserDialog):
 

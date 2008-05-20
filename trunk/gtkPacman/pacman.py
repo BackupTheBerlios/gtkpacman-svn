@@ -364,11 +364,11 @@ class database(dict):
             if reason_int:
                 reason = _("Installed as a dependency for another package")
             else:
-                reason = _("Excplicitly installed")
+                reason = _("Explicitly installed")
 
             return reason
         except Exception:
-            return ("Excplicitly installed")
+            return ("Explicitly installed")
         
     def _get_description(self, desc):
         """Set description for the given pac"""

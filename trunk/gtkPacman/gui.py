@@ -79,6 +79,8 @@ class gui:
 
         #Setup statusbar
 	self._statusbar()
+	#Get pacman version
+	self._pacman_ver_check()
 	
 	#gobject.timeout_add( 3000, self._on_idle, gobject.PRIORITY_LOW)
 	#gobject.idle_add(self._on_idle)
@@ -697,9 +699,6 @@ class gui:
 	deps = []
         req_pacs = []
 	
-	# Check if pacman is old
-	self._pacman_check()
-	
 	if self.queues['add']:
             pacs_queues['add'] = self._execute_queue_add()
 	    # Check if packages are listed as ignorePkg
@@ -923,22 +922,37 @@ class gui:
     def quit(self, widget, data=None):
         main_quit()
         return
-    def _pacman_check(self):
-	"""Check if pacman is old, if true than update pacman
+    def _pacman_ver_check(self):
+	"""Check pacman version.
 	"""
-	# TODO ************************************************
-	# I'm not sure if this will be default action for when checking if pacman is old.
+	ver_inst = self.gld.get_widget('ver_inst_label')
+	ver_avail = self.gld.get_widget('ver_avail_label')
+	
 	for pac in self.database['core']:
-	    # 
-	    if pac.name == 'pacman' and pac.installed == False:
-		dlg = info_dialog( self.gld.get_widget('main_win'), "Warning:: Pacman is not installed,\n This isn't right, REPORT IT PLEASE", self.icon)
-		dlg.run()
-		dlg.destroy()
+	    # Print pacmans installed and avaible version
 	    if pac.name == 'pacman' and pac.isold == True:
 		#self.queues['add'].insert(0, pac)
-		dlg = info_dialog( self.gld.get_widget('main_win'), 'Newer Pacman version is avaible', self.icon)
-		dlg.run()
-		dlg.destroy()
+		#dlg = info_dialog( self.gld.get_widget('main_win'), 'Newer Pacman version is avaible', self.icon)
+		#dlg.run()
+		#dlg.destroy()
+		ver_inst.set_text(pac.inst_ver)
+		ver_avail.set_text(pac.version)
+		return
+	    
+	    # If pacman is found but 'installed == False' then we print error
+	    elif pac.name == 'pacman' and pac.installed == False:
+		#dlg = info_dialog( self.gld.get_widget('main_win'), "Warning:: Pacman is not installed,\n This isn't right, REPORT IT PLEASE", self.icon)
+		#dlg.run()
+		#dlg.destroy()
+		ver_inst.set_text('ERROR')
+		ver_avail.set_text('ERROR')
+		print "?? WARNING: Found pacman but it's not installed"
+		return
+		
+	# If can't find pacman in core repo then print error
+	ver_inst.set_text('ERROR')
+	ver_avail.set_text('ERROR')
+	print "!! WARNING: Can't find pacman in 'core' repo"
 		
     def _statusbar(self, msg=None):
 	stat_bar = self.gld.get_widget("statusbar")

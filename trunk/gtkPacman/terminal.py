@@ -17,6 +17,7 @@
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
 from vte import Terminal
+from time import sleep
 
 class terminal(Terminal):
 
@@ -25,6 +26,7 @@ class terminal(Terminal):
         Terminal.__init__(self)
         self.fork_command()
         self.set_sensitive(False)
+        sleep(1)
     
     def _constructCmds(self, queues):
         inst = ''

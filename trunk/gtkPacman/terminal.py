@@ -26,7 +26,7 @@ class terminal(Terminal):
         Terminal.__init__(self)
         self.fork_command()
         self.set_sensitive(False)
-        sleep(1)
+        sleep(0.1)
     
     def _constructCmds(self, queues):
         inst = ''

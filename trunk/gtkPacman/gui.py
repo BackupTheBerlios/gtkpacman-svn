@@ -335,7 +335,8 @@ class gui:
             tree = file_tree.get_model()
             
             try:
-                sum_buf.set_text(pac.summary)
+                #sum_buf.set_text(pac.summary)
+		self._set_pac_summary(pac)
                 file_model = file_list(pac.filelist)
                 file_tree.set_model(file_model)
             except:
@@ -758,6 +759,10 @@ class gui:
     
     #------------------------- Callbacks End -----------------------------#   
     def _execute_queue_add(self):
+	""" We convert names to pac (dict).
+	     Then we check if there are packages that need 
+	     to be installed for our selected packages (dependecies).
+	"""
 	queue = []
 	add_queue = self.queues["add"][:]
 	
@@ -767,7 +772,7 @@ class gui:
                 self.database.set_pac_properties(pac)
 
             queue.append(pac)
-            
+	    
             if pac.dependencies:
                 dep_todo_list = []
                 dep_black_list = []
@@ -780,10 +785,13 @@ class gui:
 		    if dep.count(">="):
 			dep = dep.split(">=")[0]
 		    if dep.count('<'):
-			dep = dep.split('<')[0]		    
+			dep = dep.split('<')[0]
+		    if dep.count("="):
+			dep = dep.split("=")[0]
 		    if not (dep in self.queues["add"]):
 			done, to_do = self._execute_dep_check(dep, "dep")
 			if done and not done in queue:
+			    done.flag = 11
 			    queue.append(done)
 			for add in to_do:
 			    if not add in dep_black_list:
@@ -928,7 +936,7 @@ class gui:
 		dlg.destroy()
 	    if pac.name == 'pacman' and pac.isold == True:
 		#self.queues['add'].insert(0, pac)
-		dlg = info_dialog( self.gld.get_widget('main_win'), 'There is newer Pacman version', self.icon)
+		dlg = info_dialog( self.gld.get_widget('main_win'), 'Newer Pacman version is avaible', self.icon)
 		dlg.run()
 		dlg.destroy()
 		
@@ -974,6 +982,9 @@ class gui:
         if pac.installed:
             text_buffer.insert_with_tags_by_name(iter, "Description\n", 'heading')
             text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
+	    
+	    text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
+            text_buffer.insert(iter, pac.summary[5] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Size\n", 'heading')
             text_buffer.insert(iter, pac.summary[6] + "\n")
@@ -990,9 +1001,6 @@ class gui:
             text_buffer.insert_with_tags_by_name(iter, "Packager\n", 'heading')
             text_buffer.insert_with_tags_by_name(iter, pac.summary[3] + "\n", "desc_tag")
             
-            text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
-            text_buffer.insert(iter, pac.summary[5] + "\n")
-            
             text_buffer.insert_with_tags_by_name(iter, "Build Date\n", 'heading')
             text_buffer.insert(iter, pac.summary[4])
             
@@ -1003,12 +1011,12 @@ class gui:
         else:            
             text_buffer.insert_with_tags_by_name(iter, "Description\n", "heading")
             text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
+	    
+	    text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
+            text_buffer.insert(iter, pac.summary[2] + "\n")
+            #text_buffer.insert_with_tags_by_name(iter, pac.summary[2], "center")
             
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", "heading")
-            text_buffer.insert_with_tags_by_name(iter, pac.summary[1] + "\n", "desc_tag")
-            
-            text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
-            text_buffer.insert(iter, pac.summary[2])
-            #text_buffer.insert_with_tags_by_name(iter, pac.summary[2], "center")
+            text_buffer.insert_with_tags_by_name(iter, pac.summary[1], "desc_tag")
             
             sum_txt.set_buffer(text_buffer)

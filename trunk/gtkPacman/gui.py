@@ -76,10 +76,10 @@ class gui:
         self._setup_pacs_models()
         self._setup_pacs_tree()
         self._setup_files_tree()
-
+	
         #Setup statusbar
 	self._statusbar()
-	#Get pacman version
+	#Check pacman version
 	self._pacman_ver_check()
 	
 	#gobject.timeout_add( 3000, self._on_idle, gobject.PRIORITY_LOW)
@@ -347,6 +347,7 @@ class gui:
                 sum_buf.set_text('')
             
         del(pacs_queues)
+	self._pacman_ver_check
 	self._statusbar()
 	self.gld.get_widget("main_win").set_sensitive(True)
 	
@@ -925,33 +926,33 @@ class gui:
     def _pacman_ver_check(self):
 	"""Check pacman version.
 	"""
+	pacman_ver = self.gld.get_widget('pacman_ver_status')
 	ver_inst = self.gld.get_widget('ver_inst_label')
 	ver_avail = self.gld.get_widget('ver_avail_label')
 	
 	for pac in self.database['core']:
 	    # Print pacmans installed and avaible version
-	    if pac.name == 'pacman' and pac.isold == True:
-		#self.queues['add'].insert(0, pac)
-		#dlg = info_dialog( self.gld.get_widget('main_win'), 'Newer Pacman version is avaible', self.icon)
-		#dlg.run()
-		#dlg.destroy()
-		ver_inst.set_text(pac.inst_ver)
-		ver_avail.set_text(pac.version)
-		return
-	    
-	    # If pacman is found but 'installed == False' then we print error
-	    elif pac.name == 'pacman' and pac.installed == False:
-		#dlg = info_dialog( self.gld.get_widget('main_win'), "Warning:: Pacman is not installed,\n This isn't right, REPORT IT PLEASE", self.icon)
-		#dlg.run()
-		#dlg.destroy()
-		ver_inst.set_text('ERROR')
-		ver_avail.set_text('ERROR')
-		print "?? WARNING: Found pacman but it's not installed"
-		return
+	    if pac.name == 'pacman':
+		if pac.isold == False:
+		    pacman_ver.hide()
+		    return
+		elif (pac.name == 'pacman' and ( pac.isold == True and pac.installed == True )):
+		    pacman_ver.show()
+		    ver_inst.set_text(pac.inst_ver)
+		    ver_avail.set_text(pac.version)
+		    return
+		# If pacman is found but 'installed == False' then we print error
+		else:
+		    pacman_ver.show()
+		    ver_inst.set_text('WARNING')
+		    ver_avail.set_text('WARNING')
+		    print "?? WARNING: Found pacman but it's not installed"
+		    return
 		
 	# If can't find pacman in core repo then print error
-	ver_inst.set_text('ERROR')
-	ver_avail.set_text('ERROR')
+	pacman_ver.show()
+	ver_inst.set_text('WARNING')
+	ver_avail.set_text('WARNING')
 	print "!! WARNING: Can't find pacman in 'core' repo"
 		
     def _statusbar(self, msg=None):

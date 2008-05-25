@@ -16,13 +16,11 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-from time import sleep
-
 from gtk import Dialog, MessageDialog, AboutDialog, FileChooserDialog
 from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
 from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox, Entry
 from gtk import ScrolledWindow, VPaned, POLICY_AUTOMATIC
-from gtk import CellRendererPixbuf, CellRendererText
+from gtk import CellRendererPixbuf, CellRendererText, Entry
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT, BUTTONS_OK_CANCEL
@@ -202,8 +200,11 @@ class do_dialog(Window):
         self.set_transient_for(parent)
         self.connect("delete-event", self._stop_closing)
         self.set_position(WIN_POS_CENTER_ON_PARENT)
-
         self.set_icon(pixbuf_new_from_file(icon))
+        
+        self.terminal = terminal()
+        self.terminal.connect("child-exited", lambda _: self.close_button.show())
+        
         self._setup_trees(queues)
         self._setup_layout()
 
@@ -245,8 +246,8 @@ class do_dialog(Window):
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
-        self.terminal = terminal()
-        self.terminal.connect("child-exited", lambda _: self.close_button.show())
+        #self.terminal = terminal(self.password)
+        #self.terminal.connect("child-exited", lambda _: self.close_button.show())
 
         self.expander = Expander(_("Terminal"))
         self.expander.connect("notify::expanded", self._set_size)
@@ -262,9 +263,10 @@ class do_dialog(Window):
         
         self.add(self.vbox)
 
-    def run(self):
+    def run(self, user_pass):
 
         self.show()
+        self.terminal.login(user_pass)
         self.terminal.do(self.queues)
         return
 
@@ -497,14 +499,23 @@ class error_dialog(MessageDialog):
                                MESSAGE_ERROR, BUTTONS_CLOSE, msg)
         self.set_icon(pixbuf_new_from_file(icon))
     
-class info_dialog(MessageDialog):
+class password_dialog(Dialog):
     
-    def __init__(self, parent, msg, icon):
-        MessageDialog.__init__(self, parent,
+    def __init__(self, parent, icon):
+        Dialog.__init__(self, "GtkPacman Login", parent,
                                DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
-                               MESSAGE_INFO, BUTTONS_CLOSE, msg)
-        self.set_property("title", "Pacman Info")
+                           (STOCK_CANCEL, RESPONSE_REJECT, STOCK_OK, RESPONSE_ACCEPT))
+        #self.set_property("title", "GtkPacman Login")
         self.set_icon(pixbuf_new_from_file(icon))
+        
+        self.password_entry = Entry()
+        self.password_entry.set_visibility(False)
+        self.password_entry.set_invisible_char('*')
+        info_label = Label(' Enter root password ')
+        
+        self.vbox.pack_start(info_label)
+        self.vbox.pack_start(self.password_entry)
+        self.show_all()
 
 class choose_pkgbuild_dialog(FileChooserDialog):
 

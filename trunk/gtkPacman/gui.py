@@ -21,14 +21,14 @@ import gettext, gobject, pango
 from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
-from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO
+from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO, RESPONSE_REJECT
 from gtk import TextBuffer, TextTag
 from gtk.gdk import pixbuf_new_from_file, Cursor, WATCH
 from gtk.glade import XML
 
-from dialogs import non_root_dialog, about_dialog, warning_dialog, do_dialog 
+from dialogs import non_root_dialog, about_dialog, warning_dialog, do_dialog
 from dialogs import confirm_dialog, search_dialog, upgrade_dialog
-from dialogs import upgrade_confirm_dialog, local_install_dialog, info_dialog
+from dialogs import upgrade_confirm_dialog, local_install_dialog, password_dialog
 from dialogs import local_install_fchooser_dialog, local_confirm_dialog
 from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
@@ -96,11 +96,11 @@ class gui:
         #Deactivate some widgets. Called if not root
         self.gld.get_widget("queue").set_sensitive(False)
         self.gld.get_widget("immediate").set_sensitive(False)
-        self.gld.get_widget("add_install").set_sensitive(False)
+        #self.gld.get_widget("add_install").set_sensitive(False)
         self.gld.get_widget("remove_install").set_sensitive(False)
         self.gld.get_widget("add_remove").set_sensitive(False)
         self.gld.get_widget("remove_remove").set_sensitive(False)
-        self.gld.get_widget("execute").set_sensitive(False)
+        #self.gld.get_widget("execute").set_sensitive(False)
         self.gld.get_widget("up_sys").set_sensitive(False)
         self.gld.get_widget("up_db").set_sensitive(False)
         
@@ -747,10 +747,23 @@ class gui:
         retcode = self._confirm(pacs_queues)
 	
         if retcode:
+	    dlg = do_dialog( self.gld.get_widget("main_win"), pacs_queues, self.icon)
+	    #*********************************************************
+	    pass_dlg = password_dialog(self.gld.get_widget("main_win"), self.icon)
+	    res = pass_dlg.run()
+	    if res == RESPONSE_ACCEPT:
+		user_pass = pass_dlg.password_entry.get_text()
+		# TODO: Must Validate password, check password lenght
+		#print user_pass
+		pass_dlg.destroy()
+	    elif res == RESPONSE_REJECT:
+		pass_dlg.destroy()
+		dlg.destroy()
+	    #*********************************************************
 	    self._statusbar(_("Executing queued operations..."))
-            dlg = do_dialog( self.gld.get_widget("main_win"), pacs_queues, self.icon)
+            #dlg = do_dialog( self.gld.get_widget("main_win"), pacs_queues, self.icon, user_pass)
             dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
-            dlg.run()
+            dlg.run(user_pass)
         else:
             self.queues["add"] = []
             self.queues["remove"] = []

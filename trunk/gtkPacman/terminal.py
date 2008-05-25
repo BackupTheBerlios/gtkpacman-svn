@@ -17,7 +17,6 @@
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
 from vte import Terminal
-from time import sleep
 
 class terminal(Terminal):
 
@@ -25,8 +24,14 @@ class terminal(Terminal):
 
         Terminal.__init__(self)
         self.fork_command()
+        self.feed_child("su\n")
         self.set_sensitive(False)
-        sleep(0.1)
+
+    def login(self, user_pass):
+        
+        self.feed_child(user_pass + "\n")
+        self.feed_child("whoami\n")
+        #self.feed_child("exit\n")
     
     def _constructCmds(self, queues):
         inst = ''
@@ -35,10 +40,10 @@ class terminal(Terminal):
         
         for pac in queues["add"]:
             # Package should be installed as dependancy if flag == 11. 
-            # Add it inst_dep
+            # Add pac to inst_dep
             if pac.flag == 11:
                 inst_dep = inst_dep + ' ' + pac.name
-            # Otherwise add it to inst
+            # Otherwise add pac to inst
             else:
                 inst = inst + ' ' +pac.name
         
@@ -48,10 +53,12 @@ class terminal(Terminal):
         return inst, inst_dep, rm
         
     def do(self, queues):
+        """ First we prepare commands, then we send them to self.execute
+        """
         inst, inst_dep, rm = self._constructCmds(queues)
         pacman = "pacman --noconfirm"
         commands = []
-            
+        
         if inst:
             cmd_inst = "%s -Sdf %s \n" %(pacman, inst)
             commands.append(cmd_inst)            
@@ -62,7 +69,8 @@ class terminal(Terminal):
             cmd_rem = "%s -Rdf %s \n" %(pacman, rm)
             commands.append(cmd_rem)
             
-        commands.append("exit \n")                
+        commands.append("exit \n")
+        commands.append("exit \n")
         map(self.execute, commands)
         
     def do_local(self, fname, queues):

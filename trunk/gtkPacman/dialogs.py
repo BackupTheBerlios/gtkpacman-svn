@@ -64,7 +64,7 @@ class holdpkg_dialog(MessageDialog):
         
 class confirm_dialog(Dialog):
 
-    def __init__(self, parent, queues, icon):
+    def __init__(self, parent, icon, queues):
 
         Dialog.__init__(self, _("Confirm"), parent,
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
@@ -188,27 +188,57 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"""))
         fname = join(path, "icons/pacman.png")
         logo = pixbuf_new_from_file(fname)
         self.set_logo(logo)
+        
+class command_dialog(Window):
+    """This is main window that will be later inherited in do_dialog
+    """
 
-class do_dialog(Window):
-
-    def __init__(self, parent, queues, icon):
+    def __init__(self, parent, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
-        self.set_property("skip-taskbar-hint", True)
-        self.set_property("destroy-with-parent", True)
         self.set_modal(True)
         self.set_transient_for(parent)
-        self.connect("delete-event", self._stop_closing)
+        self.set_property("skip-taskbar-hint", True)
+        self.set_property("destroy-with-parent", True)        
         self.set_position(WIN_POS_CENTER_ON_PARENT)
         self.set_icon(pixbuf_new_from_file(icon))
         
         self.terminal = terminal()
         self.terminal.connect("child-exited", lambda _: self.close_button.show())
         
+    def _setup_layout(self):
+        
+        self.vbox = VBox(False, 0)
+        self.close_button = Button(stock=STOCK_CLOSE)
+        self.close_button.connect("clicked", lambda _: self.destroy())
+
+        self.vbox.pack_start(self.terminal, False, False, 0)
+        self.vbox.pack_start(self.close_button, False, False, 0)
+        self.vbox.show()
+
+        self.add(self.vbox)
+
+    def run(self, command, pacman = True):
+        self.show()
+
+        if pacman:
+            self.terminal.execute( "pacman --noconfirm -%s \n" %command)
+            self.terminal.execute( "exit \n")
+        else:
+            self.terminal.execute( command)
+            self.terminal.execute( "exit \n")
+
+class do_dialog(command_dialog):
+
+    def __init__(self, parent, icon, queues):
+
+        command_dialog.__init__(self, parent, icon)
+
+        self.terminal.init_su()
+        
+        self.queues = queues
         self._setup_trees(queues)
         self._setup_layout()
-
-        self.queues = queues
 
     def _setup_trees(self, queues):
 
@@ -246,9 +276,6 @@ class do_dialog(Window):
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
-        #self.terminal = terminal(self.password)
-        #self.terminal.connect("child-exited", lambda _: self.close_button.show())
-
         self.expander = Expander(_("Terminal"))
         self.expander.connect("notify::expanded", self._set_size)
         self.expander.show()
@@ -259,12 +286,10 @@ class do_dialog(Window):
         self.vbox.pack_start(self.hpaned, True, True, 0)
         self.vbox.pack_start(self.expander, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
-
         
         self.add(self.vbox)
 
     def run(self, user_pass):
-
         self.show()
         self.terminal.login(user_pass)
         self.terminal.do(self.queues)
@@ -273,6 +298,89 @@ class do_dialog(Window):
     def _stop_closing(self, widget, event):
         self.stop_emission("delete-event")
         return True
+    
+class upgrade_dialog(do_dialog):
+
+    def __init__(self, parent, icon, queue):
+
+        do_dialog.__init__(self, parent, icon, queue)
+        
+    def _setup_trees(self, pacs):
+        self.tree = PacView(pacs)
+
+    def _setup_layout(self):
+        self.set_default_size (300, 300)
+        self.vbox = VBox(False, 0)
+        self.vbox.show()
+
+        self.terminal = terminal()
+        self.terminal.connect("child-exited", lambda _: self.close_button.show())
+        
+        self.expander = expander_new_with_mnemonic(_("_Terminal"))
+        self.expander.set_expanded(False)
+        self.expander.connect("notify::expanded", self._set_size)
+        self.expander.show_all()
+        
+        self.close_button = Button(stock=STOCK_CLOSE)
+        self.close_button.connect("clicked", lambda _: self.destroy())
+
+        scr = ScrolledWindow()
+        scr.set_policy (POLICY_AUTOMATIC, POLICY_AUTOMATIC)
+        scr.add(self.tree)
+        scr.show_all()
+
+        self.vbox.pack_start( scr, True, True, 0)
+        self.vbox.pack_start( self.expander, False, False, 0)
+        self.vbox.pack_start(self.close_button, False, False, 0)
+
+        self.add(self.vbox)
+        return
+    
+    def run(self):
+        self.show()
+        self.terminal.do_upgrade()
+
+class upgrade_confirm_dialog(Dialog):
+
+    def __init__(self, parent, to_upgrade, icon):
+
+        Dialog.__init__(self, _("Confirm Upgrade"), parent,
+                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
+                        (STOCK_OK, RESPONSE_ACCEPT,
+                         STOCK_CANCEL, RESPONSE_REJECT))
+
+        self.set_icon(pixbuf_new_from_file(icon))
+        self._setup_tree(to_upgrade)
+        self._setup_layout()
+        
+    def _setup_tree(self, pacs):
+
+        self.tree = PacView( pacs)
+        self.tree.show()
+
+    def _setup_layout(self):
+
+        self.label = Label(_("Are you sure you want to upgrade those packages?\n"))
+        self.label.show()
+
+        self.set_default_size (300, 300)
+
+        scr = ScrolledWindow()
+        scr.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
+        scr.add(self.tree)
+        scr.show()
+        
+        self.vbox.pack_start(self.label, False, False, 0)
+        self.vbox.pack_start(scr, True, True, 0)
+
+    def run(self):
+        retcode = Dialog.run(self)
+        self.destroy()
+
+        if retcode == RESPONSE_ACCEPT:
+            return True
+        else:
+            return False
 
 class local_install_fchooser_dialog(FileChooserDialog):
 
@@ -348,147 +456,6 @@ class search_dialog(Dialog):
 
     def _entry_response(self, widget, data=None):
         self.response(RESPONSE_ACCEPT)
-
-class upgrade_dialog(Window):
-
-    def __init__(self, parent, to_upgrade, icon):
-
-        Window.__init__(self, WINDOW_TOPLEVEL)
-        self.set_property("skip-taskbar-hint", True)
-        self.set_property("modal", True)
-        self.set_transient_for(parent)
-        self.set_property("destroy-with-parent", True)
-        self.set_position(WIN_POS_CENTER_ON_PARENT)
-        self.set_default_size (300, 300)
-
-        self.set_icon(pixbuf_new_from_file(icon))
-        self._setup_tree(to_upgrade)
-        self._setup_layout()
-
-    def _setup_layout(self):
-        self.vbox = VBox(False, 0)
-        self.vbox.show()
-
-        self.terminal = terminal()
-        self.terminal.connect("child-exited", lambda _: self.close_button.show())
-        
-        self.expander = expander_new_with_mnemonic(_("_Terminal"))
-        self.expander.set_expanded(False)
-        self.expander.connect("notify::expanded", self._set_size)
-        self.expander.show_all()
-        
-        self.close_button = Button(stock=STOCK_CLOSE)
-        self.close_button.connect("clicked", lambda _: self.destroy())
-
-        scr = ScrolledWindow()
-        scr.set_policy (POLICY_AUTOMATIC, POLICY_AUTOMATIC)
-        scr.add(self.tree)
-        scr.show_all()
-
-        self.vbox.pack_start( scr, True, True, 0)
-        self.vbox.pack_start( self.expander, False, False, 0)
-        self.vbox.pack_start(self.close_button, False, False, 0)
-
-        self.add(self.vbox)
-        return
-
-    def _set_size (self, widget, data=None, event=None):
-        if self.expander.get_expanded():
-            self.size = self.get_size()
-            self.expander.add(self.terminal)
-            self.terminal.show()
-        else:
-            self.expander.remove(self.terminal)
-            self.resize(self.size[0], self.size[1])
-        return
-
-    def _setup_tree(self, pacs):
-        self.tree = PacView(pacs)
-    
-    def run(self):
-        self.show()
-        self.terminal.do_upgrade()
-
-class upgrade_confirm_dialog(Dialog):
-
-    def __init__(self, parent, to_upgrade, icon):
-
-        Dialog.__init__(self, _("Confirm Upgrade"), parent,
-                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
-                        (STOCK_OK, RESPONSE_ACCEPT,
-                         STOCK_CANCEL, RESPONSE_REJECT))
-
-        self.set_icon(pixbuf_new_from_file(icon))
-        self._setup_tree(to_upgrade)
-        self._setup_layout()
-        
-    def _setup_tree(self, pacs):
-
-        self.tree = PacView( pacs)
-        self.tree.show()
-
-    def _setup_layout(self):
-
-        self.label = Label(_("Are you sure you want to upgrade those packages?\n"))
-        self.label.show()
-
-        self.set_default_size (300, 300)
-
-        scr = ScrolledWindow()
-        scr.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
-        scr.add(self.tree)
-        scr.show()
-        
-        self.vbox.pack_start(self.label, False, False, 0)
-        self.vbox.pack_start(scr, True, True, 0)
-
-    def run(self):
-        retcode = Dialog.run(self)
-        self.destroy()
-
-        if retcode == RESPONSE_ACCEPT:
-            return True
-        else:
-            return False
-
-class command_dialog(Window):
-
-    def __init__(self, parent, icon):
-
-        Window.__init__(self, WINDOW_TOPLEVEL)
-        self.set_property("skip-taskbar-hint", True)
-        self.set_property("destroy-with-parent", True)
-        self.set_modal(True)
-        self.set_transient_for( parent)
-        self.set_position( WIN_POS_CENTER_ON_PARENT)
-
-        self.vbox = VBox(False, 0)
-        
-        self.terminal = terminal()
-        self.terminal.connect("child-exited",
-                              lambda _: self.close_button.show())
-        self.terminal.show()
-        
-        self.close_button = Button(stock=STOCK_CLOSE)
-        self.close_button.connect("clicked", lambda _: self.destroy())
-
-        self.vbox.pack_start(self.terminal, False, False, 0)
-        self.vbox.pack_start(self.close_button, False, False, 0)
-        self.vbox.show()
-
-        self.add(self.vbox)
-
-        self.set_icon(pixbuf_new_from_file(icon))
-
-    def run(self, command, pacman = True):
-        self.show()
-
-        if pacman:
-            self.terminal.execute( "pacman --noconfirm -%s \n" %command)
-            self.terminal.execute( "exit \n")
-        else:
-            self.terminal.execute( command)
-            self.terminal.execute( "exit \n")
             
 class error_dialog(MessageDialog):
 
@@ -505,7 +472,6 @@ class password_dialog(Dialog):
         Dialog.__init__(self, "GtkPacman Login", parent,
                                DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                            (STOCK_CANCEL, RESPONSE_REJECT, STOCK_OK, RESPONSE_ACCEPT))
-        #self.set_property("title", "GtkPacman Login")
         self.set_icon(pixbuf_new_from_file(icon))
         
         self.password_entry = Entry()

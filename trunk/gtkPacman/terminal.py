@@ -24,11 +24,15 @@ class terminal(Terminal):
 
         Terminal.__init__(self)
         self.fork_command()
-        self.feed_child("su\n")
-        self.set_sensitive(False)
-
-    def login(self, user_pass):
+        #self.set_sensitive(False)
         
+    def init_su(self):
+        """ su command need to be executed for it's own, 
+        otherwise su command will be printed twice in terminal.
+        """
+        self.feed_child("su\n")
+
+    def login(self, user_pass):        
         self.feed_child(user_pass + "\n")
         self.feed_child("whoami\n")
         #self.feed_child("exit\n")

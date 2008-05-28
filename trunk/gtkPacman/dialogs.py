@@ -18,9 +18,9 @@
 
 from gtk import Dialog, MessageDialog, AboutDialog, FileChooserDialog
 from gtk import Expander, ListStore, TreeView, HPaned, Frame, Label, Button
-from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox, Entry
-from gtk import ScrolledWindow, VPaned, POLICY_AUTOMATIC
-from gtk import CellRendererPixbuf, CellRendererText, Entry
+from gtk import Window, WINDOW_TOPLEVEL, WIN_POS_CENTER, VBox, Entry, HBox
+from gtk import ScrolledWindow, VPaned, POLICY_AUTOMATIC, STOCK_STOP, ICON_SIZE_BUTTON
+from gtk import CellRendererPixbuf, CellRendererText, Entry, Image
 from gtk import STOCK_CLOSE, STOCK_OK, STOCK_CANCEL, STOCK_GO_FORWARD
 from gtk import STOCK_APPLY, STOCK_REMOVE, STOCK_YES, STOCK_NO, STOCK_OPEN
 from gtk import DIALOG_MODAL, DIALOG_DESTROY_WITH_PARENT, BUTTONS_OK_CANCEL
@@ -192,7 +192,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"""))
 class command_dialog(Window):
     """This is main window that will be later inherited in do_dialog
     """
-
     def __init__(self, parent, icon):
 
         Window.__init__(self, WINDOW_TOPLEVEL)
@@ -203,7 +202,7 @@ class command_dialog(Window):
         self.set_position(WIN_POS_CENTER_ON_PARENT)
         self.set_icon(pixbuf_new_from_file(icon))
         
-        self.terminal = terminal()
+        self.terminal = terminal()        
         self.terminal.connect("child-exited", lambda _: self.close_button.show())
         
     def _setup_layout(self):
@@ -214,12 +213,14 @@ class command_dialog(Window):
 
         self.vbox.pack_start(self.terminal, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
-        self.vbox.show()
 
         self.add(self.vbox)
+    def exit_terminal(self):
+        pass
 
     def run(self, command, pacman = True):
-        self.show()
+        self._setup_layout()
+        self.show_all()
 
         if pacman:
             self.terminal.execute( "pacman --noconfirm -%s \n" %command)
@@ -227,6 +228,12 @@ class command_dialog(Window):
         else:
             self.terminal.execute( command)
             self.terminal.execute( "exit \n")
+        
+    def run_su(self):
+        self.terminal.init_su()
+        
+    def run_login(self, user_pass):
+        self.terminal.login(user_pass)
 
 class do_dialog(command_dialog):
 
@@ -234,8 +241,6 @@ class do_dialog(command_dialog):
 
         command_dialog.__init__(self, parent, icon)
 
-        self.terminal.init_su()
-        
         self.queues = queues
         self._setup_trees(queues)
         self._setup_layout()
@@ -271,27 +276,22 @@ class do_dialog(command_dialog):
         
         self.hpaned.pack1(inst_scroll, False, False)
         self.hpaned.pack2(rem_scroll, False, False)
-        self.hpaned.show_all()
 
         self.close_button = Button(stock=STOCK_CLOSE)
         self.close_button.connect("clicked", lambda _: self.destroy())
 
         self.expander = Expander(_("Terminal"))
         self.expander.connect("notify::expanded", self._set_size)
-        self.expander.show()
 
-        self.vbox = VBox(False, 0)
-        self.vbox.show()
-        
+        self.vbox = VBox(False, 0)        
         self.vbox.pack_start(self.hpaned, True, True, 0)
         self.vbox.pack_start(self.expander, False, False, 0)
         self.vbox.pack_start(self.close_button, False, False, 0)
         
         self.add(self.vbox)
 
-    def run(self, user_pass):
-        self.show()
-        self.terminal.login(user_pass)
+    def run(self):
+        self.show_all()
         self.terminal.do(self.queues)
         return
 
@@ -342,7 +342,7 @@ class upgrade_dialog(do_dialog):
 
 class upgrade_confirm_dialog(Dialog):
 
-    def __init__(self, parent, to_upgrade, icon):
+    def __init__(self, parent, icon, to_upgrade):
 
         Dialog.__init__(self, _("Confirm Upgrade"), parent,
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
@@ -471,16 +471,29 @@ class password_dialog(Dialog):
     def __init__(self, parent, icon):
         Dialog.__init__(self, "GtkPacman Login", parent,
                                DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
-                           (STOCK_CANCEL, RESPONSE_REJECT, STOCK_OK, RESPONSE_ACCEPT))
+                           (STOCK_OK, RESPONSE_ACCEPT, STOCK_CANCEL, RESPONSE_REJECT))
         self.set_icon(pixbuf_new_from_file(icon))
+        self._setup_layout()
         
+    def _setup_layout(self):
         self.password_entry = Entry()
         self.password_entry.set_visibility(False)
         self.password_entry.set_invisible_char('*')
         info_label = Label(' Enter root password ')
         
+        self.hbox = HBox()
+                
         self.vbox.pack_start(info_label)
         self.vbox.pack_start(self.password_entry)
+        self.vbox.pack_start(self.hbox)        
+        self.show_all()
+        
+    def show_warning(self):
+        image = Image()
+        image.set_from_stock(STOCK_STOP, ICON_SIZE_BUTTON)
+        warning_label = Label(' Invalid Password! ')        
+        self.hbox.pack_start(image, False, False, 10)
+        self.hbox.pack_start(warning_label, False, False, 0)
         self.show_all()
 
 class choose_pkgbuild_dialog(FileChooserDialog):

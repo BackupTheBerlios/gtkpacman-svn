@@ -27,15 +27,13 @@ class terminal(Terminal):
         #self.set_sensitive(False)
         
     def init_su(self):
-        """ su command need to be executed for it's own, 
+        """ su command need to be executed for it's own,
         otherwise su command will be printed twice in terminal.
         """
         self.feed_child("su\n")
 
-    def login(self, user_pass):        
+    def login(self, user_pass):
         self.feed_child(user_pass + "\n")
-        self.feed_child("whoami\n")
-        #self.feed_child("exit\n")
     
     def _constructCmds(self, queues):
         inst = ''

@@ -63,7 +63,7 @@ class gui:
                   "make_pkg":       self.make_package}
         self.gld.signal_autoconnect(h_dict)
 
-
+        self.uid = uid
         self.fname = fname
         self.icon = icon
         self.database = database
@@ -76,14 +76,14 @@ class gui:
         self._setup_pacs_models()
         self._setup_pacs_tree()
         self._setup_files_tree()
-	
+        
         #Setup statusbar
-	self._statusbar()
-	#Check pacman version
-	self._pacman_ver_check()
-	
-	#gobject.timeout_add( 3000, self._on_idle, gobject.PRIORITY_LOW)
-	#gobject.idle_add(self._on_idle)
+        self._statusbar()
+        #Check pacman version
+        self._pacman_ver_check()
+        
+        #gobject.timeout_add( 3000, self._on_idle, gobject.PRIORITY_LOW)
+        #gobject.idle_add(self._on_idle)
 
         #Check if root, else notufy it and deactivate some widgets
         if uid:
@@ -97,17 +97,17 @@ class gui:
         self.gld.get_widget("queue").set_sensitive(False)
         self.gld.get_widget("immediate").set_sensitive(False)
         #self.gld.get_widget("add_install").set_sensitive(False)
-        self.gld.get_widget("remove_install").set_sensitive(False)
-        self.gld.get_widget("add_remove").set_sensitive(False)
-        self.gld.get_widget("remove_remove").set_sensitive(False)
+        #self.gld.get_widget("remove_install").set_sensitive(False)
+        #self.gld.get_widget("add_remove").set_sensitive(False)
+        #self.gld.get_widget("remove_remove").set_sensitive(False)
         #self.gld.get_widget("execute").set_sensitive(False)
-        self.gld.get_widget("up_sys").set_sensitive(False)
-        self.gld.get_widget("up_db").set_sensitive(False)
+        #self.gld.get_widget("up_sys").set_sensitive(False)
+        #self.gld.get_widget("up_db").set_sensitive(False)
         
-        self.popup_gld.get_widget("popup_add_install").set_sensitive(False)
-        self.popup_gld.get_widget("popup_remove_install").set_sensitive(False)
-        self.popup_gld.get_widget("popup_add_remove").set_sensitive(False)
-        self.popup_gld.get_widget("popup_remove_remove").set_sensitive(False)
+        #self.popup_gld.get_widget("popup_add_install").set_sensitive(False)
+        #self.popup_gld.get_widget("popup_remove_install").set_sensitive(False)
+        #self.popup_gld.get_widget("popup_add_remove").set_sensitive(False)
+        #self.popup_gld.get_widget("popup_remove_remove").set_sensitive(False)
     
     def _adjust_queues (self):
         for name in self.queues["add"]:
@@ -132,7 +132,7 @@ class gui:
         
     def _setup_pacs_tree(self):
         pacs_tree = self.gld.get_widget("pacs_tree")
-	pacs_tree.set_reorderable(False)
+        pacs_tree.set_reorderable(False)
 
         pacs_tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
                                                 stock_id=0)
@@ -209,8 +209,8 @@ class gui:
             inst_mod = installed_list(self.database[repo])
 
             self.models[repo][_("all")] = all_mod
-	    if repo != _('local'):
-		self.models[repo][_("installed")] = inst_mod
+            if repo != _('local'):
+                self.models[repo][_("installed")] = inst_mod
             continue
         return
 
@@ -255,7 +255,7 @@ class gui:
 
     def _refresh_trees(self):
         for model in self.models.keys():
-	    if model == _("All") or model == _("foreigners") or model == _("search"):
+            if model == _("All") or model == _("foreigners") or model == _("search"):
                 self._refresh_model(model)
             else:
                 try:
@@ -283,13 +283,13 @@ class gui:
                     if check == rm[2]:
                         del liststore[nr -1]
             elif check in self.queues["remove"] and submodel ==  _("installed"):
-		itr = liststore.get_iter_first()
-		while itr:
-		    rm = liststore.get_value(itr, 2)
-		    # We delete row if match
-		    if check == rm:
-			liststore.remove(itr)
-		    itr = liststore.iter_next(itr)
+                itr = liststore.get_iter_first()
+                while itr:
+                    rm = liststore.get_value(itr, 2)
+                    # We delete row if match
+                    if check == rm:
+                        liststore.remove(itr)
+                    itr = liststore.iter_next(itr)
             elif row[2] in self.queues["add"] and row[0] == 'red' and submodel =="all":
                 row[0] = "green"
                 row[3] = row[4]
@@ -311,7 +311,7 @@ class gui:
             for pac in pacs_queues["add"]:
                 if not pac.name in self.queues["add"]:
                     self.queues["add"].append(pac.name)
-	    for pac in pacs_queues["remove"]:
+            for pac in pacs_queues["remove"]:
                 if not pac.name in self.queues["remove"]:
                     self.queues["remove"].append(pac.name)
 
@@ -338,7 +338,7 @@ class gui:
             
             try:
                 #sum_buf.set_text(pac.summary)
-		self._set_pac_summary(pac)
+                self._set_pac_summary(pac)
                 file_model = file_list(pac.filelist)
                 file_tree.set_model(file_model)
             except:
@@ -347,10 +347,10 @@ class gui:
                 sum_buf.set_text('')
             
         del(pacs_queues)
-	self._pacman_ver_check
-	self._statusbar()
-	self.gld.get_widget("main_win").set_sensitive(True)
-	
+        self._pacman_ver_check
+        self._statusbar()
+        self.gld.get_widget("main_win").set_sensitive(True)
+        
     
     #----------------------------- Callbacks ------------------------------#
     def show_popup(self, widget, event, data=None):
@@ -358,7 +358,7 @@ class gui:
             self.popup.popup(None, None, None, event.button, event.time)
         else:
             self.popup.popdown()
-	    
+            
     def repo_changed(self, widget, data=None):
         repos_tree = self.gld.get_widget("repos_tree")
         pacs_tree = self.gld.get_widget("pacs_tree")
@@ -406,52 +406,52 @@ class gui:
                 self.inst_ver_col = pacs_tree.insert_column_with_attributes(
                     -1, _("Avaible Version"), CellRendererText(), text=4)
         pacs_tree.set_model(pacs_model)
-	
-	stat = (len(pacs_model), selected)
-	self._statusbar(stat)
+        
+        stat = (len(pacs_model), selected)
+        self._statusbar(stat)
 
     def pacs_changed(self, widget, data=None):
-	def _fork():	    
-	    pac = self.database.get_by_name(name)
-	    if not pac.prop_setted:
-		self.database.set_pac_properties(pac)
+        def _fork():        
+            pac = self.database.get_by_name(name)
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
 
-	    #sum_buf.set_text(pac.summary)
-	    self._set_pac_summary(pac)
-	    file_model = file_list(pac.filelist)
-	    file_tree.set_model(file_model)
-	    self._statusbar()
-		
+            #sum_buf.set_text(pac.summary)
+            self._set_pac_summary(pac)
+            file_model = file_list(pac.filelist)
+            file_tree.set_model(file_model)
+            self._statusbar()
+                
         sum_txt = self.gld.get_widget("summary")
-	file_tree = self.gld.get_widget("files")
+        file_tree = self.gld.get_widget("files")
         sum_buf = sum_txt.get_buffer()        
                
         model, t_iter = widget.get_selection().get_selected()
         name = model.get_value(t_iter, 2)
-		
-	gobject.idle_add(_fork)
-	self._statusbar("Please Wait...")      
+                
+        gobject.idle_add(_fork)
+        self._statusbar("Please Wait...")      
     
     def add_from_local_file(self, widget, data=None):
         dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),
                                             self.icon)
         if dlg.run() == RESPONSE_ACCEPT:
-	    self.gld.get_widget("main_win").set_sensitive(False)
+            self.gld.get_widget("main_win").set_sensitive(False)
             fname = dlg.get_filename()
             dlg.destroy()
         else:
             dlg.destroy()
             return
-	
-	self._statusbar(_("Installing %s" %fname))
+        
+        self._statusbar(_("Installing %s" %fname))
         deps, conflicts = self.database.get_local_file_deps(fname)
 
         install = []
         remove = []
         
         for dep in deps:
-	    if dep.count(">="):
-		dep = dep.split(">=")[0]
+            if dep.count(">="):
+                dep = dep.split(">=")[0]
             dep_pkg = self.database.get_by_name(dep)
             if dep_pkg and not dep_pkg.installed:
                 install.append(dep_pkg)
@@ -460,8 +460,8 @@ class gui:
         for conflict in conflicts:
             try:
                 conflict_pkg = self.database.get_by_name(conflict)
-		if conflict_pkg:
-		    remove.append(conflict_pkg)
+                if conflict_pkg:
+                    remove.append(conflict_pkg)
             except NameError:
                 pass
             continue
@@ -473,8 +473,8 @@ class gui:
             i_dlg = local_install_dialog(fname, pacs_queues, self.icon)
             i_dlg.connect("destroy", self._after_local_install)
             i_dlg.run()
-	self.gld.get_widget("main_win").set_sensitive(True)
-	self._statusbar()
+        self.gld.get_widget("main_win").set_sensitive(True)
+        self._statusbar()
 
     def add_to_install_queue(self, widget, data=None):
         tree = self.gld.get_widget("pacs_tree")
@@ -528,7 +528,7 @@ class gui:
         if name in self.queues["remove"]:
             return
                 
-        image = model.get_value(l_iter, 0)	
+        image = model.get_value(l_iter, 0)      
         if image == "red":
             return
 
@@ -556,13 +556,16 @@ class gui:
         return
     
     def refresh_database(self, widget, data=None):
-	main_window = self.gld.get_widget("main_win")
-	main_window.set_sensitive(False)
-	self._statusbar(_("Refreshing database..."))
+        main_window = self.gld.get_widget("main_win")
+        main_window.set_sensitive(False)
+        self._statusbar(_("Refreshing database..."))
         dlg = command_dialog(main_window, self.icon)
         dlg.connect("destroy", self._done_upgrade)
-        dlg.run("Sy")
-        return
+        
+        if self._passwd_dlg_init(dlg):
+            dlg.run('Sy')
+        else:
+            dlg.destroy()
     
     def upgrade_system(self, widget, data=None):
         to_upgrade = []
@@ -573,45 +576,50 @@ class gui:
                     to_upgrade.append(pac)
                 continue
             continue
-
+        
+        # Jump in if there are packages to upgrade
         if to_upgrade:
-	    self.gld.get_widget("main_win").set_sensitive(False)
-	    b_list = self._blacklist( to_upgrade, 0x01)
-	    if b_list:
-		dlg = ignorepkg_dialog( b_list, self.icon)
-		res = dlg.run()
-		dlg.destroy()
-		if res == RESPONSE_NO:
-		    self._done(None)
-		    return
-	    
-            confirm = self._upgrade_confirm(to_upgrade)
+            self.gld.get_widget("main_win").set_sensitive(False)
+            b_list = self._blacklist( to_upgrade, 0x01)
+            if b_list:
+                dlg = ignorepkg_dialog( b_list, self.icon)
+                res = dlg.run()
+                dlg.destroy()
+                if res == RESPONSE_NO:
+                    self._done(None)
+                    return
+            
+            upgrade_dlg = upgrade_confirm_dialog(self.gld.get_widget("main_win"), self.icon, to_upgrade)
 
-            if confirm:
-		self._statusbar(_("Refreshing database..."))
-                dlg = upgrade_dialog( self.gld.get_widget("main_win"), to_upgrade, self.icon)
+            if upgrade_dlg.run():
+                self._statusbar(_("Refreshing database..."))
+                dlg = upgrade_dialog( self.gld.get_widget("main_win"), self.icon, to_upgrade)
                 dlg.connect("destroy", self._done_upgrade)
-                dlg.run()
-	    else:
-		self.gld.get_widget("main_win").set_sensitive(True)
+                if self._passwd_dlg_init(dlg):
+                    dlg.run()
+                else:
+                    dlg.destroy()
+            else:
+                self.gld.get_widget("main_win").set_sensitive(True)
+        # Else nothing to upgrade
         else:
-	    self._statusbar(_("There isn't any packages to upgrade"))
-	    self.gld.get_widget("main_win").set_sensitive(True)
+            self._statusbar(_("There are no packages to upgrade"))
+            self.gld.get_widget("main_win").set_sensitive(True)
         return
     
     def clear_cache(self, wid, data=None):
-	main_window = self.gld.get_widget("main_win")
-	main_window.set_sensitive(False)
-	self._statusbar(msg=_("Clearing cache..."))
+        main_window = self.gld.get_widget("main_win")
+        main_window.set_sensitive(False)
+        self._statusbar(msg=_("Clearing cache..."))
         dlg = command_dialog(main_window, self.icon)
         dlg.connect("destroy", self._done)
         dlg.run("Sc")
         return
     
     def empty_cache(self, wid, data=None):
-	main_window = self.gld.get_widget("main_win")
-	main_window.set_sensitive(False)
-	self._statusbar(_("Emptying cache..."))
+        main_window = self.gld.get_widget("main_win")
+        main_window.set_sensitive(False)
+        self._statusbar(_("Emptying cache..."))
         dlg = command_dialog(main_window, self.icon)
         dlg.connect("destroy", self._done)
         dlg.run("Scc")
@@ -628,15 +636,15 @@ class gui:
         try:
             dname = dirname(fname)
         except:
-	    self.gld.get_widget("main_win").set_sensitive(True)
+            self.gld.get_widget("main_win").set_sensitive(True)
             return
 
-	self.gld.get_widget("main_win").set_sensitive(False)
+        self.gld.get_widget("main_win").set_sensitive(False)
         pwd = abspath(curdir)
         chdir(dname)
 
         cdlg = command_dialog(self.gld.get_widget("main_win"), self.icon)
-	cdlg.connect("destroy", self._done)
+        cdlg.connect("destroy", self._done)
 
         if geteuid() == 0:
             dlg = change_user_dialog(self.gld.get_widget("main_win"), self.icon)
@@ -653,176 +661,190 @@ class gui:
             cdlg.run("makepkg -si \n", False)
         chdir(pwd)
     
-    def search(self, widget, data=None):	
-	win = self.gld.get_widget("main_win")
-	wait_cursor = Cursor(WATCH)
-	        
+    def search(self, widget, data=None):        
+        win = self.gld.get_widget("main_win")
+        wait_cursor = Cursor(WATCH)
+                
         dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
-	
-	def _fork():	    
-	    repos_tree = self.gld.get_widget("repos_tree")
-	    repos_model = repos_tree.get_model()
-	    
-	    pacs = self.database.get_by_keywords(keywords)	    
-	    if self.search_iter:
-		repos_model.remove(self.search_iter)
-	    self.search_iter = repos_model.append(None, [_("Search results for '%s'") %keywords])
-	    self.models["search"] = search_list(pacs)
-	    repos_tree.set_cursor_on_cell((1))
-	    
-	    dlg.destroy()
-	    win.window.set_cursor(None)
-	
+        
+        def _fork():        
+            repos_tree = self.gld.get_widget("repos_tree")
+            repos_model = repos_tree.get_model()
+            
+            pacs = self.database.get_by_keywords(keywords)          
+            if self.search_iter:
+                repos_model.remove(self.search_iter)
+            self.search_iter = repos_model.append(None, [_("Search results for '%s'") %keywords])
+            self.models["search"] = search_list(pacs)
+            repos_tree.set_cursor_on_cell((1))
+            
+            dlg.destroy()
+            win.window.set_cursor(None)
+        
         if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
-	    if keywords:
-		dlg.vbox.set_sensitive(False)
-		self._statusbar(_("Searching for %s..." %keywords))
-		win.window.set_cursor(wait_cursor)
-		dlg.window.set_cursor(wait_cursor)
-		gobject.idle_add(_fork)	
-	    else:
-		dlg.destroy()
-		error_dlg = error_dialog(None, _("You should insert at least one keyword to search for"), self.icon)
-		error_dlg.run()
-		error_dlg.destroy()
-	else:
-	    dlg.destroy()
-	    
+            if keywords:
+                dlg.vbox.set_sensitive(False)
+                self._statusbar(_("Searching for %s..." %keywords))
+                win.window.set_cursor(wait_cursor)
+                dlg.window.set_cursor(wait_cursor)
+                gobject.idle_add(_fork) 
+            else:
+                dlg.destroy()
+                error_dlg = error_dialog(None, _("You should insert at least one keyword to search for"), self.icon)
+                error_dlg.run()
+                error_dlg.destroy()
+        else:
+            dlg.destroy()
+            
     def about(self, widget, data=None):
         dlg = about_dialog(self.icon)
         dlg.run()
         dlg.destroy()
         return
     
+    def quit(self, widget, data=None):
+        main_quit()
+        return
+    
     def execute(self, widget=None, data=None):
         pacs_queues = { "add": [], "remove": [] }
-	deps = []
+        deps = []
         req_pacs = []
-	
-	if self.queues['add']:
+        
+        if self.queues['add']:
             pacs_queues['add'] = self._execute_queue_add()
-	    # Check if packages are listed as ignorePkg
-	    b_list = self._blacklist( pacs_queues['add'], 0x01)
-	    if b_list:
-		dlg = ignorepkg_dialog( b_list, self.icon)
-		res = dlg.run()
-		dlg.destroy()
-		if res == RESPONSE_NO:
-		    self._done(None)
-		    return
-	    
-	if self.queues['remove']:
+            # Check if packages are listed as ignorePkg
+            b_list = self._blacklist( pacs_queues['add'], 0x01)
+            if b_list:
+                dlg = ignorepkg_dialog( b_list, self.icon)
+                res = dlg.run()
+                dlg.destroy()
+                if res == RESPONSE_NO:
+                    self._done(None)
+                    return
+            
+        if self.queues['remove']:
             pacs_queues['remove'], req_pacs = self._execute_queue_remove()
-	    # Check if packages are listed as holdPkg
-	    b_list = self._blacklist( pacs_queues['remove'], 0x02)
-	    if b_list:
-		dlg = holdpkg_dialog( b_list, self.icon)
-		res = dlg.run()
-		dlg.destroy()
-		if res == RESPONSE_NO:
-		    self._done(None)
-		    return
-	    
-	if not (pacs_queues["add"] or pacs_queues["remove"]):
+            # Check if packages are listed as holdPkg
+            b_list = self._blacklist( pacs_queues['remove'], 0x02)
+            if b_list:
+                dlg = holdpkg_dialog( b_list, self.icon)
+                res = dlg.run()
+                dlg.destroy()
+                if res == RESPONSE_NO:
+                    self._done(None)
+                    return
+            
+        if not (pacs_queues["add"] or pacs_queues["remove"]):
             self._refresh_trees_and_queues()
             return
-	
-	self.gld.get_widget("main_win").set_sensitive(False)
-	if req_pacs:
-	    dlg = warning_dialog(self.gld.get_widget("main_win"),
-			     req_pacs, self.icon)
-	    if dlg.run() == RESPONSE_YES:
-		pacs_queues["remove"].extend(req_pacs)
-		dlg.destroy()
-	    else:
-		#self.queues["remove"].remove(name)
-		#pacs_queues["remove"].remove(pac)
-		self.queues['remove'] = []
-		pacs_queues['remove'] = []
-		dlg.destroy()
-		self._refresh_trees_and_queues()
-		return
+        
+        self.gld.get_widget("main_win").set_sensitive(False)
+        if req_pacs:
+            dlg = warning_dialog(self.gld.get_widget("main_win"),
+                             req_pacs, self.icon)
+            if dlg.run() == RESPONSE_YES:
+                pacs_queues["remove"].extend(req_pacs)
+                dlg.destroy()
+            else:
+                #self.queues["remove"].remove(name)
+                #pacs_queues["remove"].remove(pac)
+                self.queues['remove'] = []
+                pacs_queues['remove'] = []
+                dlg.destroy()
+                self._refresh_trees_and_queues()
+                return
 
-        retcode = self._confirm(pacs_queues)
-	
-        if retcode:
-	    dlg = do_dialog( self.gld.get_widget("main_win"), pacs_queues, self.icon)
-	    #*********************************************************
-	    pass_dlg = password_dialog(self.gld.get_widget("main_win"), self.icon)
-	    res = pass_dlg.run()
-	    if res == RESPONSE_ACCEPT:
-		user_pass = pass_dlg.password_entry.get_text()
-		# TODO: Must Validate password, check password lenght
-		#print user_pass
-		pass_dlg.destroy()
-	    elif res == RESPONSE_REJECT:
-		pass_dlg.destroy()
-		dlg.destroy()
-	    #*********************************************************
-	    self._statusbar(_("Executing queued operations..."))
-            #dlg = do_dialog( self.gld.get_widget("main_win"), pacs_queues, self.icon, user_pass)
-            dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
-            dlg.run(user_pass)
+        confirm_dlg = confirm_dialog(self.gld.get_widget("main_win"), self.icon, pacs_queues)
+        
+        if confirm_dlg.run():
+            self._statusbar(_("Executing queued operations..."))
+            dlg = do_dialog( self.gld.get_widget("main_win"), self.icon, pacs_queues)
+            dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)     
+            if self._passwd_dlg_init(dlg):
+                dlg.run()
+            else:
+                dlg.destroy()
+            # Jump in if program wasn't started by root
+            #dlg.run_su()
+            #if self.uid:
+                #dlg.run_su()
+                ## Run password dialog
+                #user_passwd =  self._passwd_dlg_init()
+                ## Check if user clicked on OK button
+                #if user_passwd:
+                    ##self._statusbar(_("Executing queued operations..."))
+                    #dlg.run_login(user_passwd)
+                    #dlg.run()
+                    #del user_passwd
+                ## User clicked on Cancle button
+                #else:
+                    #dlg.destroy()
+                    ##self._refresh_trees_and_queues()
+            ## Otherwise program is started by root
+            #else:
+                ##self._statusbar(_("Executing queued operations..."))
+                ##dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
+            #dlg.run()
         else:
             self.queues["add"] = []
             self.queues["remove"] = []
             self._refresh_trees_and_queues()
-        return
     
-    #------------------------- Callbacks End -----------------------------#   
+    #------------------------- Callbacks End -----------------------------#
     def _execute_queue_add(self):
-	""" We convert names to pac (dict).
-	     Then we check if there are packages that need 
-	     to be installed for our selected packages (dependecies).
-	"""
-	queue = []
-	add_queue = self.queues["add"][:]
-	
-	for name in add_queue:
-	    pac = self.database.get_by_name(name)
-            if not pac.prop_setted:
-                self.database.set_pac_properties(pac)
-
-            queue.append(pac)
-	    
-            if pac.dependencies:
-                dep_todo_list = []
-                dep_black_list = []
-                deps = pac.dependencies.split(", ")
-		for dep in deps:
-		    if not dep in queue:
-			dep_todo_list.append(dep)
-		while dep_todo_list:
-		    dep = dep_todo_list.pop(0)
-		    if dep.count(">="):
-			dep = dep.split(">=")[0]
-		    if dep.count('<'):
-			dep = dep.split('<')[0]
-		    if dep.count("="):
-			dep = dep.split("=")[0]
-		    if not (dep in self.queues["add"]):
-			done, to_do = self._execute_dep_check(dep, "dep")
-			if done and not done in queue:
-			    done.flag = 11
-			    queue.append(done)
-			for add in to_do:
-			    if not add in dep_black_list:
-				dep_todo_list.append(add)
-				dep_black_list.append(add)
-	return queue
-	
-    def _execute_queue_remove(self):
-	queue = []
-	req_pacs = []
-	remove_queue = self.queues["remove"][:]
-	
-	for name in remove_queue:
+        """ We convert names to pac (dict).
+             Then we check if there are packages that need 
+             to be installed for our selected packages (dependecies).
+        """
+        queue = []
+        add_queue = self.queues["add"][:]
+        
+        for name in add_queue:
             pac = self.database.get_by_name(name)
             if not pac.prop_setted:
                 self.database.set_pac_properties(pac)
 
-	    queue.append(pac)
+            queue.append(pac)
+            
+            if pac.dependencies:
+                dep_todo_list = []
+                dep_black_list = []
+                deps = pac.dependencies.split(", ")
+                for dep in deps:
+                    if not dep in queue:
+                        dep_todo_list.append(dep)
+                while dep_todo_list:
+                    dep = dep_todo_list.pop(0)
+                    if dep.count(">="):
+                        dep = dep.split(">=")[0]
+                    if dep.count('<'):
+                        dep = dep.split('<')[0]
+                    if dep.count("="):
+                        dep = dep.split("=")[0]
+                    if not (dep in self.queues["add"]):
+                        done, to_do = self._execute_dep_check(dep, "dep")
+                        if done and not done in queue:
+                            done.flag = 11
+                            queue.append(done)
+                        for add in to_do:
+                            if not add in dep_black_list:
+                                dep_todo_list.append(add)
+                                dep_black_list.append(add)
+        return queue
+        
+    def _execute_queue_remove(self):
+        queue = []
+        req_pacs = []
+        remove_queue = self.queues["remove"][:]
+        
+        for name in remove_queue:
+            pac = self.database.get_by_name(name)
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
+
+            queue.append(pac)
             if pac.req_by:
                 req_todo_list = []
                 req_black_list = []
@@ -839,53 +861,91 @@ class gui:
                             if not add in req_black_list:
                                 req_todo_list.append(add)
                                 req_black_list.append(add)
-	return queue, req_pacs
-				
+        return queue, req_pacs
+                                
     def _execute_dep_check(self, to_check, flag):
-	to_do = []
-	try:
-	    pac = self.database.get_by_name(to_check)
-	except NameError:
-	    dlg = error_dialog(self.gld.get_widget("main_win"),
-	    _("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
-	    dlg.run()
-	    dlg.destroy()
-	    pacs_queues["add"].remove(pac)
-	    self.queues["add"].remove(name)
-	    return
-	try:
-	    if not pac.prop_setted:
-		self.database.set_pac_properties(pac)
-	except:
-	    return pac, to_do
-	
-	if flag == "req":
-	    for req in pac.req_by.split(", "):
-		if len(req) >= 1:
-		    to_do.append(req)
-	else:
-	    if not pac.installed:
-		for dep in pac.dependencies.split(", "):
-		    if len(dep) >= 1:
-			to_do.append(dep)
-		    else:
-			pac = None
-		return pac, to_do
-	    pac = None
+        to_do = []
+        try:
+            pac = self.database.get_by_name(to_check)
+        except NameError:
+            dlg = error_dialog(self.gld.get_widget("main_win"),
+            _("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
+            dlg.run()
+            dlg.destroy()
+            pacs_queues["add"].remove(pac)
+            self.queues["add"].remove(name)
+            return
+        try:
+            if not pac.prop_setted:
+                self.database.set_pac_properties(pac)
+        except:
+            return pac, to_do
+        
+        if flag == "req":
+            for req in pac.req_by.split(", "):
+                if len(req) >= 1:
+                    to_do.append(req)
+        else:
+            if not pac.installed:
+                for dep in pac.dependencies.split(", "):
+                    if len(dep) >= 1:
+                        to_do.append(dep)
+                    else:
+                        pac = None
+                return pac, to_do
+            pac = None
     
-	return pac, to_do
-				
-    def _confirm(self, pacs_queues):
-        dlg = confirm_dialog(self.gld.get_widget("main_win"), pacs_queues, self.icon)
-        retcode = dlg.run()
-        return retcode   
-	
+        return pac, to_do
+                                
+    def _passwd_dlg_init(self, dlg):
+        """ Here we check what user has started gtkpacman and then
+             we runing password_dialog
+        """
+        from os import access
+        warning_on = False
+        # Jump in if program was started by not root
+        if self.uid:
+            dlg.run_su()
+            passwd_dlg = password_dialog(self.gld.get_widget("main_win"), self.icon)        
+            # When password is less then 1 we show 'error' message. 
+            # Until passwd is less than one and unverified we keep password_dialog runing.
+            while passwd_dlg.run() == RESPONSE_ACCEPT:
+                user_passwd = passwd_dlg.password_entry.get_text()
+                if not len(user_passwd) > 0:
+                    # We don't want to show same message everytime user click on OK button
+                    if not warning_on:
+                        passwd_dlg.show_warning()
+                        warning_on = True
+                    continue
+                #****************************************************
+                #elif len(user_passwd) and not access('/usr', 2):
+                    #if not warning_on:
+                        #passwd_dlg.show_warning()
+                        #warning_on = True
+                    #continue
+                # TODO: Must Validate password
+                #****************************************************
+                # Return with valid password
+                else:
+                    passwd_dlg.destroy()
+                    #return user_passwd
+                    dlg.run_login(user_passwd)
+                    #dlg.run()
+                    del user_passwd
+                    return True
+            # Destroy dialog and return False when user clic on Cancle
+            passwd_dlg.destroy()
+            return False
+        # We return if program was started by root
+        else:
+            return True
+    
     def _after_local_install(self, wid, data=None):
         self.database.refresh()
         self.models["foreigners"] = installed_list(self.database["foreigners"])
-	self.gld.get_widget("main_win").set_sensitive(True)
+        self.gld.get_widget("main_win").set_sensitive(True)
 
-	self._statusbar()
+        self._statusbar()
 
     def _local_confirm(self, fname, pacs_queue):
         dlg = local_confirm_dialog(self.gld.get_widget("main_win"),
@@ -895,89 +955,80 @@ class gui:
         else:
             retcode = False
         return retcode
-
-    def _upgrade_confirm(self, to_upgrade):
-        dlg = upgrade_confirm_dialog(self.gld.get_widget("main_win"),
-                                     to_upgrade, self.icon)
-        retcode = dlg.run()
-        return retcode
     
     def _blacklist(self, pacs, key=None):
-	""" Here we check if packages are not in hold or ignore list.
-	    If they are then we return them.
-	"""
-	blacklist = []
-	if pacs and key == 0x01:
-	    for bp in self.database.ignorePkg:
-		for p in pacs:
-		    if p.name == bp:
-			blacklist.append(p.name)
-	elif pacs and key == 0x02:
-	    for bp in self.database.holdPkg:
-		for p in pacs:
-		    if p.name == bp:
-			blacklist.append(p.name)
-	else:
-	    return None
-	
-	return blacklist
+        """ Here we check if packages are not in hold or ignore list.
+            If they are then we return them.
+        """
+        blacklist = []
+        if pacs and key == 0x01:
+            for bp in self.database.ignorePkg:
+                for p in pacs:
+                    if p.name == bp:
+                        blacklist.append(p.name)
+        elif pacs and key == 0x02:
+            for bp in self.database.holdPkg:
+                for p in pacs:
+                    if p.name == bp:
+                        blacklist.append(p.name)
+        else:
+            return None
+        
+        return blacklist
 
     def _done_upgrade(self, widget, data=None):
         self.database.refresh()
         self._refresh_repos_tree()
         self._setup_pacs_models()
-	self._statusbar(_("Updating compleated"))
-	self.gld.get_widget("main_win").set_sensitive(True)
-	
+        self._statusbar(_("Updating compleated"))
+        self.gld.get_widget("main_win").set_sensitive(True)
+        
     def _done(self, widget, data=None):
-	self.gld.get_widget("main_win").set_sensitive(True)
-	self._statusbar()
-	
-    def quit(self, widget, data=None):
-        main_quit()
-        return
+        self.gld.get_widget("main_win").set_sensitive(True)
+        self._statusbar()
+        
     def _pacman_ver_check(self):
-	"""Check pacman version.
-	"""
-	pacman_ver = self.gld.get_widget('pacman_ver_status')
-	ver_inst = self.gld.get_widget('ver_inst_label')
-	ver_avail = self.gld.get_widget('ver_avail_label')
-	
-	for pac in self.database['core']:
-	    # Print pacmans installed and avaible version
-	    if pac.name == 'pacman':
-		if pac.isold == False:
-		    pacman_ver.hide()
-		    return
-		elif (pac.name == 'pacman' and ( pac.isold == True and pac.installed == True )):
-		    pacman_ver.show()
-		    ver_inst.set_text(pac.inst_ver)
-		    ver_avail.set_text(pac.version)
-		    return
-		# If pacman is found but 'installed == False' then we print error
-		else:
-		    pacman_ver.show()
-		    ver_inst.set_text('WARNING')
-		    ver_avail.set_text('WARNING')
-		    print "?? WARNING: Found pacman but it's not installed"
-		    return
-		
-	# If can't find pacman in core repo then print error
-	pacman_ver.show()
-	ver_inst.set_text('WARNING')
-	ver_avail.set_text('WARNING')
-	print "!! WARNING: Can't find pacman in 'core' repo"
-		
+        """Check pacman version.
+        """
+        pacman_ver = self.gld.get_widget('pacman_ver_status')
+        ver_inst = self.gld.get_widget('ver_inst_label')
+        ver_avail = self.gld.get_widget('ver_avail_label')
+        
+        for pac in self.database['core']:
+            # Print pacmans installed and avaible version
+            if pac.name == 'pacman':
+                if pac.isold == False:
+                    pacman_ver.hide()
+                    return
+                elif (pac.name == 'pacman' and ( pac.isold == True and pac.installed == True )):
+                    pacman_ver.show()
+                    ver_inst.set_text(pac.inst_ver)
+                    ver_avail.set_text(pac.version)
+                    return
+                # If pacman is found but 'installed == False' then we print warning
+                else:
+                    pacman_ver.show()
+                    ver_inst.set_text('WARNING')
+                    ver_avail.set_text('WARNING')
+                    print "?? WARNING: Found pacman but it's not installed"
+                    return
+                
+        # If can't find pacman in core repo then print warning
+        pacman_ver.show()
+        ver_inst.set_text('WARNING')
+        ver_avail.set_text('WARNING')
+        print "!! WARNING: Can't find pacman in 'core' repo"
+                
     def _statusbar(self, msg=None):
-	stat_bar = self.gld.get_widget("statusbar")
+        stat_bar = self.gld.get_widget("statusbar")
 
-	if type(msg) == type(()):
-	    str = _("%s packages in [ %s ]") %(msg[0], msg[1])
-	elif msg == None:
-	    str =  _("Done")
-	else:
-	    str = "%s " %msg
-	stat_bar.push(-1, str)
+        if type(msg) == type(()):
+            str = _("%s packages in [ %s ]") %(msg[0], msg[1])
+        elif msg == None:
+            str =  _("Done")
+        else:
+            str = "%s " %msg
+        stat_bar.push(-1, str)
     
     def _set_pac_summary(self, pac):
         sum_txt = self.gld.get_widget("summary")
@@ -992,8 +1043,8 @@ class gui:
         heading_tag = TextTag("heading")
         heading_tag.set_property("weight", pango.WEIGHT_BOLD)
         heading_tag.set_property("foreground", "grey")
-	
-	description_tag = TextTag("desc_tag")
+        
+        description_tag = TextTag("desc_tag")
         description_tag.set_property("indent", -15)
         
         center_tag = TextTag("center")
@@ -1002,7 +1053,7 @@ class gui:
         #center_tag.set_property("left-margin", 90)
         tag_table.add(heading_tag)
         tag_table.add(center_tag)
-	tag_table.add(description_tag)
+        tag_table.add(description_tag)
         
         iter = text_buffer.get_start_iter()
         #iter, eob = text_buffer.get_bounds()
@@ -1010,8 +1061,8 @@ class gui:
         if pac.installed:
             text_buffer.insert_with_tags_by_name(iter, "Description\n", 'heading')
             text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
-	    
-	    text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
+            
+            text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
             text_buffer.insert(iter, pac.summary[5] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Size\n", 'heading')
@@ -1039,8 +1090,8 @@ class gui:
         else:            
             text_buffer.insert_with_tags_by_name(iter, "Description\n", "heading")
             text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
-	    
-	    text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
             text_buffer.insert(iter, pac.summary[2] + "\n")
             #text_buffer.insert_with_tags_by_name(iter, pac.summary[2], "center")
             

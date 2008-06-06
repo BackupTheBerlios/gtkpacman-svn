@@ -898,8 +898,8 @@ class gui:
         return pac, to_do
                                 
     def _passwd_dlg_init(self, dlg):
-        """ Here we check what user has started gtkpacman and then
-             we runing password_dialog
+        """ We check if gtkpacman was started by root. 
+            If not then we run password_dialog
         """
         from os import access
         warning_on = False

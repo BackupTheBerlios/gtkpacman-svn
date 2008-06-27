@@ -43,15 +43,20 @@ class package:
         else:
             self.inst_ver = "-"
         self.isold = isold
-        self.description = ""
+        # [0] = Package description, [1] = Packager
+        self.description = [None, None]
         self.filelist = ""
-        self.isorphan = True
+        self.isorphan = None
         self.req_by = ""
         self.dependencies = ""
-        self.prop_setted = False
-	self.summary = ""
-	# Flag is for marking package as " install as dependency ", ( flag = 11 )
-	self.flag = None 
+        self.prop_setted = [False, None]
+        # [0] = Install date, [1] = Build date
+        self.dates = [None, None]
+        # Explicitly will be used for showing packages that ware installed explicitly
+        self.explicitly = ["", None]
+        # Flag is for marking package as " install as dependency ", ( flag = 11 )
+        self.flag = None
+        self.size = ""
         
     def set_version(self, version):
         """Set package's version"""
@@ -149,7 +154,7 @@ class database(dict):
         self.ver = stout.read().split('v')[1].split('-')[0].strip().split('.')
 
     def _get_repo_pacs(self, repo):
-	global path_repo
+        global path_repo
         pacs = None
         #Grab all pacs in the col
         if (self.ver[0] >= '3' and self.ver[1] >= '1'):
@@ -197,7 +202,7 @@ class database(dict):
     def set_pacs(self):
         """Grab all pacs from machine db, instatiate a package obj for each
         of them and order them by cols"""
-	self["local"] = []
+        self["local"] = []
         self.inst_pacs = self._get_installed()
         
         for repo in self.repos:
@@ -208,13 +213,13 @@ class database(dict):
             
             for pac in pacs:
                 pac_obj = self._make_pac(pac, repo)
-		if pac_obj.installed:
-		    self[repo].append(pac_obj)
-		    ver = pac_obj.inst_ver
-		    pac_local = package(pac_obj.name, ver, inst_ver=ver, repo='local', inst=True, isold=False)
-		    self["local"].append(pac_local)
-		else:
-		    self[repo].append(pac_obj)
+                if pac_obj.installed:
+                    self[repo].append(pac_obj)
+                    ver = pac_obj.inst_ver
+                    pac_local = package(pac_obj.name, ver, inst_ver=ver, repo='local', inst=True, isold=False)
+                    self["local"].append(pac_local)
+                else:
+                    self[repo].append(pac_obj)
                 continue
             continue
         
@@ -229,74 +234,106 @@ class database(dict):
     
     def set_pac_properties(self, pac):
         """Set the properties for the given pac"""
-	if pac.installed:
-	    raw_desc = self._get_raw_desc(pac, "desc")
-	    raw_depends = self._get_raw_desc(pac, "depends")
-	    raw_files = self._get_raw_desc(pac, "files")
-	    
-	    pac.req_by = self._search_reqby(pac.name)
-	    self._set_filelist(pac, raw_files)
-	else:
-	    raw_desc = self._get_raw_desc(pac, "desc")
-	    raw_depends = self._get_raw_desc(pac, "depends")
-	
-	if raw_desc:
-	    self._set_summary(pac, raw_desc, raw_depends)
-	else:
-	    return
-        
-        pac.prop_setted = True
-    
-    def _set_summary(self, pac, raw_desc, raw_depends=None):
-        
-        desc = self._get_description(raw_desc)
-        deps = self._get_dependencies(raw_depends)
-        size = self._get_size(raw_desc)
-
         if pac.installed:
-	    if not pac.req_by:
-		pac.req_by = self._get_req_by(raw_depends)
-            packager = self._get_packager(raw_desc)
-            builddate = self._get_builddate(raw_desc)
-            installdate = self._get_installdate(raw_desc)
-            reason = self._get_reason(raw_desc)
-            #summary = _("Description: %s\nDepends on: %s\nRequired by: %s\nSize: %s\nPackager: %s\nBuilt: %s\nInstalled: %s\nReason: %s") %(desc, deps, pac.req_by, size, packager, builddate, installdate, reason)
-	    summary = ":: %s" %( desc ),\
-		    ":: %s"%( deps ),\
-		    ":: %s" %( pac.req_by ),\
-		    ":: %s" %( packager ),\
-		    ":: %s" %( builddate ),\
-		    ":: %s" %( installdate ),\
-		    ":: %s" %( size),\
-		    ":: %s" %( reason )
-
+            raw_desc = self._get_raw_desc(pac, "desc")
+            raw_depends = self._get_raw_desc(pac, "depends")
+            raw_files = self._get_raw_desc(pac, "files")
+            
+            pac.description = [ self._get_description(raw_desc), self._get_packager(raw_desc) ]
+            pac.dates = [ self._get_installdate(raw_desc), self._get_builddate(raw_desc) ]
+            pac.explicitly = self._get_reason(raw_desc)
+            pac.size = self._get_size(raw_desc)
+            
+            pac.dependencies, pac.req_by = self._search_dependencies(pac)
+            self._set_filelist(pac, raw_files)
+            
         else:
-            #summary = _("Description: %s\nDepends on: %s\nSize (compressed): %s") %(desc, deps, size)
-	    summary = ":: %s" %( desc ),\
-		    ":: %s" %( deps ),\
-		    ":: %s" %( size )
-
-        pac.summary = summary
-        pac.dependencies = deps
-        #pac.description = desc
-	
+            raw_desc = self._get_raw_desc(pac, "desc")
+            raw_depends = self._get_raw_desc(pac, "depends")
+            
+            pac.description = [ self._get_dependencies(raw_desc), self._get_packager ]
+            pac.dependencies = self._get_dependencies(raw_depends)
+            pac.size = self._get_size(raw_desc)
+        
+        pac.prop_setted[0] = True
+        
+    def _search_dependencies(self, pac):
+        # Search in local repo for pac_name in descriptions files.
+        # If found than pack.name is requied by pack_name
+        deps_stack = []
+        deps_on = ''
+        deps = ''
+        
+        req_stack = []
+        req_by = ''
+        req = ''
+        
+        # Get dependencies only from "pac"
+        pac_raw_req_by = self._get_raw_desc(pac, "depends")
+        pac_req_by = self._get_dependencies(pac_raw_req_by)
+        
+        for p in pac_req_by.split(','):
+            if '=<' in p:
+                p = p.split('=<')[0]
+            if '>=' in p:
+                p = p.split('>=')[0]
+            p = p.strip()
+            deps_stack.append(p)
+        
+        for package in self["local"]:
+            if not package.prop_setted[0]:
+                # Get Required package
+                raw_depends = self._get_raw_desc(package, "depends")
+                depends_on = self._get_dependencies(raw_depends)
+                for p in depends_on.split(','):
+                    p = p.strip()
+                    if '=<' in p:
+                        p = p.split('=<')[0]
+                    if '>=' in p:
+                        p = p.split('>=')[0]
+                    if p == pac.name and package.name not in req_stack and package.name != pac.name:
+                        req_stack.append(package.name)
+                
+                # Get dependencies
+                req_by = self._get_req_by(raw_depends)
+                for p in req_by.split(','):
+                    p = p.strip()
+                    if '=<' in p:
+                        p = p.split('=<')[0]
+                    if '>=' in p:
+                        p = p.split('>=')[0]
+                    if p == pac.name and package.name not in deps_stack and package.name != pac.name:
+                        deps_stack.append(package.name)
+            else:
+                continue
+    
+        for dep_name in deps_stack:
+            deps = deps + ", " + dep_name
+        deps = deps[2:]
+        
+        for req_name in req_stack:
+            req = req + ", " + req_name
+        req = req[2:]
+        
+        return deps, req
+        
     def _get_raw_desc(self, pac, desc_f):
-	global path_repo
-	repo = pac.repo
-	if pac.installed:
-	    name_n_ver = pac.name + '-' + pac.inst_ver
-	    path = '/var/lib/pacman/local/%s/%s' %(name_n_ver, desc_f)
-	else:
-	    name_n_ver = pac.name + '-' + pac.version
-	    path = "%s/%s/%s/%s" %(path_repo, repo, name_n_ver, desc_f)
+        global path_repo
+        repo = pac.repo
+        if pac.installed:
+            name_n_ver = pac.name + '-' + pac.inst_ver
+            path = '/var/lib/pacman/local/%s/%s' %(name_n_ver, desc_f)
+        else:
+            name_n_ver = pac.name + '-' + pac.version
+            path = "%s/%s/%s/%s" %(path_repo, repo, name_n_ver, desc_f)
 
-	try:
-	    raw_file = open(path).read()
-	except IOError, msg:
-	    print "!! Warning: can't open %s \n\t" %path, msg
-	    return None
-	    
-	return raw_file
+        try:
+            raw_file = open(path).read()
+        except IOError, msg:
+            print "!! Warning: can't open %s \n\t" %path, msg
+            return None
+            
+        return raw_file
 
     def _get_size(self, desc):
 
@@ -305,11 +342,11 @@ class database(dict):
         except ValueError:
             begin = desc.index("%SIZE%") + len("%SIZE%")
 
-	try:
-		end = desc.index("%", begin)
-		size_s = desc[begin:end].strip()
-	except ValueError:
-		size_s = desc[begin:].strip()
+        try:
+                end = desc.index("%", begin)
+                size_s = desc[begin:end].strip()
+        except ValueError:
+                size_s = desc[begin:].strip()
         size_int = int(size_s)
         measure = "byte(s)"
 
@@ -335,13 +372,13 @@ class database(dict):
         end = desc.index("%", begin)
 
         builddate = desc[begin:end].strip()
-	
-	if builddate.isdigit():
-	    try:
-		num = int(builddate)
-		builddate = time.ctime(num)
-	    except ValueError:
-		return builddate
+        
+        if builddate.isdigit():
+            try:
+                num = int(builddate)
+                builddate = time.ctime(num)
+            except ValueError:
+                return builddate
         return builddate
 
     def _get_installdate(self, desc):
@@ -349,26 +386,23 @@ class database(dict):
         end = desc.index("%", begin)
 
         installdate = desc[begin:end].strip()
-	
-	if installdate.isdigit():
-	    num = int(installdate)
-	    installdate = time.ctime(num)
-	    return installdate
+        
+        if installdate.isdigit():
+            num = int(installdate)
+            installdate = time.ctime(num)
+            return installdate
         return installdate
 
-    def _get_reason(self, desc):
+    def _get_reason(self, desc):            
+        # There is no reason to extract anything from reason because if reason is in file
+        # then this mean that package is installed by another package
         try:
-            begin = desc.index("%REASON%") + len("%REASON%")
-            reason_int = int(desc[begin:].strip())
-
-            if reason_int:
-                reason = _("Installed as a dependency for another package")
-            else:
-                reason = _("Explicitly installed")
-
-            return reason
-        except Exception:
-            return ("Explicitly installed")
+            desc.index("%REASON%")
+            pack_reason = ['Installed as a dependency for another package', False]
+        except ValueError:
+            pack_reason = ['Explicitly installed', True]
+        
+        return pack_reason
         
     def _get_description(self, desc):
         """Set description for the given pac"""
@@ -397,13 +431,12 @@ class database(dict):
     
     def _get_req_by(self, depends):
         """Set list of packages that needs given pac"""
-	
+        
         try:
             begin = depends.index("%REQUIREDBY%") + len("%REQUIREDBY%")
-            end = depends.find("%", begin) - len("%")
         except Exception:
             return ''
-        
+        end = depends.find("%", begin) - len("%")
         reqs = depends[begin:end].strip().split("\n")
         req_by = ", ".join(reqs)
         return req_by
@@ -414,43 +447,35 @@ class database(dict):
             return _("%s is not installed") %pac.name
         
         try:
-	    begin = files.index("%FILES%") + len("%FILES%")
-	    end = files.find("%", begin) - len("%")
-	    filelist = files[begin:end].strip()
-	    pac.filelist = filelist
-	except (ValueError, AttributeError):
-	    return
+            begin = files.index("%FILES%") + len("%FILES%")
+            end = files.find("%", begin) - len("%")
+            filelist = files[begin:end].strip()
+            pac.filelist = filelist
+        except (ValueError, AttributeError):
+            return
         return
     
     def set_orphans(self):
         """Set orphans pacs"""
-        self.orphans = []
-        for repo in self.repos:
-            try:
-                self[repo]
-            except KeyError:
-                self.repos.remove(repo)
+        orphans = ''
+        for package in self["local"]:
+            if package.prop_setted:
                 continue
-            for pac in self[repo]:
-                if not pac.installed:
-                    continue
-                name = pac.name
-                version = pac.inst_ver
-                repo = "local"
-                
-                pack_dir = "-".join((name, version))
-                path = "/var/lib/pacman/%s/%s" %(repo, pack_dir)
-                desc = open("%s/desc" %path).read()
-
-                reason = 0
-                begin = desc.find("%REASON%")
-
-                if begin == -1:
-                    continue
-                
-                begin += len("%REASON%")
-                reason = desc[begin:].strip()
-                return
+            else:
+                raw_desc = self._get_raw_desc(package, "desc")
+                explicitly = self._get_reason(raw_desc)[1]
+                package.explicitly = explicitly
+            
+            # Set orphans
+            if explicitly:
+                continue
+            else:
+                reqby = self._search_dependencies(package.name)
+                package.req_by = reqby
+                if reqby:
+                    package.isorphan = False
+                else:
+                    package.isorphan = True
                 
     def get_by_name(self, name):
         """Return the pckage named 'name', or raise a NameError"""
@@ -458,8 +483,8 @@ class database(dict):
             for pac in self[repo]:
                 if name == pac.name:
                     return pac
-	print "Info: %s is not in the database..."  %name
-	return
+        print "Info: %s is not in the database..."  %name
+        return
 
     def search_by_name(self, name):
         """Return a list of packages wich contains 'name' in the name"""
@@ -482,42 +507,18 @@ class database(dict):
                     self.olds.append(pac)
                 continue
             continue
-        return   
-    
-    def _search_reqby(self, pac_name):
-	# Search in local repo for pac_name in descriptions files. 
-	# If found than pack.name is requied by pack_name
-	stack = []
-	req_by = ''
-	req = ""
-	for package in self["local"]:
-	    if not package.req_by:
-		raw_desc = self._get_raw_desc(package, "depends")
-		req_by = self._get_dependencies(raw_desc)
-	    for p in req_by.split(','):
-		p = p.strip()
-		if '=<' in p:
-		    p = p.split('=<')[0]
-		if '>=' in p:
-		    p = p.split('>=')[0]
-		if p == pac_name and package.name not in stack and package.name != pac_name:
-		    stack.append(package.name)
-	if stack:
-	    for name in stack:
-		req = req + ", " + name
-	    req = req[2:]
-	return req
+        return
     
     def get_by_desc(self, desc):
         """Return pacs which description match with desc"""
         pacs = []
         for repo in self.repos:
             for pac in self[repo]:
-		if not pac.description:
-		    d = self._get_raw_desc( pac, 'desc')
-		    pac.description = self._get_description( d)
-		if pac.description.count(desc):
-		    pacs.append(pac)
+                if not pac.description:
+                    d = self._get_raw_desc( pac, 'desc')
+                    pac.description = self._get_description( d)
+                if pac.description.count(desc):
+                    pacs.append(pac)
         return pacs
     
     def get_by_keywords(self, keywords):
@@ -584,11 +585,11 @@ class database(dict):
         for line in infos_lines:
             sides = line.split(" = ")
             if sides[0] == "depend":
-		if sides[1]:
-		    deps.append(sides[1])
+                if sides[1]:
+                    deps.append(sides[1])
             elif sides[0] == "conflict":
-		if sides[1]:
-		    conflicts.append(sides[1])
+                if sides[1]:
+                    conflicts.append(sides[1])
             continue
 
         system("rm -rf /tmp/gtkpacman")

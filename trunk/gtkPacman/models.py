@@ -56,7 +56,25 @@ class all_list(ListStore):
 
             self.append([image, None, pac.name, inst_ver, pac.version])
             continue
+#***********************************
+class orphan_list(ListStore):
 
+    def __init__(self, pacs):
+
+        ListStore.__init__(self, str, str, str, str, str)
+
+        for pac in pacs:
+            if pac.isorphan and pac.isold:
+                image = "yellow"
+                inst_ver = pac.inst_ver
+            elif pac.isorphan and not pac.isold:
+                image = "green"
+                inst_ver = pac.inst_ver
+	    else:
+		continue
+
+            self.append([image, None, pac.name, inst_ver, pac.version])
+#*********************************
 class whole_list(ListStore):
 
     def __init__(self, pacs):

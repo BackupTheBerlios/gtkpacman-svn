@@ -33,7 +33,7 @@ from dialogs import local_install_fchooser_dialog, local_confirm_dialog
 from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
-from models import installed_list, all_list, whole_list, search_list, file_list
+from models import installed_list, all_list, whole_list, search_list, file_list, orphan_list
 
 #from threading import Thread
 
@@ -200,7 +200,7 @@ class gui:
             self.models[_("foreigners")] = installed_list(self.database["foreigners"])
             
         for repo in self.database.keys():
-            if repo == _("foreigners"):
+            if repo == _("foreigners") or repo == "local":
                 continue
             
             self.models[repo] = {}
@@ -212,6 +212,11 @@ class gui:
             if repo != _('local'):
                 self.models[repo][_("installed")] = inst_mod
             continue
+        
+        #**********
+        #self.database.set_orphans()
+        #self.models[_("orphans")] = orphan_list(self.database["local"])
+        #*************
         return
 
     def _make_repos_model (self):
@@ -219,13 +224,15 @@ class gui:
         all_it = repos_model.append(None, [_("All")])
 
         for repo in self.database.repos:
-            if repo == "foreigners":
+            if repo == "foreigners" or repo == "local":
                 continue
             repo_it = repos_model.append(all_it, [repo])
             repos_model.append(repo_it, [_("all")])
             repos_model.append(repo_it, [_("installed")])
-            continue
-
+        
+        #************
+        repos_model.append(all_it, [_("orphans")])
+        #************
         repos_model.append(all_it, [_("foreigners")])
         return repos_model
  
@@ -392,10 +399,15 @@ class gui:
             pacs_model = self.models[selected]
             
         else:
+            #if selected == _("all") or selected == _("installed"):
             if selected == _("all") or selected == _("installed"):
                 parent_iter = repos_model.iter_parent(tree_iter)
                 parent = repos_model.get_value(parent_iter, 0)
                 pacs_model = self.models[parent][selected]
+            elif selected == _("orphans"):
+                parent_iter = repos_model.iter_parent(tree_iter)
+                parent = repos_model.get_value(parent_iter, 0)
+                pacs_model = self.models[selected]
             else:
                 pacs_model = self.models[selected][_("all")]
 
@@ -413,7 +425,7 @@ class gui:
     def pacs_changed(self, widget, data=None):
         def _fork():        
             pac = self.database.get_by_name(name)
-            if not pac.prop_setted:
+            if not pac.prop_setted[0]:
                 self.database.set_pac_properties(pac)
 
             #sum_buf.set_text(pac.summary)
@@ -901,8 +913,8 @@ class gui:
         """ We check if gtkpacman was started by root. 
             If not then we run password_dialog
         """
-        from os import access
-        warning_on = False
+        #from os import spawnv
+        warning_ison = False
         # Jump in if program was started by not root
         if self.uid:
             dlg.run_su()
@@ -918,10 +930,13 @@ class gui:
                         warning_on = True
                     continue
                 #****************************************************
-                #elif len(user_passwd) and not access('/usr', 2):
-                    #if not warning_on:
+                #elif len(user_passwd):
+                    #op = spawnv('P_WAIT', '/bin/ls', '/etc/')
+                    ##op2 = popen3('killer')
+                    #print op, type(op)
+                    #if not warning_ison:
                         #passwd_dlg.show_warning()
-                        #warning_on = True
+                        #warning_ison = True
                     #continue
                 # TODO: Must Validate password
                 #****************************************************
@@ -1060,28 +1075,28 @@ class gui:
         
         if pac.installed:
             text_buffer.insert_with_tags_by_name(iter, "Description\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
+            text_buffer.insert_with_tags_by_name(iter, pac.description[0] + "\n", "desc_tag")
             
             text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
-            text_buffer.insert(iter, pac.summary[5] + "\n")
+            text_buffer.insert(iter, pac.dates[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Size\n", 'heading')
-            text_buffer.insert(iter, pac.summary[6] + "\n")
+            text_buffer.insert(iter, pac.size + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Install Reason\n", 'heading')
-            text_buffer.insert(iter, pac.summary[7] + "\n")
+            text_buffer.insert(iter, pac.explicitly[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Required By\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.summary[2] + "\n", "desc_tag")
+            text_buffer.insert_with_tags_by_name(iter, pac.req_by + "\n", "desc_tag")
             
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.summary[1] + "\n", "desc_tag")
+            text_buffer.insert_with_tags_by_name(iter, pac.dependencies + "\n", "desc_tag")
             
             text_buffer.insert_with_tags_by_name(iter, "Packager\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.summary[3] + "\n", "desc_tag")
+            text_buffer.insert_with_tags_by_name(iter, pac.description[1] + "\n", "desc_tag")
             
             text_buffer.insert_with_tags_by_name(iter, "Build Date\n", 'heading')
-            text_buffer.insert(iter, pac.summary[4])
+            text_buffer.insert(iter, pac.dates[1])
             
             sum_txt.set_buffer(text_buffer)
     
@@ -1089,13 +1104,13 @@ class gui:
             file_tree.set_model(file_model)
         else:            
             text_buffer.insert_with_tags_by_name(iter, "Description\n", "heading")
-            text_buffer.insert_with_tags_by_name(iter, pac.summary[0] + "\n", "desc_tag")
+            text_buffer.insert_with_tags_by_name(iter, pac.description[0] + "\n", "desc_tag")
             
             text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
-            text_buffer.insert(iter, pac.summary[2] + "\n")
+            text_buffer.insert(iter, pac.size + "\n")
             #text_buffer.insert_with_tags_by_name(iter, pac.summary[2], "center")
             
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", "heading")
-            text_buffer.insert_with_tags_by_name(iter, pac.summary[1], "desc_tag")
+            text_buffer.insert_with_tags_by_name(iter, pac.dependencies, "desc_tag")
             
             sum_txt.set_buffer(text_buffer)

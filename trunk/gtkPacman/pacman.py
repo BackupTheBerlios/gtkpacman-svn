@@ -49,7 +49,7 @@ class package:
         self.isorphan = None
         self.req_by = ""
         self.dependencies = ""
-        self.prop_setted = [False, None]
+        self.prop_setted = False
         # [0] = Install date, [1] = Build date
         self.dates = [None, None]
         # Explicitly will be used for showing packages that ware installed explicitly
@@ -251,11 +251,11 @@ class database(dict):
             raw_desc = self._get_raw_desc(pac, "desc")
             raw_depends = self._get_raw_desc(pac, "depends")
             
-            pac.description = [ self._get_dependencies(raw_desc), self._get_packager ]
+            pac.description = [ self._get_description(raw_desc), self._get_packager ]
             pac.dependencies = self._get_dependencies(raw_depends)
             pac.size = self._get_size(raw_desc)
         
-        pac.prop_setted[0] = True
+        pac.prop_setted = True
         
     def _search_dependencies(self, pac):
         # Search in local repo for pac_name in descriptions files.
@@ -281,7 +281,7 @@ class database(dict):
             deps_stack.append(p)
         
         for package in self["local"]:
-            if not package.prop_setted[0]:
+            if not package.prop_setted:
                 # Get Required package
                 raw_depends = self._get_raw_desc(package, "depends")
                 depends_on = self._get_dependencies(raw_depends)
@@ -339,8 +339,11 @@ class database(dict):
 
         try:
             begin = desc.index("%CSIZE%") + len("%CSIZE%")
-        except ValueError:
-            begin = desc.index("%SIZE%") + len("%SIZE%")
+        except (AttributeError, IndexError, ValueError):
+            try:
+                begin = desc.index("%SIZE%") + len("%SIZE%")
+            except (AttributeError, IndexError, ValueError):
+                return "Not Found"
 
         try:
                 end = desc.index("%", begin)
@@ -361,15 +364,21 @@ class database(dict):
         return size
 
     def _get_packager(self, desc):
-        begin = desc.index("%PACKAGER%") + len("%PACKAGER%")
-        end = desc.index("%", begin)
+        try:
+            begin = desc.index("%PACKAGER%") + len("%PACKAGER%")
+            end = desc.index("%", begin)
+        except (AttributeError, IndexError):
+            return "Not Found"
 
         packager = desc[begin:end].strip()
         return packager
 
     def _get_builddate(self, desc):
-        begin = desc.index("%BUILDDATE%") + len("%BUILDDATE%")
-        end = desc.index("%", begin)
+        try:
+            begin = desc.index("%BUILDDATE%") + len("%BUILDDATE%")
+            end = desc.index("%", begin)
+        except (AttributeError, IndexError):
+            return "Not Found"
 
         builddate = desc[begin:end].strip()
         
@@ -382,9 +391,11 @@ class database(dict):
         return builddate
 
     def _get_installdate(self, desc):
-        begin = desc.index("%INSTALLDATE%") + len("%INSTALLDATE%")
-        end = desc.index("%", begin)
-
+        try:
+            begin = desc.index("%INSTALLDATE%") + len("%INSTALLDATE%")
+            end = desc.index("%", begin)
+        except (AttributeError, IndexError):
+            return "Not Found"
         installdate = desc[begin:end].strip()
         
         if installdate.isdigit():
@@ -399,7 +410,7 @@ class database(dict):
         try:
             desc.index("%REASON%")
             pack_reason = ['Installed as a dependency for another package', False]
-        except ValueError:
+        except (AttributeError, IndexError, ValueError):
             pack_reason = ['Explicitly installed', True]
         
         return pack_reason
@@ -421,7 +432,7 @@ class database(dict):
         dependencies = []
         try:
             begin = deps.index("%DEPENDS%") + len("%DEPENDS%")
-        except ValueError:
+        except (AttributeError, IndexError, ValueError):
             return ""
         end = deps.find("%", begin) - len("%")
         dependencies = deps[begin:end].strip()

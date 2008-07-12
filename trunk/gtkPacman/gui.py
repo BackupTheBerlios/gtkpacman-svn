@@ -35,8 +35,6 @@ from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
 from models import installed_list, all_list, whole_list, search_list, file_list, orphan_list
 
-#from threading import Thread
-
 class gui:
     def __init__(self, fname, database, uid, icon):
 
@@ -229,11 +227,14 @@ class gui:
             repo_it = repos_model.append(all_it, [repo])
             repos_model.append(repo_it, [_("all")])
             repos_model.append(repo_it, [_("installed")])
+            #**************************
+            repos_model.append(repo_it, [_("explicitly installed")])
+            #**************************
         
-        #************
-        repos_model.append(all_it, [_("orphans")])
-        #************
         repos_model.append(all_it, [_("foreigners")])
+        #************
+        repos_model.append(all_it, [_("orphans")])        
+        #************
         return repos_model
  
     def _pacs_tree_exp_check(self):
@@ -250,7 +251,7 @@ class gui:
         model.foreach(expander_check)
         return expanded
 
-    def _refresh_repos_tree (self):            
+    def _refresh_repos_tree (self):
         expanded = self._pacs_tree_exp_check()
         
         repos_tree = self.gld.get_widget("repos_tree")
@@ -397,17 +398,22 @@ class gui:
                 self.inst_ver_col = None
             
             pacs_model = self.models[selected]
-            
+        elif selected == _("orphans"):
+            if self.database.orphans[0]:
+                pacs_model = self.models['orphans']
+            else:
+                self.database.set_orphans()
+                self.models['orphans'] = orphan_list(self.database.orphans)
+
+                parent_iter = repos_model.iter_parent(tree_iter)
+                pacs_model = self.models['orphans']
         else:
-            #if selected == _("all") or selected == _("installed"):
             if selected == _("all") or selected == _("installed"):
                 parent_iter = repos_model.iter_parent(tree_iter)
                 parent = repos_model.get_value(parent_iter, 0)
                 pacs_model = self.models[parent][selected]
-            elif selected == _("orphans"):
-                parent_iter = repos_model.iter_parent(tree_iter)
-                parent = repos_model.get_value(parent_iter, 0)
-                pacs_model = self.models[selected]
+            elif selected == _("explicitly installed"):
+                self._prepare_model()
             else:
                 pacs_model = self.models[selected][_("all")]
 
@@ -425,7 +431,7 @@ class gui:
     def pacs_changed(self, widget, data=None):
         def _fork():        
             pac = self.database.get_by_name(name)
-            if not pac.prop_setted[0]:
+            if not pac.prop_setted:
                 self.database.set_pac_properties(pac)
 
             #sum_buf.set_text(pac.summary)
@@ -760,8 +766,6 @@ class gui:
                 pacs_queues["remove"].extend(req_pacs)
                 dlg.destroy()
             else:
-                #self.queues["remove"].remove(name)
-                #pacs_queues["remove"].remove(pac)
                 self.queues['remove'] = []
                 pacs_queues['remove'] = []
                 dlg.destroy()
@@ -773,32 +777,15 @@ class gui:
         if confirm_dlg.run():
             self._statusbar(_("Executing queued operations..."))
             dlg = do_dialog( self.gld.get_widget("main_win"), self.icon, pacs_queues)
-            dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)     
+            dlg.connect("destroy", self._refresh_trees_and_queues)
+            
             if self._passwd_dlg_init(dlg):
                 dlg.run()
             else:
                 dlg.destroy()
-            # Jump in if program wasn't started by root
-            #dlg.run_su()
-            #if self.uid:
-                #dlg.run_su()
-                ## Run password dialog
-                #user_passwd =  self._passwd_dlg_init()
-                ## Check if user clicked on OK button
-                #if user_passwd:
-                    ##self._statusbar(_("Executing queued operations..."))
-                    #dlg.run_login(user_passwd)
-                    #dlg.run()
-                    #del user_passwd
-                ## User clicked on Cancle button
-                #else:
-                    #dlg.destroy()
-                    ##self._refresh_trees_and_queues()
-            ## Otherwise program is started by root
-            #else:
-                ##self._statusbar(_("Executing queued operations..."))
-                ##dlg.connect("destroy", self._refresh_trees_and_queues, pacs_queues)
-            #dlg.run()
+                self.queues["add"] = []
+                self.queues["remove"] = []
+                self._refresh_trees_and_queues()
         else:
             self.queues["add"] = []
             self.queues["remove"] = []
@@ -837,7 +824,8 @@ class gui:
                         dep = dep.split("=")[0]
                     if not (dep in self.queues["add"]):
                         done, to_do = self._execute_dep_check(dep, "dep")
-                        if done and not done in queue:
+                        #if done and not done in queue:
+                        if done and not done in queue and not done.installed:
                             done.flag = 11
                             queue.append(done)
                         for add in to_do:
@@ -887,10 +875,10 @@ class gui:
             pacs_queues["add"].remove(pac)
             self.queues["add"].remove(name)
             return
-        try:
-            if not pac.prop_setted:
-                self.database.set_pac_properties(pac)
-        except:
+        
+        if not pac.prop_setted:
+            self.database.set_pac_properties(pac)
+        else:
             return pac, to_do
         
         if flag == "req":
@@ -913,12 +901,11 @@ class gui:
         """ We check if gtkpacman was started by root. 
             If not then we run password_dialog
         """
-        #from os import spawnv
         warning_ison = False
-        # Jump in if program was started by not root
+        # Jump in if program was not started by root
         if self.uid:
             dlg.run_su()
-            passwd_dlg = password_dialog(self.gld.get_widget("main_win"), self.icon)        
+            passwd_dlg = password_dialog(self.gld.get_widget("main_win"), self.icon)
             # When password is less then 1 we show 'error' message. 
             # Until passwd is less than one and unverified we keep password_dialog runing.
             while passwd_dlg.run() == RESPONSE_ACCEPT:
@@ -948,7 +935,7 @@ class gui:
                     #dlg.run()
                     del user_passwd
                     return True
-            # Destroy dialog and return False when user clic on Cancle
+            # Destroy dialog and return False when user click on Cancel
             passwd_dlg.destroy()
             return False
         # We return if program was started by root
@@ -1033,7 +1020,7 @@ class gui:
         ver_inst.set_text('WARNING')
         ver_avail.set_text('WARNING')
         print "!! WARNING: Can't find pacman in 'core' repo"
-                
+
     def _statusbar(self, msg=None):
         stat_bar = self.gld.get_widget("statusbar")
 

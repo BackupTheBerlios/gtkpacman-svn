@@ -98,7 +98,7 @@ class database(dict):
 
         #Init some variable which will be usefull
         self.olds = []
-        self.orphans = []
+        self.orphans = [False]
 
     def _get_repos(self):
         conf_file = file("/etc/pacman.conf", "r").read()
@@ -229,7 +229,9 @@ class database(dict):
         for pac in self.inst_pacs.keys():
             inst = True
             ver = self.inst_pacs[pac]
-            self["foreigners"].append(package(pac, ver, ver, "foreigners"))
+            pac_local = package(pac, ver, ver, "foreigners")
+            self["foreigners"].append(pac_local)
+            self['local'].append(pac_local)
         return
     
     def set_pac_properties(self, pac):
@@ -281,6 +283,7 @@ class database(dict):
             deps_stack.append(p)
         
         for package in self["local"]:
+            
             if not package.prop_setted:
                 # Get Required package
                 raw_depends = self._get_raw_desc(package, "depends")
@@ -291,7 +294,7 @@ class database(dict):
                         p = p.split('=<')[0]
                     if '>=' in p:
                         p = p.split('>=')[0]
-                    if p == pac.name and package.name not in req_stack and package.name != pac.name:
+                    if (p == pac.name and (package.name not in req_stack and package.name != pac.name)):
                         req_stack.append(package.name)
                 
                 # Get dependencies
@@ -468,26 +471,32 @@ class database(dict):
     
     def set_orphans(self):
         """Set orphans pacs"""
-        orphans = ''
+
         for package in self["local"]:
             if package.prop_setted:
                 continue
             else:
                 raw_desc = self._get_raw_desc(package, "desc")
-                explicitly = self._get_reason(raw_desc)[1]
-                package.explicitly = explicitly
+                package.explicitly = self._get_reason(raw_desc)[1]
             
-            # Set orphans
-            if explicitly:
+            # Set orphans, if installed explicitly then continue
+            if package.explicitly:
                 continue
             else:
-                reqby = self._search_dependencies(package.name)
-                package.req_by = reqby
-                if reqby:
+                package.req_by = self._search_dependencies(package)[1]
+                if package.req_by:
                     package.isorphan = False
                 else:
                     package.isorphan = True
-                
+                    self.orphans.append(package)
+                    
+        # Check if there are pacs in orphans
+        if self.orphans[1]: 
+            self.orphans.pop(0)
+        else:
+            self.orphans[0] = True
+            
+        return
     def get_by_name(self, name):
         """Return the pckage named 'name', or raise a NameError"""
         for repo in self.repos:

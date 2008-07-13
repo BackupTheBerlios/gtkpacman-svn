@@ -98,7 +98,7 @@ class database(dict):
 
         #Init some variable which will be usefull
         self.olds = []
-        self.orphans = [False]
+        self.orphans = []
 
     def _get_repos(self):
         conf_file = file("/etc/pacman.conf", "r").read()
@@ -489,12 +489,6 @@ class database(dict):
                 else:
                     package.isorphan = True
                     self.orphans.append(package)
-                    
-        # Check if there are pacs in orphans
-        if self.orphans[1]: 
-            self.orphans.pop(0)
-        else:
-            self.orphans[0] = True
             
         return
     def get_by_name(self, name):

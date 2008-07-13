@@ -399,7 +399,7 @@ class gui:
             
             pacs_model = self.models[selected]
         elif selected == _("orphans"):
-            if self.database.orphans[0]:
+            if self.database.orphans:
                 pacs_model = self.models['orphans']
             else:
                 self.database.set_orphans()
@@ -407,6 +407,8 @@ class gui:
 
                 parent_iter = repos_model.iter_parent(tree_iter)
                 pacs_model = self.models['orphans']
+        elif selected == ("explicitly installed"):
+            pass
         else:
             if selected == _("all") or selected == _("installed"):
                 parent_iter = repos_model.iter_parent(tree_iter)

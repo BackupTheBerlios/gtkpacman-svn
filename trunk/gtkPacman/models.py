@@ -64,14 +64,12 @@ class orphan_list(ListStore):
         ListStore.__init__(self, str, str, str, str, str)
 
         for pac in pacs:
-            if pac.isorphan and pac.isold:
+            if pac.isold:
                 image = "yellow"
                 inst_ver = pac.inst_ver
-            elif pac.isorphan and not pac.isold:
+            else:
                 image = "green"
                 inst_ver = pac.inst_ver
-	    else:
-		continue
 
             self.append([image, None, pac.name, inst_ver, pac.version])
 #*********************************

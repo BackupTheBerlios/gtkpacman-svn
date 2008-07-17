@@ -427,6 +427,15 @@
               <widget class="GtkVBox" id="vbox1">
                 <property name="visible">True</property>
                 <child>
+                  <widget class="GtkComboBox" id="combo_box_options">
+                    <property name="visible">True</property>
+                    <property name="items" translatable="yes">.</property>
+                  </widget>
+                  <packing>
+                    <property name="expand">False</property>
+                  </packing>
+                </child>
+                <child>
                   <widget class="GtkScrolledWindow" id="repos_scr1">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -443,6 +452,9 @@
                       </widget>
                     </child>
                   </widget>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
                 </child>
                 <child>
                   <widget class="GtkFrame" id="pacman_ver_status">
@@ -549,7 +561,7 @@
                   </widget>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </widget>

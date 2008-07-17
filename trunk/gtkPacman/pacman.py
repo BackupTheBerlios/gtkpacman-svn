@@ -216,7 +216,7 @@ class database(dict):
                 if pac_obj.installed:
                     self[repo].append(pac_obj)
                     ver = pac_obj.inst_ver
-                    pac_local = package(pac_obj.name, ver, inst_ver=ver, repo=repo, inst=True, isold=False)
+                    pac_local = package( pac_obj.name, pac_obj.version, pac_obj.inst_ver, pac_obj.repo, pac_obj.installed, pac_obj.isold )
                     self["local"].append(pac_local)
                 else:
                     self[repo].append(pac_obj)
@@ -488,12 +488,12 @@ class database(dict):
                     package.isorphan = False
                 else:
                     package.isorphan = True
-                    self.orphans.append(package)
+                    #self.orphans.append(package)
             
         return
     
     def set_reason(self, repo):
-        explicitly = []
+        #explicitly = []
         
         for pac in self["local"]:
             if pac.repo == repo:
@@ -503,9 +503,12 @@ class database(dict):
                     raw_desc = self._get_raw_desc(pac, "desc")
                     pac.explicitly = self._get_reason(raw_desc)[1]
                     if pac.explicitly:
-                        explicitly.append(pac)
+                        #explicitly.append(pac)
+                        for repo_pac in self[pac.repo]:
+                            if repo_pac.name == pac.name:
+                                repo_pac.explicitly[1] = True
         
-        return explicitly
+        #return explicitly
     def get_by_name(self, name):
         """Return the pckage named 'name', or raise a NameError"""
         for repo in self.repos:

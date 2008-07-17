@@ -18,7 +18,7 @@
 
 import gettext, gobject, pango
 
-from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button, CellRendererToggle
+from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO, RESPONSE_REJECT
@@ -79,7 +79,7 @@ class gui:
         self._setup_files_tree()
         
         #Setup statusbar
-        self._statusbar()
+        self._statusbar('Ready for your command')
         #Check pacman version
         self._pacman_ver_check()
         
@@ -409,6 +409,19 @@ class gui:
         self._statusbar(stat)
         
     def repo_changed(self, widget, data=None):
+        def _setup_status(pacs_model):
+            pacs_tree.set_model(pacs_model)
+            stat = (len(pacs_model), selected_repo)
+            self._statusbar(stat)
+            
+        def _setup_orphans_fork():
+            self.database.set_orphans()
+            self.models['orphans'] = orphan_list( self.database['local'] )
+            parent_iter = repos_model.iter_parent(tree_iter)
+            
+            _setup_status( self.models['orphans'] )            
+            main_win.window.set_cursor(None)
+        
         repos_tree = self.gld.get_widget("repos_tree")
         pacs_tree = self.gld.get_widget("pacs_tree")
         combo_box_options = self.gld.get_widget("combo_box_options")
@@ -416,38 +429,31 @@ class gui:
         repos_model, tree_iter = repos_tree.get_selection().get_selected()
         selected_repo = repos_model.get_value(tree_iter, 0)
         
-        # If selected repo is: foreigners, orphans or search then we deactivate combo_box_options
-        if 'foreigners' in selected_repo or 'orphans' in selected_repo or 'Search' in selected_repo:
-            #combo_box_options.set_active(0)
+        # Fetch orphans packages
+        if selected_repo == 'orphans':
             combo_box_options.set_sensitive(False)
-
-            # Fetch orphans packages
-            if selected_repo == 'orphans':
-                try:
-                #if self.models['orphans']:
-                    pacs_model = self.models['orphans']
-                except KeyError:
-                #else:
-                    self.database.set_orphans()
-                    #self.models['orphans'] = orphan_list(self.database.orphans)
-                    self.database.orphans
-                    self.models['orphans'] = orphan_list( self.database['local'] )
-                    #***********************************
-                    #for orphan in self.database:
-                    #    repo = orphan.repo
-                    #    for model_orphan in self.models[repo]:
-                    #        pass
-                    #***********************************
-                    parent_iter = repos_model.iter_parent(tree_iter)
-                    pacs_model = self.models['orphans']
+            try:
+                _setup_status( self.models['orphans'] )
+            except KeyError:
+                main_win = self.gld.get_widget("main_win")
+                main_win.window.set_cursor(Cursor(WATCH))
+                self._statusbar('Please wait...')
+                gobject.idle_add(_setup_orphans_fork)
+        
+        # If selected repo is: foreigners, orphans or search then we deactivate combo_box_options
+        elif 'foreigners' == selected_repo or selected_repo.startswith('Search'):
+            combo_box_options.set_sensitive(False)
                     
             # Fetch search model
-            elif selected_repo.startswith('Search'):
+            if selected_repo.startswith('Search'):
                 pacs_model = self.models["search"]
                 
             # Jump in if selected repo is foreigners
             else:
                 pacs_model = self.models[ selected_repo ]
+                pacs_tree.set_model(pacs_model)
+                
+            _setup_status(pacs_model)
             
         # Otherwise we check selected option from combo_box_options and 
         # fetch model appropriate to selected option
@@ -460,72 +466,10 @@ class gui:
                     pacs_model = self.models[ selected_repo ][ selected_option ]
                 except KeyError:
                     self.database.set_reason(selected_repo)
-                    self.models[ selected_repo ] ['explicitly installed' ] = explicitly_list(self.database[ selected_repo ])
+                    self.models[ selected_repo ][ 'explicitly installed' ] = explicitly_list(self.database[ selected_repo ])
             
             pacs_model = self.models[ selected_repo ][ selected_option ]
-            
-        pacs_tree.set_model(pacs_model)
-            
-        #if not repos_model.iter_depth(tree_iter):
-            #if selected.count(_("Search")):
-                #pacs_model = self.models["search"]
-            #else:
-                #pacs_model = self.models[_("All")]
-            #if not self.repo_col:
-                #self.repo_col = pacs_tree.insert_column_with_attributes(
-                    #-1, _("Repo"), CellRendererText(), text=5
-                    #)
-            #if not self.inst_ver_col:
-                #self.inst_ver_col = pacs_tree.insert_column_with_attributes(
-                    #-1, _("Available Version"), CellRendererText(), text=4
-                    #)
-                
-        #elif selected == _("foreigners"):
-            #if self.repo_col:
-                #pacs_tree.remove_column(self.repo_col)
-                #self.repo_col = None
-                
-            #if self.inst_ver_col:
-                #pacs_tree.remove_column(self.inst_ver_col)
-                #self.inst_ver_col = None
-            
-            #pacs_model = self.models[selected]
-        #elif selected == _("orphans"):
-            #if self.database.orphans:
-                #pacs_model = self.models['orphans']
-            #else:
-                #self.database.set_orphans()
-                #self.models['orphans'] = orphan_list(self.database.orphans)
-
-                #parent_iter = repos_model.iter_parent(tree_iter)
-                #pacs_model = self.models['orphans']
-        #elif selected == ("explicitly installed"):
-            #parent_iter = repos_model.iter_parent(tree_iter)
-            #parent = repos_model.get_value(parent_iter, 0)
-            
-            #self.models[parent]['explicitly installed'] = orphan_list(self.database.set_reason(parent))            
-            
-            #pacs_model = self.models[parent][selected]
-        #else:
-            #if selected == _("all") or selected == _("installed"):
-                #parent_iter = repos_model.iter_parent(tree_iter)
-                #parent = repos_model.get_value(parent_iter, 0)
-                #pacs_model = self.models[parent][selected]
-            #elif selected == _("explicitly installed"):
-                #self._prepare_model()
-            #else:
-                #pacs_model = self.models[selected][_("all")]
-
-            #if self.repo_col:
-                #pacs_tree.remove_column(self.repo_col)
-                #self.repo_col = None
-            #if not self.inst_ver_col:
-                #self.inst_ver_col = pacs_tree.insert_column_with_attributes(
-                    #-1, _("Avaible Version"), CellRendererText(), text=4)
-        #pacs_tree.set_model(pacs_model)
-        
-        stat = (len(pacs_model), selected_repo)
-        self._statusbar(stat)
+            _setup_status(pacs_model)
 
     def pacs_changed(self, widget, data=None):
         def _fork():        
@@ -783,7 +727,6 @@ class gui:
     
     def search(self, widget, data=None):        
         win = self.gld.get_widget("main_win")
-        wait_cursor = Cursor(WATCH)
                 
         dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
         
@@ -807,8 +750,8 @@ class gui:
             if keywords:
                 dlg.vbox.set_sensitive(False)
                 self._statusbar(_("Searching for %s..." %keywords))
-                win.window.set_cursor(wait_cursor)
-                dlg.window.set_cursor(wait_cursor)
+                win.window.set_cursor(Cursor(WATCH))
+                dlg.window.set_cursor(Cursor(WATCH))
                 gobject.idle_add(_fork) 
             else:
                 dlg.destroy()

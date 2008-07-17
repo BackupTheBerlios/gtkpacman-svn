@@ -674,6 +674,7 @@ class gui:
     
     def refresh_database(self, widget, data=None):
         main_window = self.gld.get_widget("main_win")
+        self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
         main_window.set_sensitive(False)
         self._statusbar(_("Refreshing database..."))
         dlg = command_dialog(main_window, self.icon)
@@ -683,6 +684,8 @@ class gui:
             dlg.run('Sy')
         else:
             dlg.destroy()
+            
+        self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
     
     def upgrade_system(self, widget, data=None):
         to_upgrade = []

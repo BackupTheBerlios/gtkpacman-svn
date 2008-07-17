@@ -18,7 +18,7 @@
 
 import gettext, gobject, pango
 
-from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
+from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button, CellRendererToggle
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO, RESPONSE_REJECT
@@ -33,7 +33,7 @@ from dialogs import local_install_fchooser_dialog, local_confirm_dialog
 from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
-from models import installed_list, all_list, whole_list, search_list, file_list, orphan_list
+from models import installed_list, all_list, explicitly_list, search_list, file_list, orphan_list
 
 class gui:
     def __init__(self, fname, database, uid, icon):
@@ -72,6 +72,9 @@ class gui:
         self._setup_popup_menu(fname)
         self._setup_repos_tree()
         self._setup_pacs_models()
+        #**********************
+        self._setup_combobox()
+        #**********************
         self._setup_pacs_tree()
         self._setup_files_tree()
         
@@ -130,6 +133,8 @@ class gui:
         
     def _setup_pacs_tree(self):
         pacs_tree = self.gld.get_widget("pacs_tree")
+        repos_tree = self.gld.get_widget("repos_tree")
+        
         pacs_tree.set_reorderable(False)
 
         pacs_tree.insert_column_with_attributes(-1, "", CellRendererPixbuf(),
@@ -143,12 +148,10 @@ class gui:
         self.inst_ver_col = pacs_tree.insert_column_with_attributes(
             -1, _("Avaible Version"), CellRendererText(), text=4
             )
-        self.repo_col = pacs_tree.insert_column_with_attributes(
-            -1, _("Repo"),
-            CellRendererText(), text=5
-            )
-
-        pacs_tree.set_model(self.models[_("All")])
+        #self.repo_col = pacs_tree.insert_column_with_attributes(
+        #    -1, _("Repository"),
+        #    CellRendererText(), text=5
+        #    )
 
         sort_id = 0
         for col in pacs_tree.get_columns():
@@ -157,8 +160,9 @@ class gui:
             col.set_clickable(True)
             col.set_resizable(True)
             sort_id += 1
-            continue
-        return
+        
+        # Select first repo in repos_tree
+        repos_tree.set_cursor_on_cell(0)
 
     def _setup_popup_menu(self, fname):
         self.popup_gld = XML(fname, "popup_menu", "gtkpacman")
@@ -190,7 +194,7 @@ class gui:
     def _setup_pacs_models(self):
         self.models = {}
 
-        self.models[_("All")] = whole_list(self.database.values())
+        #self.models[_("All")] = whole_list(self.database.values())
         try:
             self.models[_("foreigners")] = installed_list(self.database["foreigners"])
         except KeyError:
@@ -207,33 +211,45 @@ class gui:
             inst_mod = installed_list(self.database[repo])
 
             self.models[repo][_("all")] = all_mod
-            if repo != _('local'):
+            if repo != 'local':
                 self.models[repo][_("installed")] = inst_mod
-            continue
         
-        #**********
-        #self.database.set_orphans()
-        #self.models[_("orphans")] = orphan_list(self.database["local"])
-        #*************
         return
+    
+    def _setup_combobox(self):
+        
+        combo_list = ListStore(str)
+        combo_box = self.gld.get_widget("combo_box_options")
+        combo_box.set_model(combo_list)
+        
+        combo_box.append_text("all")
+        combo_box.append_text("installed")
+        combo_box.append_text("explicitly installed")
+        
+        combo_box.set_active(0)
+        
+        combo_box.connect("changed", self.combobox_options_changed)
 
     def _make_repos_model (self):
         repos_model = TreeStore(str)
-        all_it = repos_model.append(None, [_("All")])
+        #all_it = repos_model.append(None, [_("All")])
 
         for repo in self.database.repos:
             if repo == "foreigners" or repo == "local":
                 continue
-            repo_it = repos_model.append(all_it, [repo])
-            repos_model.append(repo_it, [_("all")])
-            repos_model.append(repo_it, [_("installed")])
+            #repo_it = repos_model.append(all_it, [repo])
+            repo_it = repos_model.append(None, [repo])
+            #repos_model.append(repo_it, [_("all")])
+            #repos_model.append(repo_it, [_("installed")])
             #**************************
-            repos_model.append(repo_it, [_("explicitly installed")])
+            #repos_model.append(repo_it, [_("explicitly installed")])
             #**************************
         
-        repos_model.append(all_it, [_("foreigners")])
+        #repos_model.append(all_it, [_("foreigners")])
+        repos_model.append(None, [_("foreigners")])
         #************
-        repos_model.append(all_it, [_("orphans")])        
+        #repos_model.append(all_it, [_("orphans")])        
+        repos_model.append(None, [_("orphans")])  
         #************
         return repos_model
  
@@ -250,7 +266,8 @@ class gui:
         path = model.get_path(iter)
         model.foreach(expander_check)
         return expanded
-
+    
+    #------------------------ Refresh: database, models, trees, repos ------------#
     def _refresh_repos_tree (self):
         expanded = self._pacs_tree_exp_check()
         
@@ -359,6 +376,7 @@ class gui:
         self._statusbar()
         self.gld.get_widget("main_win").set_sensitive(True)
         
+    #----------------------------- Refresh End ---------------------------#
     
     #----------------------------- Callbacks ------------------------------#
     def show_popup(self, widget, event, data=None):
@@ -367,72 +385,146 @@ class gui:
         else:
             self.popup.popdown()
             
+    def combobox_options_changed(self, widget, data=None):
+        
+        repos_tree = self.gld.get_widget("repos_tree")
+        pacs_tree = self.gld.get_widget("pacs_tree")
+        combo_box_options = self.gld.get_widget("combo_box_options")
+        
+        repos_model, tree_iter = repos_tree.get_selection().get_selected()
+        selected_repo = repos_model.get_value(tree_iter, 0)
+        selected_option = combo_box_options.get_active_text()
+        
+        if selected_option == 'explicitly installed':
+            try:
+                pacs_model = self.models[ selected_repo ][ selected_option ]
+            except KeyError:
+                self.database.set_reason(selected_repo)
+                self.models[ selected_repo ] ['explicitly installed' ] = explicitly_list(self.database[ selected_repo ])
+            
+        pacs_model = self.models[ selected_repo ][ selected_option ]
+        pacs_tree.set_model(pacs_model)
+        
+        stat = (len(pacs_model), selected_repo)
+        self._statusbar(stat)
+        
     def repo_changed(self, widget, data=None):
         repos_tree = self.gld.get_widget("repos_tree")
         pacs_tree = self.gld.get_widget("pacs_tree")
+        combo_box_options = self.gld.get_widget("combo_box_options")
         
         repos_model, tree_iter = repos_tree.get_selection().get_selected()
-        selected = repos_model.get_value(tree_iter, 0)
-
-        if not repos_model.iter_depth(tree_iter):
-            if selected.count(_("Search")):
-                pacs_model = self.models["search"]
-            else:
-                pacs_model = self.models[_("All")]
-            if not self.repo_col:
-                self.repo_col = pacs_tree.insert_column_with_attributes(
-                    -1, _("Repo"), CellRendererText(), text=5
-                    )
-            if not self.inst_ver_col:
-                self.inst_ver_col = pacs_tree.insert_column_with_attributes(
-                    -1, _("Available Version"), CellRendererText(), text=4
-                    )
-                
-        elif selected == _("foreigners"):
-            if self.repo_col:
-                pacs_tree.remove_column(self.repo_col)
-                self.repo_col = None
-                
-            if self.inst_ver_col:
-                pacs_tree.remove_column(self.inst_ver_col)
-                self.inst_ver_col = None
-            
-            pacs_model = self.models[selected]
-        elif selected == _("orphans"):
-            if self.database.orphans:
-                pacs_model = self.models['orphans']
-            else:
-                self.database.set_orphans()
-                self.models['orphans'] = orphan_list(self.database.orphans)
-
-                parent_iter = repos_model.iter_parent(tree_iter)
-                pacs_model = self.models['orphans']
-        elif selected == ("explicitly installed"):
-            parent_iter = repos_model.iter_parent(tree_iter)
-            parent = repos_model.get_value(parent_iter, 0)
-            
-            self.models[parent]['explicitly installed'] = orphan_list(self.database.set_reason(parent))            
-            
-            pacs_model = self.models[parent][selected]
-        else:
-            if selected == _("all") or selected == _("installed"):
-                parent_iter = repos_model.iter_parent(tree_iter)
-                parent = repos_model.get_value(parent_iter, 0)
-                pacs_model = self.models[parent][selected]
-            elif selected == _("explicitly installed"):
-                self._prepare_model()
-            else:
-                pacs_model = self.models[selected][_("all")]
-
-            if self.repo_col:
-                pacs_tree.remove_column(self.repo_col)
-                self.repo_col = None
-            if not self.inst_ver_col:
-                self.inst_ver_col = pacs_tree.insert_column_with_attributes(
-                    -1, _("Avaible Version"), CellRendererText(), text=4)
-        pacs_tree.set_model(pacs_model)
+        selected_repo = repos_model.get_value(tree_iter, 0)
         
-        stat = (len(pacs_model), selected)
+        # If selected repo is: foreigners, orphans or search then we deactivate combo_box_options
+        if 'foreigners' in selected_repo or 'orphans' in selected_repo or 'Search' in selected_repo:
+            #combo_box_options.set_active(0)
+            combo_box_options.set_sensitive(False)
+
+            # Fetch orphans packages
+            if selected_repo == 'orphans':
+                try:
+                #if self.models['orphans']:
+                    pacs_model = self.models['orphans']
+                except KeyError:
+                #else:
+                    self.database.set_orphans()
+                    #self.models['orphans'] = orphan_list(self.database.orphans)
+                    self.database.orphans
+                    self.models['orphans'] = orphan_list( self.database['local'] )
+                    #***********************************
+                    #for orphan in self.database:
+                    #    repo = orphan.repo
+                    #    for model_orphan in self.models[repo]:
+                    #        pass
+                    #***********************************
+                    parent_iter = repos_model.iter_parent(tree_iter)
+                    pacs_model = self.models['orphans']
+                    
+            # Fetch search model
+            elif selected_repo.startswith('Search'):
+                pacs_model = self.models["search"]
+                
+            # Jump in if selected repo is foreigners
+            else:
+                pacs_model = self.models[ selected_repo ]
+            
+        # Otherwise we check selected option from combo_box_options and 
+        # fetch model appropriate to selected option
+        else:
+            combo_box_options.set_sensitive(True)
+            selected_option = combo_box_options.get_active_text()
+            
+            if selected_option == 'explicitly installed':
+                try:
+                    pacs_model = self.models[ selected_repo ][ selected_option ]
+                except KeyError:
+                    self.database.set_reason(selected_repo)
+                    self.models[ selected_repo ] ['explicitly installed' ] = explicitly_list(self.database[ selected_repo ])
+            
+            pacs_model = self.models[ selected_repo ][ selected_option ]
+            
+        pacs_tree.set_model(pacs_model)
+            
+        #if not repos_model.iter_depth(tree_iter):
+            #if selected.count(_("Search")):
+                #pacs_model = self.models["search"]
+            #else:
+                #pacs_model = self.models[_("All")]
+            #if not self.repo_col:
+                #self.repo_col = pacs_tree.insert_column_with_attributes(
+                    #-1, _("Repo"), CellRendererText(), text=5
+                    #)
+            #if not self.inst_ver_col:
+                #self.inst_ver_col = pacs_tree.insert_column_with_attributes(
+                    #-1, _("Available Version"), CellRendererText(), text=4
+                    #)
+                
+        #elif selected == _("foreigners"):
+            #if self.repo_col:
+                #pacs_tree.remove_column(self.repo_col)
+                #self.repo_col = None
+                
+            #if self.inst_ver_col:
+                #pacs_tree.remove_column(self.inst_ver_col)
+                #self.inst_ver_col = None
+            
+            #pacs_model = self.models[selected]
+        #elif selected == _("orphans"):
+            #if self.database.orphans:
+                #pacs_model = self.models['orphans']
+            #else:
+                #self.database.set_orphans()
+                #self.models['orphans'] = orphan_list(self.database.orphans)
+
+                #parent_iter = repos_model.iter_parent(tree_iter)
+                #pacs_model = self.models['orphans']
+        #elif selected == ("explicitly installed"):
+            #parent_iter = repos_model.iter_parent(tree_iter)
+            #parent = repos_model.get_value(parent_iter, 0)
+            
+            #self.models[parent]['explicitly installed'] = orphan_list(self.database.set_reason(parent))            
+            
+            #pacs_model = self.models[parent][selected]
+        #else:
+            #if selected == _("all") or selected == _("installed"):
+                #parent_iter = repos_model.iter_parent(tree_iter)
+                #parent = repos_model.get_value(parent_iter, 0)
+                #pacs_model = self.models[parent][selected]
+            #elif selected == _("explicitly installed"):
+                #self._prepare_model()
+            #else:
+                #pacs_model = self.models[selected][_("all")]
+
+            #if self.repo_col:
+                #pacs_tree.remove_column(self.repo_col)
+                #self.repo_col = None
+            #if not self.inst_ver_col:
+                #self.inst_ver_col = pacs_tree.insert_column_with_attributes(
+                    #-1, _("Avaible Version"), CellRendererText(), text=4)
+        #pacs_tree.set_model(pacs_model)
+        
+        stat = (len(pacs_model), selected_repo)
         self._statusbar(stat)
 
     def pacs_changed(self, widget, data=None):
@@ -701,7 +793,8 @@ class gui:
                 repos_model.remove(self.search_iter)
             self.search_iter = repos_model.append(None, [_("Search results for '%s'") %keywords])
             self.models["search"] = search_list(pacs)
-            repos_tree.set_cursor_on_cell((1))
+            path = repos_model.get_path(self.search_iter)
+            repos_tree.set_cursor_on_cell(path)
             
             dlg.destroy()
             win.window.set_cursor(None)
@@ -919,10 +1012,9 @@ class gui:
                 user_passwd = passwd_dlg.password_entry.get_text()
                 if not len(user_passwd) > 0:
                     # We don't want to show same message everytime user click on OK button
-                    if not warning_on:
+                    if not warning_ison:
                         passwd_dlg.show_warning()
-                        warning_on = True
-                    continue
+                        warning_ison = True
                 #****************************************************
                 #elif len(user_passwd):
                     #op = spawnv('P_WAIT', '/bin/ls', '/etc/')
@@ -1069,7 +1161,8 @@ class gui:
         
         if pac.installed:
             text_buffer.insert_with_tags_by_name(iter, "Description\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.description[0] + "\n", "desc_tag")
+            #text_buffer.insert_with_tags_by_name(iter, pac.description[0] + "\n", "desc_tag")
+            text_buffer.insert(iter, pac.description[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
             text_buffer.insert(iter, pac.dates[0] + "\n")
@@ -1081,13 +1174,13 @@ class gui:
             text_buffer.insert(iter, pac.explicitly[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Required By\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.req_by + "\n", "desc_tag")
+            text_buffer.insert(iter, pac.req_by + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.dependencies + "\n", "desc_tag")
+            text_buffer.insert(iter, pac.dependencies + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Packager\n", 'heading')
-            text_buffer.insert_with_tags_by_name(iter, pac.description[1] + "\n", "desc_tag")
+            text_buffer.insert(iter, pac.description[1] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Build Date\n", 'heading')
             text_buffer.insert(iter, pac.dates[1])
@@ -1098,13 +1191,13 @@ class gui:
             file_tree.set_model(file_model)
         else:            
             text_buffer.insert_with_tags_by_name(iter, "Description\n", "heading")
-            text_buffer.insert_with_tags_by_name(iter, pac.description[0] + "\n", "desc_tag")
+            text_buffer.insert(iter, pac.description[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
             text_buffer.insert(iter, pac.size + "\n")
             #text_buffer.insert_with_tags_by_name(iter, pac.summary[2], "center")
             
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", "heading")
-            text_buffer.insert_with_tags_by_name(iter, pac.dependencies, "desc_tag")
+            text_buffer.insert(iter, pac.dependencies, )
             
             sum_txt.set_buffer(text_buffer)

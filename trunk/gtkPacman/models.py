@@ -23,79 +23,82 @@ class installed_list(ListStore):
 
     def __init__(self, pacs):
 
-        ListStore.__init__(self, str, str, str, str, str)
-
-        for pac in pacs:
-            if not pac.installed:
+        ListStore.__init__(self, str, str, str, str, str, int)
+	
+        for pac_tuple in enumerate( pacs ):
+            if not pac_tuple[1].installed:
                 continue
-
-            if pac.isold:
+	    
+	    position = pac_tuple[0]
+            if pac_tuple[1].isold:
                 image = "yellow"
             else:
                 image = "green"
                 
-            self.append([image, None, pac.name, pac.inst_ver, pac.version])
-            continue
+            self.append([image, None, pac_tuple[1].name, pac_tuple[1].inst_ver, pac_tuple[1].version, position])
 
 class all_list(ListStore):
 
     def __init__(self, pacs):
 
-        ListStore.__init__(self, str, str, str, str, str)
+        ListStore.__init__(self, str, str, str, str, str, int)
 
-        for pac in pacs:
-            if not (pac.isold or pac.installed):
+        for pac_tuple in enumerate( pacs ):	    
+	    position = pac_tuple[0]
+	    
+            if not (pac_tuple[1].isold or pac_tuple[1].installed):
                 image = "red"
                 inst_ver = "-"
-            elif pac.isold:
+            elif pac_tuple[1].isold:
                 image = "yellow"
-                inst_ver = pac.inst_ver
+                inst_ver = pac_tuple[1].inst_ver
             else:
                 image = "green"
-                inst_ver = pac.inst_ver
+                inst_ver = pac_tuple[1].inst_ver
 
-            self.append([image, None, pac.name, inst_ver, pac.version])
+            self.append([image, None, pac_tuple[1].name, inst_ver, pac_tuple[1].version, position])
             continue
 #***********************************
 class orphan_list(ListStore):
 
     def __init__(self, pacs):
 
-        ListStore.__init__(self, str, str, str, str, str)
+        ListStore.__init__(self, str, str, str, str, str, int)
 
-        for pac in pacs:
-            if pac.isold:
+        for pac_tuple in enumerate( pacs ):
+	    position = pac_tuple[0]
+	    
+	    if not pac_tuple[1].isorphan:
+		continue
+            if pac_tuple[1].isold:
                 image = "yellow"
-                inst_ver = pac.inst_ver
+                inst_ver = pac_tuple[1].inst_ver
             else:
                 image = "green"
-                inst_ver = pac.inst_ver
+                inst_ver = pac_tuple[1].inst_ver
 
-            self.append([image, None, pac.name, inst_ver, pac.version])
+            self.append([image, None, pac_tuple[1].name, inst_ver, pac_tuple[1].version, position])
 #*********************************
-class whole_list(ListStore):
+class explicitly_list(ListStore):
 
     def __init__(self, pacs):
 
-        ListStore.__init__(self, str, str, str, str, str, str)
+        ListStore.__init__(self, str, str, str, str, str, int)
         
-        for r_list in pacs:
-            for pac in r_list:
-		# We don't want to add pacs from local repo or we will have duplicates
-		if pac.repo == 'local':
-		    continue
-		    
-                if not (pac.isold or pac.installed):
-                    image = "red"
-                    inst_ver = "-"
-                elif pac.isold:
-                    image = "yellow"
-                    inst_ver = pac.inst_ver
-                else:
-                    image = "green"
-                    inst_ver = pac.inst_ver
 
-                self.append([image, None, pac.name, inst_ver, pac.version, pac.repo])
+	for pac_tuple in enumerate(pacs):
+	    position = pac_tuple[0]
+		
+	    if pac_tuple[1].explicitly[1] and pac_tuple[1].isold:
+		image = "yellow"
+		inst_ver = pac_tuple[1].inst_ver
+	    elif pac_tuple[1].explicitly[1] and not pac_tuple[1].isold:
+		image = "green"
+		inst_ver = pac_tuple[1].inst_ver
+	    else:
+		continue
+
+	    self.append([image, None, pac_tuple[1].name, inst_ver, pac_tuple[1].version, position])
 
 class search_list(ListStore):
 

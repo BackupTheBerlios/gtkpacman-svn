@@ -232,51 +232,21 @@ class gui:
 
     def _make_repos_model (self):
         repos_model = TreeStore(str)
-        #all_it = repos_model.append(None, [_("All")])
 
         for repo in self.database.repos:
             if repo == "foreigners" or repo == "local":
                 continue
-            #repo_it = repos_model.append(all_it, [repo])
             repo_it = repos_model.append(None, [repo])
-            #repos_model.append(repo_it, [_("all")])
-            #repos_model.append(repo_it, [_("installed")])
-            #**************************
-            #repos_model.append(repo_it, [_("explicitly installed")])
-            #**************************
         
-        #repos_model.append(all_it, [_("foreigners")])
-        repos_model.append(None, [_("foreigners")])
-        #************
-        #repos_model.append(all_it, [_("orphans")])        
+        repos_model.append(None, [_("foreigners")])   
         repos_model.append(None, [_("orphans")])  
-        #************
-        return repos_model
- 
-    def _pacs_tree_exp_check(self):
-        expanded= []
-        def expander_check(model, path, iter):
-            is_expanded = repos_tree.row_expanded(path)
-            if is_expanded:
-                expanded.append(path)
 
-        repos_tree = self.gld.get_widget("repos_tree")
-        model = repos_tree.get_model()
-        iter = model.get_iter_root()
-        path = model.get_path(iter)
-        model.foreach(expander_check)
-        return expanded
+        return repos_model 
     
     #------------------------ Refresh: database, models, trees, repos ------------#
     def _refresh_repos_tree (self):
-        expanded = self._pacs_tree_exp_check()
-        
         repos_tree = self.gld.get_widget("repos_tree")
         repos_tree.set_model(self._make_repos_model())
-        
-        for row in expanded:
-            repos_tree.expand_row(row, False)
-        return
 
     def _refresh_trees(self):
         for model in self.models.keys():
@@ -362,7 +332,6 @@ class gui:
             tree = file_tree.get_model()
             
             try:
-                #sum_buf.set_text(pac.summary)
                 self._set_pac_summary(pac)
                 file_model = file_list(pac.filelist)
                 file_tree.set_model(file_model)
@@ -1080,10 +1049,6 @@ class gui:
     def _set_pac_summary(self, pac):
         sum_txt = self.gld.get_widget("summary")
         file_tree = self.gld.get_widget("files")
-        
-        #text_buffer = TextBuffer()
-        #text_buffer.set_text(pac.summary)
-        #sum_txt.set_buffer(text_buffer)
         
         text_buffer = TextBuffer()
         tag_table = text_buffer.get_tag_table()

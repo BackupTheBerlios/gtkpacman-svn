@@ -190,7 +190,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA"""))
         self.set_logo(logo)
         
 class command_dialog(Window):
-    """This is main window that will be later inherited in do_dialog
+    """This is main window that will be later inherited by do_dialog
     """
     def __init__(self, parent, icon):
 
@@ -396,7 +396,7 @@ class local_confirm_dialog(confirm_dialog):
     def __init__(self, parent, fname, pacs_queue, icon):
         from os.path import basename
         
-        confirm_dialog.__init__(self, parent, pacs_queue, icon)
+        confirm_dialog.__init__(self, parent, icon, pacs_queue)
         package = basename(fname)
 
         name_n_ver = package.rsplit("-", 3)
@@ -409,10 +409,10 @@ class local_confirm_dialog(confirm_dialog):
 
 class local_install_dialog(do_dialog):
 
-    def __init__(self, fname, pacs_queue, icon):
+    def __init__(self, fname, parent, pacs_queue, icon):
         from os.path import basename
         
-        do_dialog.__init__(self, pacs_queue, icon)
+        do_dialog.__init__(self, parent, icon, pacs_queue)
 
         package = basename(fname)
         
@@ -420,12 +420,12 @@ class local_install_dialog(do_dialog):
         version = name_n_ver.pop()
         name = "-".join(name_n_ver)
 
-        self.inst_model.prepend(["red", name, version])
+        #self.inst_model.prepend(["red", name, version])
         self.fname = fname
         self.pacs_queue = pacs_queue
 
     def run(self):
-        self.show()
+        self.show_all()
         self.terminal.do_local(self.fname, self.pacs_queue)
         return
         

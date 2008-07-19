@@ -34,6 +34,7 @@ from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
 from models import installed_list, all_list, explicitly_list, search_list, file_list, orphan_list
+import gtk
 
 class gui:
     def __init__(self, fname, database, uid, icon):
@@ -72,9 +73,7 @@ class gui:
         self._setup_popup_menu(fname)
         self._setup_repos_tree()
         self._setup_pacs_models()
-        #**********************
         self._setup_combobox()
-        #**********************
         self._setup_pacs_tree()
         self._setup_files_tree()
         
@@ -194,7 +193,6 @@ class gui:
     def _setup_pacs_models(self):
         self.models = {}
 
-        #self.models[_("All")] = whole_list(self.database.values())
         try:
             self.models[_("foreigners")] = installed_list(self.database["foreigners"])
         except KeyError:
@@ -239,109 +237,63 @@ class gui:
             repo_it = repos_model.append(None, [repo])
         
         repos_model.append(None, [_("foreigners")])   
-        repos_model.append(None, [_("orphans")])  
+        repos_model.append(None, [_("orphans")])
 
         return repos_model 
     
     #------------------------ Refresh: database, models, trees, repos ------------#
-    def _refresh_repos_tree (self):
-        repos_tree = self.gld.get_widget("repos_tree")
-        repos_tree.set_model(self._make_repos_model())
-
-    def _refresh_trees(self):
-        for model in self.models.keys():
-            if model == _("All") or model == _("foreigners") or model == _("search"):
-                self._refresh_model(model)
-            else:
-                try:
-                    for mod in self.models[model].keys():
-                        self._refresh_model(model, mod)
-                        continue
-                except AttributeError:
-                    pass
-            continue
-        return
-
-    def _refresh_model(self, model, submodel=None):
-        if submodel:
-            liststore = self.models[model][submodel]
-        else:
-            liststore = self.models[model]
-
-        for row in liststore:
-            row[1] = None
-            check = row[2][:]
-            if check in self.queues["remove"] and model ==  _("foreigners"):
-                nr = 0
-                for rm in liststore:
-                    nr += 1
-                    if check == rm[2]:
-                        del liststore[nr -1]
-            elif check in self.queues["remove"] and submodel ==  _("installed"):
-                itr = liststore.get_iter_first()
-                while itr:
-                    rm = liststore.get_value(itr, 2)
-                    # We delete row if match
-                    if check == rm:
-                        liststore.remove(itr)
-                    itr = liststore.iter_next(itr)
-            elif row[2] in self.queues["add"] and row[0] == 'red' and submodel =="all":
-                row[0] = "green"
-                row[3] = row[4]
-                self.models[model]["installed"].append(row)
-            elif row[2] in self.queues["add"]:
-                row[0] = "green"
-                row[3] = row[4]
-            elif row[2] in self.queues["remove"]:
-                row[0] = "red"
-                row[3] = "-"
-            continue
-        return
-    
     def _refresh_trees_and_queues(self, widget=None, pacs_queues=None):
-        self.database.refresh()
-        self._refresh_repos_tree()
+        selected_pac_before = str()
+        selected_pac_after = str()
+        selected_pac_path = None
+        selected_repo_path = None
         
-        if pacs_queues:
-            for pac in pacs_queues["add"]:
-                if not pac.name in self.queues["add"]:
-                    self.queues["add"].append(pac.name)
-            for pac in pacs_queues["remove"]:
-                if not pac.name in self.queues["remove"]:
-                    self.queues["remove"].append(pac.name)
+        repos_tree = self.gld.get_widget("repos_tree")
+        pacs_tree = self.gld.get_widget("pacs_tree")
+        
+        repos_model, repo_iter = repos_tree.get_selection().get_selected()
+        # Need to be sure that repository was selected before fetching it's name
+        if repo_iter:
+            selected_repo_path = repos_model.get_path(repo_iter)
+        
+        pacs_model, pac_iter = pacs_tree.get_selection().get_selected()
+        # Need to be sure that package was selected before fetching packages name
+        if pac_iter:
+            selected_pac_before = pacs_model.get_value(pac_iter, 2)
+            selected_pac_path = pacs_model.get_path(pac_iter)
+        
+        # Refresh database, packages models, repositories models
+        self.database.refresh()
+        self._setup_pacs_models()
+        repos_tree.set_model(self._make_repos_model())
+        
+        # Check if repo was selected
+        if type(selected_repo_path) == tuple:
+            repos_tree.set_cursor(selected_repo_path)
+            pacs_model = pacs_tree.get_model()
+        else:
+            repos_tree.set_cursor_on_cell(0)
 
-        self._refresh_trees()
-        self.queues["add"] = []
-        self.queues["remove"] = []
-        if pacs_queues:
-            for pac in pacs_queues["add"]:
-                pac.installed = True
-                pac.inst_ver = pac.version
-                self.database.set_pac_properties(pac)
-                continue
-            for pac in pacs_queues["remove"]:
-                pac.installed = False
-                if pac.repo == 'foreigners':
-                    del pac
-                    continue
-                self.database.set_pac_properties(pac)
-                continue
-            sum_txt = self.gld.get_widget("summary")
-            file_tree = self.gld.get_widget("files")
-            sum_buf = sum_txt.get_buffer()
-            tree = file_tree.get_model()
-            
+        # Check if selected pac path is tuple, otherwise it wasn't selected and we skip this moment
+        if type(selected_pac_path) == tuple:
             try:
-                self._set_pac_summary(pac)
-                file_model = file_list(pac.filelist)
-                file_tree.set_model(file_model)
-            except:
-                col = file_tree.get_columns()
-                tree.clear()
-                sum_buf.set_text('')
+                pac_iter = pacs_model.get_iter(selected_pac_path)
+                selected_pac_after = pacs_model.get_value(pac_iter, 2)
+            except ValueError:
+                pass
+        
+        # Compare pacs after refreshing, if match then select both repository and package
+        if (selected_pac_before and selected_pac_before == selected_pac_after):
+            pacs_tree.scroll_to_cell(selected_pac_path)
+            pacs_tree.set_cursor(selected_pac_path)
+        else:
+            summary_buffer = self.gld.get_widget("summary").get_buffer()
+            summary_buffer.set_text('')
             
         del(pacs_queues)
-        self._pacman_ver_check
+        self.queues["add"] = []
+        self.queues["remove"] = []
+        self._pacman_ver_check()
         self._statusbar()
         self.gld.get_widget("main_win").set_sensitive(True)
         
@@ -396,7 +348,13 @@ class gui:
         combo_box_options = self.gld.get_widget("combo_box_options")
         
         repos_model, tree_iter = repos_tree.get_selection().get_selected()
-        selected_repo = repos_model.get_value(tree_iter, 0)
+        # Need to be sure that repo was selected
+        if tree_iter:
+            selected_repo = repos_model.get_value(tree_iter, 0)
+        # If it wasn't than we select first repo available and return
+        else:
+            repos_tree.set_cursor_on_cell(0)
+            return
         
         # Fetch orphans packages
         if selected_repo == 'orphans':
@@ -446,7 +404,6 @@ class gui:
             if not pac.prop_setted:
                 self.database.set_pac_properties(pac)
 
-            #sum_buf.set_text(pac.summary)
             self._set_pac_summary(pac)
             file_model = file_list(pac.filelist)
             file_tree.set_model(file_model)
@@ -463,10 +420,10 @@ class gui:
         self._statusbar("Please Wait...")      
     
     def add_from_local_file(self, widget, data=None):
-        dlg = local_install_fchooser_dialog(self.gld.get_widget("main_win"),
-                                            self.icon)
+        main_win = self.gld.get_widget("main_win")
+        dlg = local_install_fchooser_dialog(main_win, self.icon)
         if dlg.run() == RESPONSE_ACCEPT:
-            self.gld.get_widget("main_win").set_sensitive(False)
+            main_win.set_sensitive(False)
             fname = dlg.get_filename()
             dlg.destroy()
         else:
@@ -500,10 +457,10 @@ class gui:
 
         retcode = self._local_confirm(fname, pacs_queues)
         if retcode:
-            i_dlg = local_install_dialog(fname, pacs_queues, self.icon)
+            i_dlg = local_install_dialog(fname, main_win, pacs_queues, self.icon)
             i_dlg.connect("destroy", self._after_local_install)
             i_dlg.run()
-        self.gld.get_widget("main_win").set_sensitive(True)
+        main_win.set_sensitive(True)
         self._statusbar()
 
     def add_to_install_queue(self, widget, data=None):
@@ -587,7 +544,7 @@ class gui:
     
     def refresh_database(self, widget, data=None):
         main_window = self.gld.get_widget("main_win")
-        self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
+        #self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
         main_window.set_sensitive(False)
         self._statusbar(_("Refreshing database..."))
         dlg = command_dialog(main_window, self.icon)
@@ -597,7 +554,7 @@ class gui:
             dlg.run('Sy')
         else:
             dlg.destroy()
-            
+        self._refresh_trees_and_queues()    
         self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
     
     def upgrade_system(self, widget, data=None):
@@ -957,8 +914,9 @@ class gui:
             return True
     
     def _after_local_install(self, wid, data=None):
-        self.database.refresh()
-        self.models["foreigners"] = installed_list(self.database["foreigners"])
+        #self.database.refresh()
+        self._refresh_trees_and_queues()
+        #self.models["foreigners"] = installed_list(self.database["foreigners"])
         self.gld.get_widget("main_win").set_sensitive(True)
 
         self._statusbar()
@@ -993,9 +951,7 @@ class gui:
         return blacklist
 
     def _done_upgrade(self, widget, data=None):
-        self.database.refresh()
-        self._refresh_repos_tree()
-        self._setup_pacs_models()
+        self._refresh_trees_and_queues()
         self._statusbar(_("Updating compleated"))
         self.gld.get_widget("main_win").set_sensitive(True)
         

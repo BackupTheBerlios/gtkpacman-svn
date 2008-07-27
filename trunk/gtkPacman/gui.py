@@ -87,10 +87,11 @@ class gui:
 
         #Check if root, else notufy it and deactivate some widgets
         if uid:
-            self._setup_avaible_actions()
-            dlg = non_root_dialog(icon)
-            dlg.run()
-            dlg.destroy()
+            pass
+            #self._setup_avaible_actions()
+            #dlg = non_root_dialog(icon)
+            #dlg.run()
+            #dlg.destroy()
 
     def _setup_avaible_actions(self):
         #Deactivate some widgets. Called if not root
@@ -288,7 +289,12 @@ class gui:
             pacs_tree.set_cursor(selected_pac_path)
         else:
             summary_buffer = self.gld.get_widget("summary").get_buffer()
+            file_tree = self.gld.get_widget("files")
             summary_buffer.set_text('')
+            file_model = file_tree.get_model()
+            if file_model:
+                file_model.clear()
+                file_tree.set_model(file_model)
             
         del(pacs_queues)
         self.queues["add"] = []
@@ -455,13 +461,21 @@ class gui:
 
         pacs_queues = { "add": install, "remove": remove }
 
-        retcode = self._local_confirm(fname, pacs_queues)
-        if retcode:
-            i_dlg = local_install_dialog(fname, main_win, pacs_queues, self.icon)
-            i_dlg.connect("destroy", self._after_local_install)
-            i_dlg.run()
-        main_win.set_sensitive(True)
-        self._statusbar()
+        local_install_dlg = local_install_dialog( main_win, self.icon, pacs_queues, fname )
+        local_install_dlg.connect("destroy", self._refresh_trees_and_queues)
+        
+        retcode = local_install_dlg.run()        
+        if retcode == RESPONSE_YES:
+            self._statusbar(_("Installing..."))
+            local_install_dlg.set_sensitive(False)
+            if self._passwd_dlg_init(local_install_dlg):
+                    local_install_dlg.install()
+                    local_install_dlg.set_sensitive(True)
+            else:
+                local_install_dlg.destroy()
+                self._statusbar(_("Installation canceled"))
+        else:
+            local_install_dlg.destroy()
 
     def add_to_install_queue(self, widget, data=None):
         tree = self.gld.get_widget("pacs_tree")
@@ -544,17 +558,16 @@ class gui:
     
     def refresh_database(self, widget, data=None):
         main_window = self.gld.get_widget("main_win")
-        #self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
         main_window.set_sensitive(False)
         self._statusbar(_("Refreshing database..."))
-        dlg = command_dialog(main_window, self.icon)
-        dlg.connect("destroy", self._done_upgrade)
+        command_dlg = command_dialog(main_window, self.icon)
+        command_dlg.connect("destroy", self._refresh_trees_and_queues)
         
-        if self._passwd_dlg_init(dlg):
-            dlg.run('Sy')
+        if self._passwd_dlg_init(command_dlg):
+            command_dlg.install('Sy')
         else:
-            dlg.destroy()
-        self._refresh_trees_and_queues()    
+            command_dlg.destroy()
+
         self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
     
     def upgrade_system(self, widget, data=None):
@@ -579,18 +592,28 @@ class gui:
                     self._done(None)
                     return
             
-            upgrade_dlg = upgrade_confirm_dialog(self.gld.get_widget("main_win"), self.icon, to_upgrade)
-
-            if upgrade_dlg.run():
+            upgrade_dlg = upgrade_dialog( self.gld.get_widget("main_win"), self.icon, to_upgrade)
+            upgrade_dlg.connect("destroy", self._refresh_trees_and_queues)
+        
+            resp = upgrade_dlg.run()
+            if resp == RESPONSE_YES:
                 self._statusbar(_("Refreshing database..."))
-                dlg = upgrade_dialog( self.gld.get_widget("main_win"), self.icon, to_upgrade)
-                dlg.connect("destroy", self._done_upgrade)
-                if self._passwd_dlg_init(dlg):
-                    dlg.run()
+                upgrade_dlg.set_sensitive(False)
+                if self._passwd_dlg_init(upgrade_dlg):
+                    upgrade_dlg.install()
+                    upgrade_dlg.set_sensitive(True)
                 else:
-                    dlg.destroy()
-            else:
+                    upgrade_dlg.destroy()
+                    self._statusbar(_("Upgrade canceled"))
+                    self.gld.get_widget("main_win").set_sensitive(True)
+                    
+            elif resp == RESPONSE_NO:
+                upgrade_dlg.destroy()
+                self._statusbar(_("Upgrade canceled"))
                 self.gld.get_widget("main_win").set_sensitive(True)
+            else:
+                print 'else'
+
         # Else nothing to upgrade
         else:
             self._statusbar(_("There are no packages to upgrade"))
@@ -744,24 +767,31 @@ class gui:
                 self._refresh_trees_and_queues()
                 return
 
-        confirm_dlg = confirm_dialog(self.gld.get_widget("main_win"), self.icon, pacs_queues)
+        # Open new dialog and execute commands ie. install/remove packages
+        do_dlg = do_dialog( self.gld.get_widget("main_win"), self.icon, pacs_queues)
+        do_dlg.connect("destroy", self._refresh_trees_and_queues)
         
-        if confirm_dlg.run():
+        resp = do_dlg.run()
+        if resp == RESPONSE_YES:
             self._statusbar(_("Executing queued operations..."))
-            dlg = do_dialog( self.gld.get_widget("main_win"), self.icon, pacs_queues)
-            dlg.connect("destroy", self._refresh_trees_and_queues)
-            
-            if self._passwd_dlg_init(dlg):
-                dlg.run()
+            do_dlg.set_sensitive(False)
+            if self._passwd_dlg_init(do_dlg):
+                do_dlg.install()
+                do_dlg.set_sensitive(True)
+            # User clicked cancel
             else:
-                dlg.destroy()
+                do_dlg.destroy()
                 self.queues["add"] = []
                 self.queues["remove"] = []
-                self._refresh_trees_and_queues()
-        else:
+                self._statusbar(_("Upgrade canceled"))
+                self.gld.get_widget("main_win").set_sensitive(True)
+                
+        elif resp == RESPONSE_NO:
+            do_dlg.destroy()
             self.queues["add"] = []
             self.queues["remove"] = []
-            self._refresh_trees_and_queues()
+            self._statusbar(_("Upgrade canceled"))
+            self.gld.get_widget("main_win").set_sensitive(True)
     
     #------------------------- Callbacks End -----------------------------#
     def _execute_queue_add(self):
@@ -796,6 +826,8 @@ class gui:
                         dep = dep.split("=")[0]
                     if not (dep in self.queues["add"]):
                         done, to_do = self._execute_dep_check(dep, "dep")
+                        if not done:
+                            continue
                         #if done and not done in queue:
                         if done and not done in queue and not done.installed:
                             done.flag = 11
@@ -837,15 +869,17 @@ class gui:
                                 
     def _execute_dep_check(self, to_check, flag):
         to_do = []
-        try:
-            pac = self.database.get_by_name(to_check)
-        except NameError:
+
+        pac = self.database.get_by_name(to_check)
+        if not pac:
             dlg = error_dialog(self.gld.get_widget("main_win"),
-            _("%(dep)s is not in the database. %(dep)s is required by %(pkg)s.\nThis maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\nIf you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{'dep': dep, "pkg": name}, self.icon)
+            _("%(pkg)s is not in the database. %(pkg)s is required by one of your package(s).\n \
+            This maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\n \
+            If you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{"pkg": to_check}, self.icon)
             dlg.run()
             dlg.destroy()
-            pacs_queues["add"].remove(pac)
-            self.queues["add"].remove(name)
+            #self.queues["add"].pop(0)
+            #self.queues["add"].remove(name)
             return
         
         if not pac.prop_setted:
@@ -887,23 +921,10 @@ class gui:
                     if not warning_ison:
                         passwd_dlg.show_warning()
                         warning_ison = True
-                #****************************************************
-                #elif len(user_passwd):
-                    #op = spawnv('P_WAIT', '/bin/ls', '/etc/')
-                    ##op2 = popen3('killer')
-                    #print op, type(op)
-                    #if not warning_ison:
-                        #passwd_dlg.show_warning()
-                        #warning_ison = True
-                    #continue
-                # TODO: Must Validate password
-                #****************************************************
                 # Return with valid password
                 else:
                     passwd_dlg.destroy()
-                    #return user_passwd
                     dlg.run_login(user_passwd)
-                    #dlg.run()
                     del user_passwd
                     return True
             # Destroy dialog and return False when user click on Cancel
@@ -912,23 +933,6 @@ class gui:
         # We return if program was started by root
         else:
             return True
-    
-    def _after_local_install(self, wid, data=None):
-        #self.database.refresh()
-        self._refresh_trees_and_queues()
-        #self.models["foreigners"] = installed_list(self.database["foreigners"])
-        self.gld.get_widget("main_win").set_sensitive(True)
-
-        self._statusbar()
-
-    def _local_confirm(self, fname, pacs_queue):
-        dlg = local_confirm_dialog(self.gld.get_widget("main_win"),
-                                   fname, pacs_queue, self.icon)
-        if dlg.run():
-            retcode = True
-        else:
-            retcode = False
-        return retcode
     
     def _blacklist(self, pacs, key=None):
         """ Here we check if packages are not in hold or ignore list.
@@ -953,7 +957,7 @@ class gui:
     def _done_upgrade(self, widget, data=None):
         self._refresh_trees_and_queues()
         self._statusbar(_("Updating compleated"))
-        self.gld.get_widget("main_win").set_sensitive(True)
+        #self.gld.get_widget("main_win").set_sensitive(True)
         
     def _done(self, widget, data=None):
         self.gld.get_widget("main_win").set_sensitive(True)
@@ -1028,7 +1032,6 @@ class gui:
         
         if pac.installed:
             text_buffer.insert_with_tags_by_name(iter, "Description\n", 'heading')
-            #text_buffer.insert_with_tags_by_name(iter, pac.description[0] + "\n", "desc_tag")
             text_buffer.insert(iter, pac.description[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
@@ -1054,15 +1057,12 @@ class gui:
             
             sum_txt.set_buffer(text_buffer)
     
-            file_model = file_list(pac.filelist)
-            file_tree.set_model(file_model)
         else:            
             text_buffer.insert_with_tags_by_name(iter, "Description\n", "heading")
             text_buffer.insert(iter, pac.description[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
             text_buffer.insert(iter, pac.size + "\n")
-            #text_buffer.insert_with_tags_by_name(iter, pac.summary[2], "center")
             
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", "heading")
             text_buffer.insert(iter, pac.dependencies, )

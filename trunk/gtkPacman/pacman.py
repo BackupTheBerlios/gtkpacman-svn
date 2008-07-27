@@ -209,7 +209,7 @@ class database(dict):
             self[repo] = []
             pacs = self._get_repo_pacs(repo)
             if not pacs:
-                return
+                pass
             
             for pac in pacs:
                 pac_obj = self._make_pac(pac, repo)
@@ -220,8 +220,6 @@ class database(dict):
                     self["local"].append(pac_local)
                 else:
                     self[repo].append(pac_obj)
-                continue
-            continue
         
         self["foreigners"] = []
         #Pacs which still are in inst_pacs aren't in the local repo, so they're

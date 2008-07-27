@@ -87,16 +87,16 @@ class gui:
 
         #Check if root, else notufy it and deactivate some widgets
         if uid:
-            pass
-            #self._setup_avaible_actions()
+            self._setup_avaible_actions()
             #dlg = non_root_dialog(icon)
             #dlg.run()
             #dlg.destroy()
 
     def _setup_avaible_actions(self):
         #Deactivate some widgets. Called if not root
-        self.gld.get_widget("queue").set_sensitive(False)
-        self.gld.get_widget("immediate").set_sensitive(False)
+        self.gld.get_widget("makepkg").set_sensitive(False)
+        #self.gld.get_widget("queue").set_sensitive(False)
+        #self.gld.get_widget("immediate").set_sensitive(False)
         #self.gld.get_widget("add_install").set_sensitive(False)
         #self.gld.get_widget("remove_install").set_sensitive(False)
         #self.gld.get_widget("add_remove").set_sensitive(False)
@@ -662,22 +662,22 @@ class gui:
         pwd = abspath(curdir)
         chdir(dname)
 
-        cdlg = command_dialog(self.gld.get_widget("main_win"), self.icon)
-        cdlg.connect("destroy", self._done)
+        command_dlg = command_dialog(self.gld.get_widget("main_win"), self.icon)
+        command_dlg.connect("destroy", self._done)
 
         if geteuid() == 0:
             dlg = change_user_dialog(self.gld.get_widget("main_win"), self.icon)
             user = dlg.run()
 
             if user == "root":
-                cdlg.run("makepkg --asroot -si \n", False)
+                command_dlg.install("makepkg --asroot -si \n", False)
             elif user == "reject":
                 pass
             else:
-                cdlg.run("su %s -c 'makepkg -si' \n" %user, False)
-            dlg.destroy()
+                command_dlg.install("su %s -c 'makepkg -si' \n" %user, False)
+            command_dlg.destroy()
         else:
-            cdlg.run("makepkg -si \n", False)
+            command_dlg.install("makepkg -si \n", False)
         chdir(pwd)
     
     def search(self, widget, data=None):        

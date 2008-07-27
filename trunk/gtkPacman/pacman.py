@@ -453,6 +453,18 @@ class database(dict):
         req_by = ", ".join(reqs)
         return req_by
 
+    def _get_provides(self, deps):
+        
+        try:
+            begin = deps.index("%PROVIDES%") + len("%PROVIDES%")
+        except ValueError:
+            return
+        end = deps.find("%", begin) - len("%")
+        provides = deps[begin:end].strip().split("\n")
+        provides = ", ".join(provides)
+        
+        return provides
+        
     def _set_filelist(self, pac, files):
         """Set installed files list for the given pac"""
         if not pac.installed:
@@ -513,8 +525,21 @@ class database(dict):
             for pac in self[repo]:
                 if name == pac.name:
                     return pac
-        print "Info: %s is not in the database..."  %name
-        return
+        print "?? '%s' is not in the database..., trying advanced searching"  %name
+        
+        # If package is not found in first search because it name could be changed then
+        # do more advanced search for package
+        for repo in self.repos:
+            for pac in self[repo]:
+                raw_depends = self._get_raw_desc(pac, "depends")
+                provides = self._get_provides(raw_depends)
+                
+                if provides and name in provides:
+                    print "... package found, '%s' name was changed to %s" %(name, pac.name)
+                    return pac
+            
+        print "!! I really can't find package '%s'" %name
+        return 
 
     def search_by_name(self, name):
         """Return a list of packages wich contains 'name' in the name"""

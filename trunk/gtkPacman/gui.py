@@ -624,19 +624,25 @@ class gui:
         main_window = self.gld.get_widget("main_win")
         main_window.set_sensitive(False)
         self._statusbar(msg=_("Clearing cache..."))
-        dlg = command_dialog(main_window, self.icon)
-        dlg.connect("destroy", self._done)
-        dlg.run("Sc")
-        return
-    
+        command_dlg = command_dialog(main_window, self.icon)
+        command_dlg.connect("destroy", self._done)
+        
+        if self._passwd_dlg_init(command_dlg):
+            command_dlg.install('Sc')
+        else:
+            command_dlg.destroy()
+        
     def empty_cache(self, wid, data=None):
         main_window = self.gld.get_widget("main_win")
         main_window.set_sensitive(False)
         self._statusbar(_("Emptying cache..."))
-        dlg = command_dialog(main_window, self.icon)
-        dlg.connect("destroy", self._done)
-        dlg.run("Scc")
-        return
+        command_dlg = command_dialog(main_window, self.icon)
+        command_dlg.connect("destroy", self._done)
+ 
+        if self._passwd_dlg_init(command_dlg):
+            command_dlg.install('Scc')
+        else:
+            command_dlg.destroy()            
     
     def make_package(self, widget):
         from os import chdir, geteuid, curdir

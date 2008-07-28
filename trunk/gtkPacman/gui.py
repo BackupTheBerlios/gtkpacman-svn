@@ -26,10 +26,10 @@ from gtk import TextBuffer, TextTag
 from gtk.gdk import pixbuf_new_from_file, Cursor, WATCH
 from gtk.glade import XML
 
-from dialogs import non_root_dialog, about_dialog, warning_dialog, do_dialog
-from dialogs import confirm_dialog, search_dialog, upgrade_dialog
-from dialogs import upgrade_confirm_dialog, local_install_dialog, password_dialog
-from dialogs import local_install_fchooser_dialog, local_confirm_dialog
+from dialogs import about_dialog, warning_dialog, do_dialog
+from dialogs import search_dialog, upgrade_dialog
+from dialogs import local_install_dialog, password_dialog
+from dialogs import local_install_fchooser_dialog
 from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
@@ -81,34 +81,9 @@ class gui:
         self._statusbar('Ready for your command')
         #Check pacman version
         self._pacman_ver_check()
-        
-        #gobject.timeout_add( 3000, self._on_idle, gobject.PRIORITY_LOW)
-        #gobject.idle_add(self._on_idle)
 
-        #Check if root, else notufy it and deactivate some widgets
-        if uid:
-            self._setup_avaible_actions()
-            #dlg = non_root_dialog(icon)
-            #dlg.run()
-            #dlg.destroy()
-
-    def _setup_avaible_actions(self):
-        #Deactivate some widgets. Called if not root
+        #Deactivate some widgets
         self.gld.get_widget("makepkg").set_sensitive(False)
-        #self.gld.get_widget("queue").set_sensitive(False)
-        #self.gld.get_widget("immediate").set_sensitive(False)
-        #self.gld.get_widget("add_install").set_sensitive(False)
-        #self.gld.get_widget("remove_install").set_sensitive(False)
-        #self.gld.get_widget("add_remove").set_sensitive(False)
-        #self.gld.get_widget("remove_remove").set_sensitive(False)
-        #self.gld.get_widget("execute").set_sensitive(False)
-        #self.gld.get_widget("up_sys").set_sensitive(False)
-        #self.gld.get_widget("up_db").set_sensitive(False)
-        
-        #self.popup_gld.get_widget("popup_add_install").set_sensitive(False)
-        #self.popup_gld.get_widget("popup_remove_install").set_sensitive(False)
-        #self.popup_gld.get_widget("popup_add_remove").set_sensitive(False)
-        #self.popup_gld.get_widget("popup_remove_remove").set_sensitive(False)
     
     def _adjust_queues (self):
         for name in self.queues["add"]:
@@ -231,8 +206,9 @@ class gui:
 
     def _make_repos_model (self):
         repos_model = TreeStore(str)
-
-        for repo in self.database.repos:
+        repos = sorted( self.database.repos.keys() )
+        
+        for repo in repos:
             if repo == "foreigners" or repo == "local":
                 continue
             repo_it = repos_model.append(None, [repo])
@@ -327,26 +303,32 @@ class gui:
                 pacs_model = self.models[ selected_repo ][ selected_option ]
             except KeyError:
                 self.database.set_reason(selected_repo)
-                self.models[ selected_repo ] ['explicitly installed' ] = explicitly_list(self.database[ selected_repo ])
+                self.models[ selected_repo ]['explicitly installed' ] = explicitly_list(self.database[ selected_repo ])
             
         pacs_model = self.models[ selected_repo ][ selected_option ]
         pacs_tree.set_model(pacs_model)
         
-        stat = (len(pacs_model), selected_repo)
+        stat = (len(pacs_model), selected_repo, self.database.repos.get( selected_repo ))
         self._statusbar(stat)
         
     def repo_changed(self, widget, data=None):
-        def _setup_status(pacs_model):
+        def _setup_status(pacs_model, ext_msg=True):
+            # ext_msg = extended message
             pacs_tree.set_model(pacs_model)
-            stat = (len(pacs_model), selected_repo)
-            self._statusbar(stat)
+            # pass more info to statusbar if repo isn't: orphans, foreigners or Search...
+            if ext_msg:
+                stat = (len(pacs_model), selected_repo, self.database.repos.get( selected_repo ))
+                self._statusbar(stat)
+            else:
+                stat = (len(pacs_model), selected_repo)
+                self._statusbar(stat)
             
         def _setup_orphans_fork():
             self.database.set_orphans()
             self.models['orphans'] = orphan_list( self.database['local'] )
             parent_iter = repos_model.iter_parent(tree_iter)
             
-            _setup_status( self.models['orphans'] )            
+            _setup_status( self.models['orphans'], False )
             main_win.window.set_cursor(None)
         
         repos_tree = self.gld.get_widget("repos_tree")
@@ -386,7 +368,7 @@ class gui:
                 pacs_model = self.models[ selected_repo ]
                 pacs_tree.set_model(pacs_model)
                 
-            _setup_status(pacs_model)
+            _setup_status(pacs_model, False)
             
         # Otherwise we check selected option from combo_box_options and 
         # fetch model appropriate to selected option
@@ -647,6 +629,7 @@ class gui:
     def make_package(self, widget):
         from os import chdir, geteuid, curdir
         from os.path import dirname, abspath
+        from pwd import getpwuid
         
         dlg = choose_pkgbuild_dialog(self.gld.get_widget("main_win"), self.icon)
         fname = dlg.run()
@@ -664,10 +647,12 @@ class gui:
 
         command_dlg = command_dialog(self.gld.get_widget("main_win"), self.icon)
         command_dlg.connect("destroy", self._done)
-
+        
+        
         if geteuid() == 0:
             dlg = change_user_dialog(self.gld.get_widget("main_win"), self.icon)
             user = dlg.run()
+            dlg.destroy()
 
             if user == "root":
                 command_dlg.install("makepkg --asroot -si \n", False)
@@ -675,9 +660,15 @@ class gui:
                 pass
             else:
                 command_dlg.install("su %s -c 'makepkg -si' \n" %user, False)
-            command_dlg.destroy()
+            #command_dlg.destroy()
         else:
-            command_dlg.install("makepkg -si \n", False)
+            if self._passwd_dlg_init(command_dlg):
+                usr_name = getpwuid(geteuid())[0]
+                command_dlg.install("su %s -c 'makepkg -si' \n" %usr_name, False)
+            else:
+                command_dlg.destroy()
+            #command_dlg.install("makepkg -s \n", False)
+        #command_dlg.destroy()
         chdir(pwd)
     
     def search(self, widget, data=None):        
@@ -959,11 +950,6 @@ class gui:
             return None
         
         return blacklist
-
-    def _done_upgrade(self, widget, data=None):
-        self._refresh_trees_and_queues()
-        self._statusbar(_("Updating compleated"))
-        #self.gld.get_widget("main_win").set_sensitive(True)
         
     def _done(self, widget, data=None):
         self.gld.get_widget("main_win").set_sensitive(True)
@@ -1004,7 +990,9 @@ class gui:
     def _statusbar(self, msg=None):
         stat_bar = self.gld.get_widget("statusbar")
 
-        if type(msg) == type(()):
+        if type(msg) == tuple and len(msg) == 3:
+            str = _("%s packages in [ %s ] - last synchronized [ %s ]") %(msg[0], msg[1], msg[2])
+        elif type(msg) == tuple and len(msg) == 2:
             str = _("%s packages in [ %s ]") %(msg[0], msg[1])
         elif msg == None:
             str =  _("Done")

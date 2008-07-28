@@ -24,7 +24,7 @@ class terminal(Terminal):
 
         Terminal.__init__(self)
         self.fork_command()
-        #self.set_sensitive(False)
+        self.set_sensitive(False)
         
     def init_su(self):
         """ su command need to be executed for it's own,
@@ -60,13 +60,13 @@ class terminal(Terminal):
         inst, inst_dep, rm = self._constructCmds(queues)
         pacman = "pacman --noconfirm"
         commands = []
-        
-        if inst:
-            cmd_inst = "%s -Sdf %s \n" %(pacman, inst)
-            commands.append(cmd_inst)            
+                    
         if inst_dep:
             cmd_inst_dep = "%s -Sdf --asdep %s \n" %(pacman, inst_dep)
             commands.append(cmd_inst_dep)
+        if inst:
+            cmd_inst = "%s -Sdf %s \n" %(pacman, inst)
+            commands.append(cmd_inst)
         if rm:
             cmd_rem = "%s -Rdf %s \n" %(pacman, rm)
             commands.append(cmd_rem)
@@ -93,7 +93,7 @@ class terminal(Terminal):
         
         cmd_inst_file = "%s \n" %local
         commands.append(cmd_inst_file)
-        commands.append("exit \n")
+        commands.extend(["exit \n", "exit \n"])
         map(self.execute, commands)
 
     def do_upgrade(self):

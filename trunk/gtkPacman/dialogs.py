@@ -35,15 +35,6 @@ from gtk.gdk import pixbuf_new_from_file
 from models import PacView
 from terminal import terminal
 
-class non_root_dialog(MessageDialog):
-
-    def __init__(self, icon):
-
-        MessageDialog.__init__(self, None,
-                               DIALOG_MODAL, MESSAGE_WARNING, BUTTONS_CLOSE,
-                               _("You must be root to fully use gtkpacman.\nSince you aren't root, gtkpacman will not allow any packages management operation (Install/Remove)"))
-        self.set_icon (pixbuf_new_from_file(icon))
-
 class ignorepkg_dialog(MessageDialog):
 
     def __init__(self, name, icon):
@@ -61,62 +52,6 @@ class holdpkg_dialog(MessageDialog):
                                DIALOG_MODAL, MESSAGE_INFO, BUTTONS_YES_NO,
                                _("Current package(s) are listed as HoldPkg.\n%s\nAre You sure you want to continue?") %name)
         self.set_icon (pixbuf_new_from_file(icon))
-        
-class confirm_dialog(Dialog):
-
-    def __init__(self, parent, icon, queues):
-
-        Dialog.__init__(self, _("Confirm"), parent,
-                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
-                        (STOCK_OK, RESPONSE_ACCEPT,
-                         STOCK_CANCEL, RESPONSE_REJECT))
-
-        self.set_icon(pixbuf_new_from_file(icon))
-        self._setup_trees(queues)
-        self._setup_layout()
-
-    def _setup_trees(self, queues):
-
-        self.install_tree = PacView(queues["add"])
-        self.remove_tree = PacView(queues["remove"])
-
-    def _setup_layout(self):
-
-        hpaned = HPaned()
-        label = Label(_("Are you sure you want to install/remove those packages?"))
-        label.show()
-        inst_frame = Frame(_("Packages to install"))
-        rem_frame = Frame(_("Packages to remove"))
-
-        inst_scroll = ScrolledWindow()
-        inst_scroll.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
-
-        rem_scroll = ScrolledWindow()
-        rem_scroll.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
-
-        inst_scroll.add(self.install_tree)
-        rem_scroll.add(self.remove_tree)
-        
-        inst_frame.add(inst_scroll)
-        rem_frame.add(rem_scroll)
-
-        hpaned.pack1(inst_frame, False, False)
-        hpaned.pack2(rem_frame, False, False)
-        
-        hpaned.show_all()
-
-        self.vbox.pack_start(label, False, False, 0)
-        self.vbox.pack_start(hpaned, True, True, 0)
-        self.set_default_size(600,300)
-        return
-
-    def run(self):
-        response = Dialog.run(self)
-        self.destroy()
-        if response == RESPONSE_ACCEPT:
-            return True
-        else:
-            return False
 
 class warning_dialog(Dialog):
 
@@ -195,10 +130,6 @@ class command_dialog(Dialog):
     def __init__(self, parent, icon):
 
         Dialog.__init__(self, None, parent, DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT)
-        #self.set_transient_for(parent)
-        #self.set_property("skip-taskbar-hint", True)
-        #self.set_property("destroy-with-parent", True)        
-        #self.set_position(WIN_POS_CENTER_ON_PARENT)
         self.set_icon(pixbuf_new_from_file(icon))
         
         self.close_button = self.add_button(STOCK_CLOSE, RESPONSE_CLOSE)
@@ -262,7 +193,6 @@ class do_dialog(command_dialog):
         
         self.expander = Expander(_("Terminal"))
         self.expander.set_expanded(False)
-        #self.expander.set_sensitive(False)
         self.expander.hide_all()
         self.expander.connect("notify::expanded", self._set_size)
         
@@ -314,17 +244,7 @@ class upgrade_dialog(do_dialog):
     def _setup_layout(self):
         self.set_default_size (300, 300)
         label = Label(_("Are you sure you want to upgrade those packages?\n"))
-
-        #self.terminal = terminal()
-        #self.terminal.connect("child-exited", lambda _: self.close_button.show())
-        
-        #self.expander = expander_new_with_mnemonic(_("_Terminal"))
-        #self.expander.set_expanded(False)
-        #self.expander.connect("notify::expanded", self._set_size)
-        #self.expander.set_sensitive(False)
-        #self.expander.show_all()
-        
-
+    
         scr = ScrolledWindow()
         scr.set_policy (POLICY_AUTOMATIC, POLICY_AUTOMATIC)
         scr.add(self.tree)
@@ -342,48 +262,6 @@ class upgrade_dialog(do_dialog):
         self.no_button.hide_all()
         self.expander.show_all()
         self.terminal.do_upgrade()
-            
-class upgrade_confirm_dialog(Dialog):
-
-    def __init__(self, parent, icon, to_upgrade):
-
-        Dialog.__init__(self, _("Confirm Upgrade"), parent,
-                        DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
-                        (STOCK_OK, RESPONSE_ACCEPT,
-                         STOCK_CANCEL, RESPONSE_REJECT))
-
-        self.set_icon(pixbuf_new_from_file(icon))
-        self._setup_tree(to_upgrade)
-        self._setup_layout()
-        
-    def _setup_tree(self, pacs):
-
-        self.tree = PacView( pacs)
-        self.tree.show()
-
-    def _setup_layout(self):
-
-        self.label = Label(_("Are you sure you want to upgrade those packages?\n"))
-        self.label.show()
-
-        self.set_default_size (300, 300)
-
-        scr = ScrolledWindow()
-        scr.set_policy(POLICY_AUTOMATIC, POLICY_AUTOMATIC)
-        scr.add(self.tree)
-        scr.show()
-        
-        self.vbox.pack_start(self.label, False, False, 0)
-        self.vbox.pack_start(scr, True, True, 0)
-
-    def run(self):
-        retcode = Dialog.run(self)
-        self.destroy()
-
-        if retcode == RESPONSE_ACCEPT:
-            return True
-        else:
-            return False
 
 class local_install_fchooser_dialog(FileChooserDialog):
 
@@ -393,22 +271,6 @@ class local_install_fchooser_dialog(FileChooserDialog):
                                    (STOCK_OPEN, RESPONSE_ACCEPT,
                                     STOCK_CANCEL, RESPONSE_REJECT))
         self.set_icon(pixbuf_new_from_file(icon))
-
-class local_confirm_dialog(confirm_dialog):
-
-    def __init__(self, parent, fname, pacs_queue, icon):
-        from os.path import basename
-        
-        confirm_dialog.__init__(self, parent, icon, pacs_queue)
-        package = basename(fname)
-
-        name_n_ver = package.rsplit("-", 3)
-        name = name_n_ver.pop(0)
-        del name_n_ver[-1]
-        version = '-'.join(name_n_ver)
-        
-        model = self.install_tree.get_model()
-        model.prepend(["red", name, version])
 
 class local_install_dialog(do_dialog):
 
@@ -436,7 +298,7 @@ class local_install_dialog(do_dialog):
         self.yes_button.hide_all()
         self.no_button.hide_all()
         self.expander.show_all()
-        self.terminal.do_local(self.fname, self.pacs_queue)        
+        self.terminal.do_local(self.fname, self.pacs_queue)
     
 class search_dialog(Dialog):
 

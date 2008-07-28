@@ -16,7 +16,8 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-import os, string, re, time
+import os, re, time
+#from time import ctime
 
 path_repo = str()
 path_local = "/var/lib/pacman/local"
@@ -93,8 +94,7 @@ class database(dict):
         self.repos = self._get_repos()
 
         self.set_pacs()
-        self.repos.sort()
-        self.repos.append("foreigners")
+        self.repos["foreigners"] = None
 
         #Init some variable which will be usefull
         self.olds = []
@@ -104,7 +104,8 @@ class database(dict):
         conf_file = file("/etc/pacman.conf", "r").read()
         conf_file_lines = conf_file.splitlines()
 
-        repos = [] 
+        #repos = [] 
+        repos = {}
         for line in conf_file_lines:
             if line.startswith("#"):
                 continue
@@ -116,7 +117,8 @@ class database(dict):
                 if repo == "options":
                     continue
                 else:
-                    repos.append(repo)
+                    #repos.append(repo)
+                    repos[repo] = None
                 continue
             if line.startswith("IgnorePkg"):
                 begin = line.index("=")+1
@@ -165,12 +167,19 @@ class database(dict):
         try:
             pacs = os.listdir("%s/%s" %(path, repo))
         except OSError:
-            self.repos.remove(repo)
+            self.repos.pop(repo)
             return
         try:
             pacs.remove(".lastupdate")
         except ValueError:
             pass
+
+        date_file = open("%s/%s/.lastupdate" %(path, repo), 'r')
+        date = int( date_file.readline() )
+        date_file.close()
+        
+        self.repos[repo] = time.ctime(date)
+
         pacs.sort()
         return pacs
 
@@ -205,11 +214,11 @@ class database(dict):
         self["local"] = []
         self.inst_pacs = self._get_installed()
         
-        for repo in self.repos:
+        for repo in self.repos.keys():
             self[repo] = []
             pacs = self._get_repo_pacs(repo)
             if not pacs:
-                pass
+                continue
             
             for pac in pacs:
                 pac_obj = self._make_pac(pac, repo)
@@ -521,7 +530,7 @@ class database(dict):
         #return explicitly
     def get_by_name(self, name):
         """Return the pckage named 'name', or raise a NameError"""
-        for repo in self.repos:
+        for repo in self.repos.keys():
             for pac in self[repo]:
                 if name == pac.name:
                     return pac
@@ -529,7 +538,7 @@ class database(dict):
         
         # If package is not found in first search because it name could be changed then
         # do more advanced search for package
-        for repo in self.repos:
+        for repo in self.repos.keys():
             for pac in self[repo]:
                 raw_depends = self._get_raw_desc(pac, "depends")
                 provides = self._get_provides(raw_depends)
@@ -544,7 +553,7 @@ class database(dict):
     def search_by_name(self, name):
         """Return a list of packages wich contains 'name' in the name"""
         pacs = []
-        for repo in self.repos:
+        for repo in self.repos.keys():
             for pac in self[repo]:
                 if pac.name.count(name):
                     pacs.append(pac)
@@ -554,7 +563,7 @@ class database(dict):
     
     def set_olds(self):
         """Set old pacs"""
-        for repo in self.repos:
+        for repo in self.repos.keys():
             if repo == "no_col":
                 continue
             for pac in self[repo]:
@@ -567,7 +576,7 @@ class database(dict):
     def get_by_desc(self, desc):
         """Return pacs which description match with desc"""
         pacs = []
-        for repo in self.repos:
+        for repo in self.repos.keys():
             for pac in self[repo]:
                 if not pac.description:
                     d = self._get_raw_desc( pac, 'desc')

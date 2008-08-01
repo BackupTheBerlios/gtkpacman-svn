@@ -729,7 +729,7 @@ class gui:
             dlg.destroy()
             
     def about(self, widget, data=None):
-        dlg = about_dialog(self.icon)
+        dlg = about_dialog(self.gld.get_widget("main_win"), self.icon)
         dlg.run()
         dlg.destroy()
         return

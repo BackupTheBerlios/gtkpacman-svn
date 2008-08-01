@@ -89,9 +89,10 @@ class warning_dialog(Dialog):
 
 class about_dialog(AboutDialog):
 
-    def __init__(self, icon):
+    def __init__(self, parent, icon):
         from os.path import exists, abspath, join
         from gtk.gdk import pixbuf_new_from_file
+        Dialog.__init__(self, None, parent)
         AboutDialog.__init__(self)
 
         self.set_icon(pixbuf_new_from_file(icon))

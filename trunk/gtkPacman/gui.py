@@ -77,7 +77,7 @@ class gui:
         self._setup_pacs_tree()
         self._setup_files_tree()
         
-        #Setup statusbar
+        self._setup_log()
         self._statusbar('Ready for your command')
         #Check pacman version
         self._pacman_ver_check()
@@ -123,19 +123,23 @@ class gui:
         self.inst_ver_col = pacs_tree.insert_column_with_attributes(
             -1, _("Avaible Version"), CellRendererText(), text=4
             )
-        #self.repo_col = pacs_tree.insert_column_with_attributes(
-        #    -1, _("Repository"),
-        #    CellRendererText(), text=5
-        #    )
+        self.repo_col = pacs_tree.insert_column_with_attributes(
+            -1, _("Repo"),
+            CellRendererText(), text=5
+            )
 
         sort_id = 0
         for col in pacs_tree.get_columns():
             col.set_reorderable(True)
             col.set_sort_column_id(sort_id)
             col.set_clickable(True)
+            col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
             col.set_resizable(True)
-            sort_id += 1
+            sort_id += 1            
+        col.set_visible(False)
         
+        col_4 = pacs_tree.get_column(4)
+        col_4.set_max_width(105)
         # Select first repo in repos_tree
         repos_tree.set_cursor_on_cell(0)
 
@@ -203,6 +207,16 @@ class gui:
         combo_box.set_active(0)
         
         combo_box.connect("changed", self.combobox_options_changed)
+        
+    def _setup_log(self):
+        log_text_view = self.gld.get_widget("log")
+        text_buffer = TextBuffer()
+        iter = text_buffer.get_start_iter()
+        log_file = self.database.log.values()[0]
+        
+        while log_file:
+            text_buffer.insert(iter, log_file.pop())
+        log_text_view.set_buffer(text_buffer)
 
     def _make_repos_model (self):
         repos_model = TreeStore(str)
@@ -232,6 +246,7 @@ class gui:
         # Need to be sure that repository was selected before fetching it's name
         if repo_iter:
             selected_repo_path = repos_model.get_path(repo_iter)
+            selected_repo = repos_model.get_value(repo_iter, 0)
         
         pacs_model, pac_iter = pacs_tree.get_selection().get_selected()
         # Need to be sure that package was selected before fetching packages name
@@ -260,7 +275,7 @@ class gui:
                 pass
         
         # Compare pacs after refreshing, if match then select both repository and package
-        if (selected_pac_before and selected_pac_before == selected_pac_after):
+        if (selected_pac_before and selected_pac_before == selected_pac_after and selected_repo != 'orphans'):
             pacs_tree.scroll_to_cell(selected_pac_path)
             pacs_tree.set_cursor(selected_pac_path)
         else:
@@ -275,6 +290,7 @@ class gui:
         del(pacs_queues)
         self.queues["add"] = []
         self.queues["remove"] = []
+        self._setup_log()
         self._pacman_ver_check()
         self._statusbar()
         self.gld.get_widget("main_win").set_sensitive(True)
@@ -335,6 +351,8 @@ class gui:
         pacs_tree = self.gld.get_widget("pacs_tree")
         combo_box_options = self.gld.get_widget("combo_box_options")
         
+        col_5 = pacs_tree.get_column(5)
+        col_5.set_visible(False)
         repos_model, tree_iter = repos_tree.get_selection().get_selected()
         # Need to be sure that repo was selected
         if tree_iter:
@@ -347,8 +365,9 @@ class gui:
         # Fetch orphans packages
         if selected_repo == 'orphans':
             combo_box_options.set_sensitive(False)
+            col_5.set_visible(True)
             try:
-                _setup_status( self.models['orphans'] )
+                _setup_status( self.models['orphans'], False )
             except KeyError:
                 main_win = self.gld.get_widget("main_win")
                 main_win.window.set_cursor(Cursor(WATCH))
@@ -550,7 +569,7 @@ class gui:
         else:
             command_dlg.destroy()
 
-        self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
+        #self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
     
     def upgrade_system(self, widget, data=None):
         to_upgrade = []
@@ -672,33 +691,35 @@ class gui:
         chdir(pwd)
     
     def search(self, widget, data=None):        
-        win = self.gld.get_widget("main_win")
+        main_win = self.gld.get_widget("main_win")
                 
-        dlg = search_dialog(self.gld.get_widget("main_win"), self.icon)
+        dlg = search_dialog(main_win, self.icon)
         
-        def _fork():        
+        def _fork():
+            col_5 = self.gld.get_widget("pacs_tree").get_column(5)
+            col_5.set_visible(True)
             repos_tree = self.gld.get_widget("repos_tree")
             repos_model = repos_tree.get_model()
             
             pacs = self.database.get_by_keywords(keywords)          
             if self.search_iter:
                 repos_model.remove(self.search_iter)
-            self.search_iter = repos_model.append(None, [_("Search results for '%s'") %keywords])
+            self.search_iter = repos_model.append(None, [_("Search for '%s'") %keywords])
             self.models["search"] = search_list(pacs)
             path = repos_model.get_path(self.search_iter)
             repos_tree.set_cursor_on_cell(path)
-            
+
             dlg.destroy()
-            win.window.set_cursor(None)
+            main_win.window.set_cursor(None)
         
         if dlg.run() == RESPONSE_ACCEPT:
             keywords = dlg.entry.get_text()
             if keywords:
                 dlg.vbox.set_sensitive(False)
                 self._statusbar(_("Searching for %s..." %keywords))
-                win.window.set_cursor(Cursor(WATCH))
+                main_win.window.set_cursor(Cursor(WATCH))
                 dlg.window.set_cursor(Cursor(WATCH))
-                gobject.idle_add(_fork) 
+                gobject.idle_add(_fork)
             else:
                 dlg.destroy()
                 error_dlg = error_dialog(None, _("You should insert at least one keyword to search for"), self.icon)
@@ -908,7 +929,7 @@ class gui:
         # Jump in if program was not started by root
         if self.uid:
             dlg.run_su()
-            passwd_dlg = password_dialog(self.gld.get_widget("main_win"), self.icon)
+            passwd_dlg = password_dialog(dlg, self.icon)
             # When password is less then 1 we show 'error' message. 
             # Until passwd is less than one and unverified we keep password_dialog runing.
             while passwd_dlg.run() == RESPONSE_ACCEPT:

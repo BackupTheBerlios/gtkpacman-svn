@@ -90,8 +90,12 @@ class database(dict):
         #Get repos present on machine
         self.ignorePkg = []
         self.holdPkg = []
+        # {log path:log}
+        self.log = {}
+        
         self._get_pacman_version()
         self.repos = self._get_repos()
+        self._get_log()
 
         self.set_pacs()
         self.repos["foreigners"] = None
@@ -103,8 +107,7 @@ class database(dict):
     def _get_repos(self):
         conf_file = file("/etc/pacman.conf", "r").read()
         conf_file_lines = conf_file.splitlines()
-
-        #repos = [] 
+ 
         repos = {}
         for line in conf_file_lines:
             if line.startswith("#"):
@@ -117,9 +120,12 @@ class database(dict):
                 if repo == "options":
                     continue
                 else:
-                    #repos.append(repo)
                     repos[repo] = None
                 continue
+
+            if line.startswith( 'LogFile' ):
+                l = line.split( '=' )[1:]
+                self.log[ l[0].strip() ] = None
             if line.startswith("IgnorePkg"):
                 begin = line.index("=")+1
                 pkgs = line[begin:].split(" ")
@@ -154,7 +160,20 @@ class database(dict):
     def _get_pacman_version (self):
         [stin, stout] = os.popen2("pacman --version|grep Pacman")
         self.ver = stout.read().split('v')[1].split('-')[0].strip().split('.')
+        
+    def _get_log(self):
+        log_path = self.log.keys()[0]
+        
+        try:
+            log_file = open(log_path, 'r')
+        except IOError:
+            return
 
+        log = log_file.readlines()
+        log_file.close()
+        
+        self.log[log_path] = log
+        
     def _get_repo_pacs(self, repo):
         global path_repo
         pacs = None
@@ -214,7 +233,7 @@ class database(dict):
         self["local"] = []
         self.inst_pacs = self._get_installed()
         
-        for repo in self.repos.keys():
+        for repo in sorted(self.repos.keys()):
             self[repo] = []
             pacs = self._get_repo_pacs(repo)
             if not pacs:

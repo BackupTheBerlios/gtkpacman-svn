@@ -225,7 +225,7 @@ class database(dict):
             elif ver > inst_ver or len(ver) > len(inst_ver):
                 isold = True
             else:
-                print """?? can't figure out version of this package:
+                print """?? can't figure out status of this package:
                 package: %s
                 installed ver. %s - avaible ver. %s
                 Marked package as 'old'""" %(name, inst_ver, ver)

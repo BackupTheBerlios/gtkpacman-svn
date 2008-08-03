@@ -34,7 +34,6 @@ from dialogs import command_dialog, error_dialog, ignorepkg_dialog
 from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
 from models import installed_list, all_list, explicitly_list, search_list, file_list, orphan_list
-import gtk
 
 class gui:
     def __init__(self, fname, database, uid, icon):
@@ -133,7 +132,6 @@ class gui:
             col.set_reorderable(True)
             col.set_sort_column_id(sort_id)
             col.set_clickable(True)
-            col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
             col.set_resizable(True)
             sort_id += 1            
         col.set_visible(False)
@@ -351,8 +349,10 @@ class gui:
         pacs_tree = self.gld.get_widget("pacs_tree")
         combo_box_options = self.gld.get_widget("combo_box_options")
         
+        # Hide last column 'Repo' if it's visible
         col_5 = pacs_tree.get_column(5)
         col_5.set_visible(False)
+
         repos_model, tree_iter = repos_tree.get_selection().get_selected()
         # Need to be sure that repo was selected
         if tree_iter:
@@ -361,6 +361,16 @@ class gui:
         else:
             repos_tree.set_cursor_on_cell(0)
             return
+        
+        # When clicking on repo we unselect any selected pac and clear summary and files
+        pacs_tree.get_selection().unselect_all()
+        summary_buffer = self.gld.get_widget("summary").get_buffer()
+        file_tree = self.gld.get_widget("files")
+        summary_buffer.set_text('')
+        file_model = file_tree.get_model()
+        if file_model:
+            file_model.clear()
+            file_tree.set_model(file_model)
         
         # Fetch orphans packages
         if selected_repo == 'orphans':
@@ -375,11 +385,12 @@ class gui:
                 gobject.idle_add(_setup_orphans_fork)
         
         # If selected repo is: foreigners, orphans or search then we deactivate combo_box_options
-        elif 'foreigners' == selected_repo or selected_repo.startswith('Search'):
+        elif selected_repo == 'foreigners' or selected_repo.startswith('Search'):
             combo_box_options.set_sensitive(False)
                     
             # Fetch search model
             if selected_repo.startswith('Search'):
+                col_5.set_visible(True)
                 pacs_model = self.models["search"]
                 
             # Jump in if selected repo is foreigners
@@ -696,8 +707,6 @@ class gui:
         dlg = search_dialog(main_win, self.icon)
         
         def _fork():
-            col_5 = self.gld.get_widget("pacs_tree").get_column(5)
-            col_5.set_visible(True)
             repos_tree = self.gld.get_widget("repos_tree")
             repos_model = repos_tree.get_model()
             
@@ -929,7 +938,7 @@ class gui:
         # Jump in if program was not started by root
         if self.uid:
             dlg.run_su()
-            passwd_dlg = password_dialog(dlg, self.icon)
+            passwd_dlg = password_dialog(self.gld.get_widget("main_win"), self.icon)
             # When password is less then 1 we show 'error' message. 
             # Until passwd is less than one and unverified we keep password_dialog runing.
             while passwd_dlg.run() == RESPONSE_ACCEPT:

@@ -215,7 +215,12 @@ class database(dict):
             inst_ver = self.inst_pacs.pop(name)
             #...and if its ver is greater then the installed one
             #it's old...
-            if ver > inst_ver:
+            
+            # comparison is done by comparing two strings,
+            # so when cmp for example '2.8' and '2.10' then
+            # '2.8' will be greater than '2.10', this is why we cmp
+            # versions length as well, to get more accurate result
+            if ver > inst_ver or len(ver) > len(inst_ver):
                 isold = True
             else:
                 isold = False

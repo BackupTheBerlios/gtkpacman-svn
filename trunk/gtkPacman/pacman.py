@@ -542,7 +542,6 @@ class database(dict):
         return
     
     def set_reason(self, repo):
-        #explicitly = []
         
         for pac in self["local"]:
             if pac.repo == repo:
@@ -552,14 +551,17 @@ class database(dict):
                     raw_desc = self._get_raw_desc(pac, "desc")
                     pac.explicitly = self._get_reason(raw_desc)[1]
                     if pac.explicitly:
-                        #explicitly.append(pac)
                         for repo_pac in self[pac.repo]:
                             if repo_pac.name == pac.name:
                                 repo_pac.explicitly[1] = True
         
-        #return explicitly
     def get_by_name(self, name):
         """Return the pckage named 'name', or raise a NameError"""
+        # First we search in 'local' repo
+        for pac in self['local']:
+            if name == pac.name:
+                return pac
+            
         for repo in self.repos.keys():
             for pac in self[repo]:
                 if name == pac.name:

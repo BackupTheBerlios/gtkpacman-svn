@@ -710,7 +710,7 @@ class gui:
             repos_tree = self.gld.get_widget("repos_tree")
             repos_model = repos_tree.get_model()
             
-            pacs = self.database.get_by_keywords(keywords)          
+            pacs = self.database.get_by_keywords(keywords.lower())
             if self.search_iter:
                 repos_model.remove(self.search_iter)
             self.search_iter = repos_model.append(None, [_("Search for '%s'") %keywords])

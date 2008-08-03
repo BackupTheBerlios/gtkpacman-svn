@@ -562,7 +562,7 @@ class database(dict):
             if name == pac.name:
                 return pac
             
-        for repo in self.repos.keys():
+        for repo in sorted( self.repos.keys()):
             for pac in self[repo]:
                 if name == pac.name:
                     return pac
@@ -580,18 +580,7 @@ class database(dict):
                     return pac
             
         print "!! I really can't find package '%s'" %name
-        return 
-
-    def search_by_name(self, name):
-        """Return a list of packages wich contains 'name' in the name"""
-        pacs = []
-        for repo in self.repos.keys():
-            for pac in self[repo]:
-                if pac.name.count(name):
-                    pacs.append(pac)
-                continue
-            continue
-        return pacs
+        return
     
     def set_olds(self):
         """Set old pacs"""
@@ -605,16 +594,36 @@ class database(dict):
             continue
         return
     
-    def get_by_desc(self, desc):
+    def search_by_name_and_desc(self, key):
         """Return pacs which description match with desc"""
         pacs = []
         for repo in self.repos.keys():
             for pac in self[repo]:
-                if not pac.description:
-                    d = self._get_raw_desc( pac, 'desc')
-                    pac.description = self._get_description( d)
-                if pac.description.count(desc):
+
+                try:
+                    pac.name.index(key)
                     pacs.append(pac)
+                    continue
+                except ValueError:
+                    pass
+                
+                try:
+                    try:
+                        pac.description[0].lower().index(key)
+                        pacs.append(pac)
+                        continue
+                    except ValueError:
+                        continue
+                except AttributeError:
+                    d = self._get_raw_desc( pac, 'desc')
+                    pac.description[0]= self._get_description( d)
+                    try:
+                        pac.description[0].lower().index(key)
+                        pacs.append(pac)
+                        continue
+                    except ValueError:
+                        continue
+                
         return pacs
     
     def get_by_keywords(self, keywords):
@@ -636,23 +645,19 @@ class database(dict):
         #Then using get_by_desc and get_by_name get the packages
         if type(keys) == type(list()):
             for key in keys:
-                pacs.extend(self.search_by_name(key))
-                pacs.extend(self.get_by_desc(key))
+                pacs.extend(self.search_by_name_and_desc(key))
                 continue
             for pac in pacs:
                 if pacs.count(pac) == 1:
                     pacs.remove(pac)
-                continue
-            
+                continue            
         else:
-            pacs.extend(self.search_by_name(keys))
-            pacs.extend(self.get_by_desc(keys))
+            pacs.extend(self.search_by_name_and_desc(keys))
 
         for pac in pacs:
             while pacs.count(pac) > 1:
                 pacs.remove(pac)
-                continue
-            continue
+                
         return pacs
 
     def get_local_file_deps(self, fname):

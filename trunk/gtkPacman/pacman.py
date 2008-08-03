@@ -220,10 +220,16 @@ class database(dict):
             # so when cmp for example '2.8' and '2.10' then
             # '2.8' will be greater than '2.10', this is why we cmp
             # versions length as well, to get more accurate result
-            if ver > inst_ver or len(ver) > len(inst_ver):
+            if ver == inst_ver:
+                isold = False
+            elif ver > inst_ver or len(ver) > len(inst_ver):
                 isold = True
             else:
-                isold = False
+                print """?? can't figure out version of this package:
+                package: %s
+                installed ver. %s - avaible ver. %s
+                Marked package as 'old'""" %(name, inst_ver, ver)
+                isold = True
             #...else it's not installed
         else:
             inst = False

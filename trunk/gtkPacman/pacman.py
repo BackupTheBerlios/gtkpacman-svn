@@ -162,8 +162,12 @@ class database(dict):
         self.ver = stout.read().split('v')[1].split('-')[0].strip().split('.')
         
     def _get_log(self):
-        log_path = self.log.keys()[0]
-        
+        try:
+            log_path = self.log.keys()[0]
+        except IndexError:
+            self.log[None] = ["!! Can't find log path in /etc/pacman.conf"]
+            return
+            
         try:
             log_file = open(log_path, 'r')
         except IOError:

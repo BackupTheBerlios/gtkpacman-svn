@@ -16,14 +16,14 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-import gettext, gobject, pango
+import gettext, gobject, pango, webbrowser
 
 from gtk import main, main_quit, TreeStore, TreeView, ListStore, Button
 from gtk import CellRendererText, CellRendererPixbuf, ScrolledWindow
 from gtk import STOCK_ADD, STOCK_GO_UP, STOCK_REMOVE, STOCK_CLOSE
 from gtk import RESPONSE_YES, RESPONSE_ACCEPT, RESPONSE_OK, RESPONSE_NO, RESPONSE_REJECT
-from gtk import TextBuffer, TextTag
-from gtk.gdk import pixbuf_new_from_file, Cursor, WATCH
+from gtk import TextBuffer, TextTag, TEXT_WINDOW_TEXT, TEXT_WINDOW_WIDGET
+from gtk.gdk import pixbuf_new_from_file, Cursor, WATCH, HAND2, XTERM, BUTTON_RELEASE
 from gtk.glade import XML
 
 from dialogs import about_dialog, warning_dialog, do_dialog
@@ -58,7 +58,8 @@ class gui:
                   "about":          self.about,
                   "pacs_changed":   self.pacs_changed,
                   "repo_changed":   self.repo_changed,
-                  "make_pkg":       self.make_package}
+                  "make_pkg":       self.make_package,
+                  "sum_txt_on_motion": self.sum_txt_on_motion}
         self.gld.signal_autoconnect(h_dict)
 
         self.uid = uid
@@ -747,6 +748,24 @@ class gui:
         main_quit()
         return
     
+    def sum_txt_on_motion(self, widget, event, data=None):
+        """ Change cursor when hovering over hyperlink
+        """        
+        x, y = widget.window_to_buffer_coords(TEXT_WINDOW_WIDGET,
+        int(event.x), int(event.y))
+        buffer = widget.get_buffer()
+        iter = widget.get_iter_at_location(x, y)
+        tags = iter.get_tags()
+        
+        for tag in tags:
+            url = tag.get_data("url")
+            if url:
+                widget.get_window(TEXT_WINDOW_TEXT).set_cursor(Cursor(HAND2))
+            else:
+                widget.get_window(TEXT_WINDOW_TEXT).set_cursor(Cursor(XTERM))
+                
+        return False
+    
     def execute(self, widget=None, data=None):
         pacs_queues = { "add": [], "remove": [] }
         deps = []
@@ -1033,15 +1052,25 @@ class gui:
     def _set_pac_summary(self, pac):
         sum_txt = self.gld.get_widget("summary")
         file_tree = self.gld.get_widget("files")
+
+        def list_tag(tag, widget, event, iter):
+            if event.type == BUTTON_RELEASE:
+                buff = widget.get_buffer()
+                url = tag.get_data("url")
+                if url:
+                    webbrowser.open_new_tab(url)
         
         text_buffer = TextBuffer()
         tag_table = text_buffer.get_tag_table()
         heading_tag = TextTag("heading")
         heading_tag.set_property("weight", pango.WEIGHT_BOLD)
         heading_tag.set_property("foreground", "grey")
-        
-        description_tag = TextTag("desc_tag")
-        description_tag.set_property("indent", -15)
+
+        link_tag = TextTag('link')
+        link_tag.set_property("foreground", 'brown')
+        link_tag.set_property('underline', pango.UNDERLINE_SINGLE)
+        link_tag.set_data("url", pac.url)
+        link_tag.connect("event", list_tag)
         
         center_tag = TextTag("center")
         #center_tag.set_property("indent", 800)
@@ -1049,20 +1078,23 @@ class gui:
         #center_tag.set_property("left-margin", 90)
         tag_table.add(heading_tag)
         tag_table.add(center_tag)
-        tag_table.add(description_tag)
+        tag_table.add(link_tag)
         
         iter = text_buffer.get_start_iter()
-        #iter, eob = text_buffer.get_bounds()
         
         if pac.installed:
             text_buffer.insert_with_tags_by_name(iter, "Description\n", 'heading')
             text_buffer.insert(iter, pac.description[0] + "\n")
             
-            text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
-            text_buffer.insert(iter, pac.dates[0] + "\n")
-            
             text_buffer.insert_with_tags_by_name(iter, "Size\n", 'heading')
             text_buffer.insert(iter, pac.size + "\n")
+
+            text_buffer.insert_with_tags_by_name(iter, "URL\n", 'heading')
+            text_buffer.insert_with_tags_by_name(iter, pac.url, 'link')
+            text_buffer.insert(iter, "\n")
+            
+            text_buffer.insert_with_tags_by_name(iter, "Install Date\n", 'heading')
+            text_buffer.insert(iter, pac.dates[0] + "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Install Reason\n", 'heading')
             text_buffer.insert(iter, pac.explicitly[0] + "\n")
@@ -1078,7 +1110,7 @@ class gui:
             
             text_buffer.insert_with_tags_by_name(iter, "Build Date\n", 'heading')
             text_buffer.insert(iter, pac.dates[1])
-            
+
             sum_txt.set_buffer(text_buffer)
     
         else:            
@@ -1087,6 +1119,10 @@ class gui:
             
             text_buffer.insert_with_tags_by_name(iter, "Size (compressed)\n", "heading")
             text_buffer.insert(iter, pac.size + "\n")
+            
+            text_buffer.insert_with_tags_by_name(iter, "URL\n", 'heading')
+            text_buffer.insert_with_tags_by_name(iter, pac.url, 'link')
+            text_buffer.insert(iter, "\n")
             
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", "heading")
             text_buffer.insert(iter, pac.dependencies, )

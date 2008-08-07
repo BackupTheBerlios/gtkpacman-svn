@@ -58,6 +58,7 @@ class package:
         # Flag is for marking package as " install as dependency ", ( flag = 11 )
         self.flag = None
         self.size = ""
+        self.url = ""
         
     def set_version(self, version):
         """Set package's version"""
@@ -171,6 +172,7 @@ class database(dict):
         try:
             log_file = open(log_path, 'r')
         except IOError:
+            self.log[log_path] = ["!! Can't open %s" %log_path]
             return
 
         log = log_file.readlines()
@@ -286,7 +288,8 @@ class database(dict):
             pac.dates = [ self._get_installdate(raw_desc), self._get_builddate(raw_desc) ]
             pac.explicitly = self._get_reason(raw_desc)
             pac.size = self._get_size(raw_desc)
-            
+            pac.url = self._get_url(raw_desc)
+
             pac.dependencies, pac.req_by = self._search_dependencies(pac)
             self._set_filelist(pac, raw_files)
             
@@ -297,6 +300,7 @@ class database(dict):
             pac.description = [ self._get_description(raw_desc), self._get_packager ]
             pac.dependencies = self._get_dependencies(raw_depends)
             pac.size = self._get_size(raw_desc)
+            pac.url = self._get_url(raw_desc)
         
         pac.prop_setted = True
         
@@ -406,6 +410,16 @@ class database(dict):
 
         size = "%s %s" %(size_int, measure)
         return size
+    
+    def _get_url(self, desc):
+        try:
+            begin = desc.index("%URL%") + len("%URL%")
+            end = desc.index("%", begin)
+            pack_url = desc[begin:end].strip()
+        except ValueError:
+            return
+        
+        return pack_url
 
     def _get_packager(self, desc):
         try:

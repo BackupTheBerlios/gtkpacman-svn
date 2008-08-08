@@ -309,6 +309,15 @@ class gui:
         pacs_tree = self.gld.get_widget("pacs_tree")
         combo_box_options = self.gld.get_widget("combo_box_options")
         
+        # Clear summary and files
+        summary_buffer = self.gld.get_widget("summary").get_buffer()
+        file_tree = self.gld.get_widget("files")
+        summary_buffer.set_text('')
+        file_model = file_tree.get_model()
+        if file_model:
+            file_model.clear()
+            file_tree.set_model(file_model)
+        
         repos_model, tree_iter = repos_tree.get_selection().get_selected()
         selected_repo = repos_model.get_value(tree_iter, 0)
         selected_option = combo_box_options.get_active_text()

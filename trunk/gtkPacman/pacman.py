@@ -416,7 +416,7 @@ class database(dict):
             begin = desc.index("%URL%") + len("%URL%")
             end = desc.index("%", begin)
             pack_url = desc[begin:end].strip()
-        except ValueError:
+        except IndexError:
             return
         
         return pack_url

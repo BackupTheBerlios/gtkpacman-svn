@@ -63,7 +63,7 @@ class orphan_list(ListStore):
 
     def __init__(self, pacs):
 
-        ListStore.__init__(self, str, str, str, str, str, int)
+        ListStore.__init__(self, str, str, str, str, str, str)
 
         for pac_tuple in enumerate( pacs ):
             position = pac_tuple[0]
@@ -77,7 +77,7 @@ class orphan_list(ListStore):
                 image = "green"
                 inst_ver = pac_tuple[1].inst_ver
 
-            self.append([image, None, pac_tuple[1].name, inst_ver, pac_tuple[1].version, position])
+            self.append([image, None, pac_tuple[1].name, inst_ver, pac_tuple[1].version, pac_tuple[1].repo])
 #*********************************
 class explicitly_list(ListStore):
 

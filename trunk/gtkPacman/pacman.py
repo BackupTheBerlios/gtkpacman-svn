@@ -230,6 +230,11 @@ class database(dict):
                 isold = False
             elif ver > inst_ver or len(ver) > len(inst_ver):
                 isold = True
+            elif ver < inst_ver and len(ver) == len(inst_ver):
+                print """?? installed package is newer than avaible package:
+                package: %s
+                installed ver. %s - avaible ver. %s""" %(name, inst_ver, ver)
+                isold = False
             else:
                 print """?? can't figure out status of this package:
                 package: %s
@@ -297,7 +302,7 @@ class database(dict):
             raw_desc = self._get_raw_desc(pac, "desc")
             raw_depends = self._get_raw_desc(pac, "depends")
             
-            pac.description = [ self._get_description(raw_desc), self._get_packager ]
+            pac.description = [ self._get_description(raw_desc), self._get_packager(raw_desc) ]
             pac.dependencies = self._get_dependencies(raw_depends)
             pac.size = self._get_size(raw_desc)
             pac.url = self._get_url(raw_desc)
@@ -320,40 +325,54 @@ class database(dict):
         pac_req_by = self._get_dependencies(pac_raw_req_by)
         
         for p in pac_req_by.split(','):
-            if '=<' in p:
-                p = p.split('=<')[0]
+            p = p.strip()
+            if '<=' in p:
+                p = p.split('<=')[0]
             if '>=' in p:
                 p = p.split('>=')[0]
-            p = p.strip()
+            if '>' in p:
+                p = p.split('>')[0]
+            if '<' in p:
+                p = p.split('<')[0]
+            if '=' in p:
+                p = p.split('=')[0]
             deps_stack.append(p)
         
         for package in self["local"]:
             
-            if not package.prop_setted:
-                # Get Required package
-                raw_depends = self._get_raw_desc(package, "depends")
-                depends_on = self._get_dependencies(raw_depends)
-                for p in depends_on.split(','):
-                    p = p.strip()
-                    if '=<' in p:
-                        p = p.split('=<')[0]
-                    if '>=' in p:
-                        p = p.split('>=')[0]
-                    if (p == pac.name and (package.name not in req_stack and package.name != pac.name)):
-                        req_stack.append(package.name)
-                
-                # Get dependencies
-                req_by = self._get_req_by(raw_depends)
-                for p in req_by.split(','):
-                    p = p.strip()
-                    if '=<' in p:
-                        p = p.split('=<')[0]
-                    if '>=' in p:
-                        p = p.split('>=')[0]
-                    if p == pac.name and package.name not in deps_stack and package.name != pac.name:
-                        deps_stack.append(package.name)
-            else:
-                continue
+            raw_depends = self._get_raw_desc(package, "depends")
+            depends_on = self._get_dependencies(raw_depends)
+            for p in depends_on.split(','):
+                p = p.strip()
+                if '<=' in p:
+                    p = p.split('<=')[0]
+                if '>=' in p:
+                    p = p.split('>=')[0]
+                if '>' in p:
+                    p = p.split('>')[0]
+                if '<' in p:
+                    p = p.split('<')[0]
+                if '=' in p:
+                    p = p.split('=')[0]
+                if p == pac.name and package.name not in req_stack and package.name != pac.name:
+                    req_stack.append(package.name)
+            
+            # Get dependencies
+            req_by = self._get_req_by(raw_depends)
+            for p in req_by.split(','):
+                p = p.strip()
+                if '<=' in p:
+                    p = p.split('<=')[0]
+                if '>=' in p:
+                    p = p.split('>=')[0]
+                if '>' in p:
+                    p = p.split('>')[0]
+                if '<' in p:
+                    p = p.split('<')[0]
+                if '=' in p:
+                    p = p.split('=')[0]
+                if p == pac.name and package.name not in deps_stack and package.name != pac.name:
+                    deps_stack.append(package.name)
     
         for dep_name in deps_stack:
             deps = deps + ", " + dep_name
@@ -416,8 +435,8 @@ class database(dict):
             begin = desc.index("%URL%") + len("%URL%")
             end = desc.index("%", begin)
             pack_url = desc[begin:end].strip()
-        except (AttributeError, IndexError):
-            return
+        except (ValueError, IndexError):
+            return ""
         
         return pack_url
 
@@ -425,7 +444,7 @@ class database(dict):
         try:
             begin = desc.index("%PACKAGER%") + len("%PACKAGER%")
             end = desc.index("%", begin)
-        except (AttributeError, IndexError):
+        except (ValueError, IndexError):
             return "Not Found"
 
         packager = desc[begin:end].strip()
@@ -490,12 +509,12 @@ class database(dict):
         dependencies = []
         try:
             begin = deps.index("%DEPENDS%") + len("%DEPENDS%")
-        except (AttributeError, IndexError, ValueError):
+        except (IndexError, ValueError):
             return ""
         end = deps.find("%", begin) - len("%")
-        dependencies = deps[begin:end].strip()
-        depends = dependencies.split("\n")
-        deps = ", ".join(depends)
+        dependencies = deps[begin:end].strip().split("\n")
+        deps = ", ".join(dependencies)
+        
         return deps
     
     def _get_req_by(self, depends):
@@ -503,11 +522,12 @@ class database(dict):
         
         try:
             begin = depends.index("%REQUIREDBY%") + len("%REQUIREDBY%")
-        except Exception:
+        except (IndexError, ValueError):
             return ''
         end = depends.find("%", begin) - len("%")
         reqs = depends[begin:end].strip().split("\n")
         req_by = ", ".join(reqs)
+
         return req_by
 
     def _get_provides(self, deps):

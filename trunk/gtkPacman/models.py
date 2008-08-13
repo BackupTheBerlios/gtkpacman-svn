@@ -158,11 +158,13 @@ class PacViewModel( ListStore):
         ListStore.__init__(self, str, str, str)
         
         for pac in queue:
-            version = pac.inst_ver
+            
             if pac.isold:
                 image = "yellow"
+                version = pac.version
             elif pac.installed:
                 image = "green"
+                version = pac.inst_ver
             else:
                 image = "red"
                 version = pac.version

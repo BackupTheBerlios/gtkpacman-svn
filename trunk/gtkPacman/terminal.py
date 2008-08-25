@@ -34,6 +34,7 @@ class terminal(Terminal):
 
     def login(self, user_pass):
         self.feed_child(user_pass + "\n")
+        del user_pass
     
     def _constructCmds(self, queues):
         inst = ''

@@ -164,6 +164,7 @@ class command_dialog(Dialog):
         
     def run_login(self, user_pass):
         self.terminal.login(user_pass)
+        del user_pass
 
 class do_dialog(command_dialog):
 

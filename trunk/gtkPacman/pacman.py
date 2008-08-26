@@ -208,6 +208,7 @@ class database(dict):
         pacs.sort()
         return pacs
 
+    #***************** Construct, change, package object *************
     def _make_pac(self, pac, repo):
         #Take the dir name and split it in name and version
         name_n_ver = pac.split("-", pac.count("-")-1)
@@ -308,7 +309,7 @@ class database(dict):
             pac.url = self._get_url(raw_desc)
         
         pac.prop_setted = True
-        
+    
     def _search_dependencies(self, pac):
         # Search in local repo for pac_name in descriptions files.
         # If found than pack.name is requied by pack_name
@@ -326,53 +327,50 @@ class database(dict):
         
         for p in pac_req_by.split(','):
             p = p.strip()
-            if '<=' in p:
-                p = p.split('<=')[0]
-            if '>=' in p:
-                p = p.split('>=')[0]
-            if '>' in p:
-                p = p.split('>')[0]
-            if '<' in p:
-                p = p.split('<')[0]
-            if '=' in p:
-                p = p.split('=')[0]
             deps_stack.append(p)
         
+        # Get required by
         for package in self["local"]:
-            
+            sep = None
             raw_depends = self._get_raw_desc(package, "depends")
             depends_on = self._get_dependencies(raw_depends)
             for p in depends_on.split(','):
                 p = p.strip()
                 if '<=' in p:
-                    p = p.split('<=')[0]
+                    p, sep, ver = p.partition('<=')
                 if '>=' in p:
-                    p = p.split('>=')[0]
+                    p, sep, ver = p.partition('>=')
                 if '>' in p:
-                    p = p.split('>')[0]
+                    p, sep, ver = p.partition('>')
                 if '<' in p:
-                    p = p.split('<')[0]
+                    p, sep, ver = p.partition('<')
                 if '=' in p:
-                    p = p.split('=')[0]
+                    p, sep, ver = p.partition('=')
                 if p == pac.name and package.name not in req_stack and package.name != pac.name:
-                    req_stack.append(package.name)
+                    if sep:
+                        req_stack.append(package.name + sep + ver)
+                    else:
+                        req_stack.append(package.name)
             
             # Get dependencies
             req_by = self._get_req_by(raw_depends)
             for p in req_by.split(','):
                 p = p.strip()
                 if '<=' in p:
-                    p = p.split('<=')[0]
+                    p, sep, ver = p.partition('<=')
                 if '>=' in p:
-                    p = p.split('>=')[0]
+                    p, sep, ver = p.partition('>=')
                 if '>' in p:
-                    p = p.split('>')[0]
+                    p, sep, ver = p.partition('>')
                 if '<' in p:
-                    p = p.split('<')[0]
+                    p, sep, ver = p.partition('<')
                 if '=' in p:
-                    p = p.split('=')[0]
+                    p, sep, ver = p.partition('=')
                 if p == pac.name and package.name not in deps_stack and package.name != pac.name:
-                    deps_stack.append(package.name)
+                    if sep:
+                        deps_stack.append(package.name + sep + ver)
+                    else:
+                        deps_stack.append(package.name)
     
         for dep_name in deps_stack:
             deps = deps + ", " + dep_name
@@ -383,8 +381,9 @@ class database(dict):
         req = req[2:]
         
         return deps, req
-        
-    def _get_raw_desc(self, pac, desc_f):
+    
+    #***************** Construct, change, package object END**********
+    def _get_raw_desc(self, pac, desc_f):        
         global path_repo
         repo = pac.repo
         if pac.installed:
@@ -398,10 +397,11 @@ class database(dict):
             raw_file = open(path).read()
         except IOError, msg:
             print "!! Warning: can't open %s \n\t" %path, msg
-            return None
+            return
             
         return raw_file
 
+    #********************* Get info about package *****************
     def _get_size(self, desc):
 
         try:
@@ -502,7 +502,7 @@ class database(dict):
         except Exception:
             pass
         return ''
-
+    
     def _get_dependencies(self, deps):
         """Set dependencies list for the given pac"""
 
@@ -541,6 +541,17 @@ class database(dict):
         provides = ", ".join(provides)
         
         return provides
+    
+    def _get_conflicts(self, depends):
+        try:
+            begin = c.index("%CONFLICTS%") + len("%CONFLICTS%")
+        except (IndexError, ValueError):
+            return
+        end = c.find("%", begin) - len("%")
+        conflitct = c[begin:end].strip().split("\n")
+        conflitct = ", ".join(conflitct)
+        
+        return conflitct
         
     def _set_filelist(self, pac, files):
         """Set installed files list for the given pac"""
@@ -555,6 +566,7 @@ class database(dict):
         except (ValueError, AttributeError):
             return
         return
+    #******************* Get info about package END ****************
     
     def set_orphans(self):
         """Set orphans pacs"""

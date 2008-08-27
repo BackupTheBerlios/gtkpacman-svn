@@ -55,21 +55,24 @@ class holdpkg_dialog(MessageDialog):
 
 class warning_dialog(Dialog):
 
-    def __init__(self, parent, pacs, icon):
+    def __init__(self, parent, pacs, icon, conflict=False):
 
         Dialog.__init__(self, _("Warning!"), parent,
                         DIALOG_MODAL | DIALOG_DESTROY_WITH_PARENT,
                         (STOCK_YES, RESPONSE_YES, STOCK_NO, RESPONSE_REJECT))
-
+        
         self.set_icon(pixbuf_new_from_file(icon))
         self._setup_tree(pacs)
-        self._setup_layout()
+        self._setup_layout(conflict)
 
-    def _setup_layout(self):
+    def _setup_layout(self, conflict):
 
         self.set_default_size(-1,250)
         
-        label = Label(_("These packages require the package(s) you've selected for removal.\nDo you want to remove them all?"))
+        if not conflict:
+            label = Label(_("These packages are required by package(s) you've selected for removal.\nDo you want to remove them all?"))
+        else:
+            label = Label("Package(s) that are about to be installed conflicts \nwith package(s) that are already installed.\nDo you want to remove them?")
         label.show()
 
         scr = ScrolledWindow()

@@ -291,7 +291,7 @@ class gui:
         self.queues["remove"] = []
         self._setup_log()
         self._pacman_ver_check()
-        self._statusbar()
+        #self._statusbar()
         self.gld.get_widget("main_win").set_sensitive(True)
         
     #----------------------------- Refresh End ---------------------------#
@@ -304,7 +304,7 @@ class gui:
             self.popup.popdown()
             
     def combobox_options_changed(self, widget, data=None):
-        
+
         repos_tree = self.gld.get_widget("repos_tree")
         pacs_tree = self.gld.get_widget("pacs_tree")
         combo_box_options = self.gld.get_widget("combo_box_options")
@@ -353,6 +353,7 @@ class gui:
             parent_iter = repos_model.iter_parent(tree_iter)
             
             _setup_status( self.models['orphans'], False )
+            col_5.set_visible(True)
             main_win.window.set_cursor(None)
         
         repos_tree = self.gld.get_widget("repos_tree")
@@ -385,13 +386,13 @@ class gui:
         # Fetch orphans packages
         if selected_repo == 'orphans':
             combo_box_options.set_sensitive(False)
-            col_5.set_visible(True)
             try:
                 _setup_status( self.models['orphans'], False )
+                col_5.set_visible(True)
             except KeyError:
                 main_win = self.gld.get_widget("main_win")
                 main_win.window.set_cursor(Cursor(WATCH))
-                self._statusbar('Please wait...')
+                self._statusbar('Searching for orphans Please wait...')
                 gobject.idle_add(_setup_orphans_fork)
         
         # If selected repo is: foreigners, orphans or search then we deactivate combo_box_options
@@ -436,7 +437,9 @@ class gui:
             file_model = file_list(pac.filelist)
             file_tree.set_model(file_model)
             self._statusbar()
+            main_win.window.set_cursor(None)
                 
+        main_win = self.gld.get_widget("main_win")
         sum_txt = self.gld.get_widget("summary")
         file_tree = self.gld.get_widget("files")
         sum_buf = sum_txt.get_buffer()        
@@ -445,6 +448,7 @@ class gui:
         name = model.get_value(t_iter, 2)
                 
         gobject.idle_add(_fork)
+        main_win.window.set_cursor(Cursor(WATCH))
         self._statusbar("Please Wait...")      
     
     def add_from_local_file(self, widget, data=None):
@@ -794,6 +798,7 @@ class gui:
             
         if self.queues['remove']:
             pacs_queues['remove'], req_pacs = self._execute_queue_remove()
+            #pacs_queues["remove"] = self._execute_queue_remove()
             # Check if packages are listed as holdPkg
             b_list = self._blacklist( pacs_queues['remove'], 0x02)
             if b_list:
@@ -816,11 +821,7 @@ class gui:
                 pacs_queues["remove"].extend(req_pacs)
                 dlg.destroy()
             else:
-                self.queues['remove'] = []
-                pacs_queues['remove'] = []
                 dlg.destroy()
-                self._refresh_trees_and_queues()
-                return
 
         # Open new dialog and execute commands ie. install/remove packages
         do_dlg = do_dialog( self.gld.get_widget("main_win"), self.icon, pacs_queues)
@@ -854,72 +855,144 @@ class gui:
              Then we check if there are packages that need 
              to be installed for our selected packages (dependecies).
         """
+        # queue is list of pacs objects and will be returned, 
+        # while queue_pac_name is only used for pac.name 
+        # to know what has been added in queue
+        def add_to_install_queue():
+            done_pac.flag = 11
+            queue.append(done_pac)
+            queue_pacs_names.append(done_pac.name)
+            deps_todo_list.extend(queue_todo)
+            if done_pac.conflict:
+                conflicts[done_pac.name] = done_pac.conflict
+            
         queue = []
-        add_queue = self.queues["add"][:]
-        
-        for name in add_queue:
+        queue_pacs_names = []
+        conflicts = {}
+
+        # 1. we fetching pacs object
+        for name in self.queues["add"]:
             pac = self.database.get_by_name(name)
-            if not pac.prop_setted:
-                self.database.set_pac_properties(pac)
+            pac.flag = 0x12
+            self.database.set_pac_properties(pac)
+            pac.flag = None
 
             queue.append(pac)
-            
+            queue_pacs_names.append(pac.name)
+        # 2. iterate over pacs object
+        for pac in queue:
             if pac.dependencies:
-                dep_todo_list = []
-                dep_black_list = []
-                deps = pac.dependencies.split(", ")
-                for dep in deps:
-                    if not dep in queue:
-                        dep_todo_list.append(dep)
-                while dep_todo_list:
-                    dep = dep_todo_list.pop(0)
-                    if dep.count(">="):
-                        dep = dep.split(">=")[0]
-                    if dep.count('<'):
-                        dep = dep.split('<')[0]
-                    if dep.count("="):
-                        dep = dep.split("=")[0]
-                    if not (dep in self.queues["add"]):
-                        done, to_do = self._execute_dep_check(dep, "dep")
-                        if not done:
+                deps_todo_list = []
+                deps_black_list = []
+                deps_todo_list.extend( pac.dependencies.split(",") )
+                while deps_todo_list:
+                    dep = deps_todo_list.pop(0)
+                    if not dep:
+                        continue
+                    # Split string if separator found
+                    if dep.count('>='):
+                        dep_name, dep_sep, dep_ver = dep.partition('>=')
+                    elif dep.count('<='):
+                        dep_name, dep_sep, dep_ver = dep.partition('<=')
+                    elif dep.count('<'):
+                        dep_name, dep_sep, dep_ver = dep.partition('<')
+                    elif dep.count('>'):
+                        dep_name, dep_sep, dep_ver = dep.partition('>')
+                    elif dep.count('='):
+                        dep_name, dep_sep, dep_ver = dep.partition('=')
+                    else:
+                        dep_name, dep_sep = dep, None
+                    dep_name = dep_name.strip()
+                    if ( dep_name not in self.queues["add"] and dep_name not in queue_pacs_names and dep_name not in deps_black_list ):
+                        done_pac, queue_todo = self._execute_dep_check(dep_name, "dep")
+        
+                        if done_pac:
+                            # if separator found then compare versions
+                            if dep_sep:
+                                # compare versions
+                                if dep_sep == '>=' and dep_ver > done_pac.inst_ver or len(dep_ver) > len(done_pac.inst_ver):
+                                    add_to_install_queue()
+                                elif dep_sep == '=':
+                                    if not done_pac.inst_ver == dep_ver or not dep.installed:
+                                        add_to_install_queue()
+                                elif (dep_sep == '>' and dep_ver > done_pac.inst_ver or len(dep_ver) > len(done_pac.inst_ver) ):
+                                        add_to_install_queue()
+                                elif dep_sep == '<' and dep_ver < done_pac.inst_ver:
+                                    print '!!!!!!!!<!!!!!!'
+                            else:
+                                if not done_pac.installed:
+                                    add_to_install_queue()
+                        else:
                             continue
-                        #if done and not done in queue:
-                        if done and not done in queue and not done.installed:
-                            done.flag = 11
-                            queue.append(done)
-                        for add in to_do:
-                            if not add in dep_black_list:
-                                dep_todo_list.append(add)
-                                dep_black_list.append(add)
+                                
+                        if not done_pac.installed and queue_todo:
+                            deps_todo_list.extend(queue_todo)
+
+                        deps_black_list.append(done_pac.name)
+        
+        # Resolve conflicts
+        if conflicts:
+            pacs = []
+            for pac in map( self.database.get_by_name, conflicts.itervalues() ):
+                if pac and pac.installed and pac.name not in self.queues["remove"]:
+                    pacs.append(pac)
+            if pacs:
+                self.gld.get_widget("main_win").set_sensitive(False)
+                dlg = warning_dialog(self.gld.get_widget("main_win"),
+                                    pacs, self.icon, True)
+                # Add pacs to remove queue if clicket on Yes button
+                if dlg.run() == RESPONSE_YES:
+                    for pac in pacs:
+                        self.queues["remove"].append(pac.name)
+                    dlg.destroy()
+                # Otherwise Cancel whole process
+                else:
+                    self.queues['add'] = []
+                    self.queues['remove'] = []
+                    dlg.destroy()
+                    return
+            
         return queue
         
     def _execute_queue_remove(self):
+        """ Prepare pacs for removal
+        """
         queue = []
         req_pacs = []
-        remove_queue = self.queues["remove"][:]
+        queue_pacs_names = []
         
-        for name in remove_queue:
+        for name in self.queues["remove"]:
             pac = self.database.get_by_name(name)
-            if not pac.prop_setted:
-                self.database.set_pac_properties(pac)
+            self.database.set_pac_properties(pac)
 
             queue.append(pac)
+            queue_pacs_names.append(pac.name)
             if pac.req_by:
                 req_todo_list = []
-                req_black_list = []
-                for req in pac.req_by.split(", "):
-                    if not (req in self.queues["remove"]):
-                        req_todo_list.append(req)
+                req_todo_list.extend( pac.req_by.split(",") )
                 while req_todo_list:
-                    req = req_todo_list.pop(0)
-                    if not (req in self.queues["remove"]):
-                        done, to_do = self._execute_dep_check(req, "req")
-                        if done and not done in req_pacs:
-                            req_pacs.append(done)
-                        for add in to_do:
-                            if not add in req_black_list:
-                                req_todo_list.append(add)
-                                req_black_list.append(add)
+                    req_name = req_todo_list.pop(0).strip()
+                    
+                    if req_name.count('>='):
+                        req_name = req_name.partition('>=')[0]
+                    elif req_name.count('<='):
+                        req_name = req_name.partition('<=')[0]
+                    elif req_name.count('<'):
+                        req_name = req_name.partition('<')[0]
+                    elif req_name.count('>'):
+                        req_name = req_name.partition('>')[0]
+                    elif req_name.count('='):
+                        req_name = req_name.partition('=')[0]
+
+                    if ( req_name not in self.queues["remove"] and req_name not in queue_pacs_names ):
+                        done_pac, queue_todo = self._execute_dep_check(req_name, "req")
+                        
+                        if ( done_pac and done_pac.name not in queue_pacs_names ):
+                            req_pacs.append(done_pac)
+                            queue_pacs_names.append(done_pac.name)
+                        if queue_todo:
+                            req_todo_list.extend(queue_todo)
+                                
         return queue, req_pacs
                                 
     def _execute_dep_check(self, to_check, flag):
@@ -928,33 +1001,24 @@ class gui:
         pac = self.database.get_by_name(to_check)
         if not pac:
             dlg = error_dialog(self.gld.get_widget("main_win"),
-            _("%(pkg)s is not in the database. %(pkg)s is required by one of your package(s).\n \
-            This maybe either an error in %(pkg)s packaging or a gtkpacman's bug.\n \
-            If you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{"pkg": to_check}, self.icon)
+            _("%(pkg)s is not in the database.\n%(pkg)s is required by one of your package(s).")%{"pkg": to_check}, self.icon)
+            #This maybe either an error in %(pkg)s packaging or a gtkpacman's bug.")%{"pkg": to_check}, self.icon)#\n \
+            #If you think it's the first, contact the %(pkg)s maintainer, else fill a bug report for gtkpacman, please.") %{"pkg": to_check}, self.icon)
             dlg.run()
             dlg.destroy()
-            #self.queues["add"].pop(0)
-            #self.queues["add"].remove(name)
-            return
-        
-        if not pac.prop_setted:
-            self.database.set_pac_properties(pac)
-        else:
-            return pac, to_do
+            return '',''
         
         if flag == "req":
-            for req in pac.req_by.split(", "):
+            self.database.set_pac_properties(pac)
+            for req in pac.req_by.split(","):
                 if len(req) >= 1:
                     to_do.append(req)
         else:
-            if not pac.installed:
-                for dep in pac.dependencies.split(", "):
-                    if len(dep) >= 1:
-                        to_do.append(dep)
-                    else:
-                        pac = None
-                return pac, to_do
-            pac = None
+            pac.flag = 0x12
+            self.database.set_pac_properties(pac)
+            pac.flag = None
+            for dep in pac.dependencies.split(","):
+                to_do.append(dep)
     
         return pac, to_do
                                 
@@ -978,9 +1042,9 @@ class gui:
                         warning_ison = True
                 # Return with valid password
                 else:
-                    passwd_dlg.destroy()
                     dlg.run_login(user_passwd)
                     del user_passwd
+                    passwd_dlg.destroy()
                     return True
             # Destroy dialog and return False when user click on Cancel
             passwd_dlg.destroy()
@@ -1049,7 +1113,7 @@ class gui:
         stat_bar = self.gld.get_widget("statusbar")
 
         if type(msg) == tuple and len(msg) == 3:
-            str = _("%s packages in [ %s ] - last synchronized [ %s ]") %(msg[0], msg[1], msg[2])
+            str = _("%s packages in [ %s ] - server last synchronized [ %s ]") %(msg[0], msg[1], msg[2])
         elif type(msg) == tuple and len(msg) == 2:
             str = _("%s packages in [ %s ]") %(msg[0], msg[1])
         elif msg == None:
@@ -1110,7 +1174,7 @@ class gui:
             
             text_buffer.insert_with_tags_by_name(iter, "Required By\n", 'heading')
             text_buffer.insert(iter, pac.req_by + "\n")
-            
+
             text_buffer.insert_with_tags_by_name(iter, "Depends On\n", 'heading')
             text_buffer.insert(iter, pac.dependencies + "\n")
             

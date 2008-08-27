@@ -62,15 +62,15 @@ class terminal(Terminal):
         pacman = "pacman --noconfirm"
         commands = []
                     
+        if rm:
+            cmd_rem = "%s -Rdf %s \n" %(pacman, rm)
+            commands.append(cmd_rem)
         if inst_dep:
             cmd_inst_dep = "%s -Sdf --asdep %s \n" %(pacman, inst_dep)
             commands.append(cmd_inst_dep)
         if inst:
             cmd_inst = "%s -Sdf %s \n" %(pacman, inst)
             commands.append(cmd_inst)
-        if rm:
-            cmd_rem = "%s -Rdf %s \n" %(pacman, rm)
-            commands.append(cmd_rem)
             
         commands.append("exit \n")
         commands.append("exit \n")

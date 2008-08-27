@@ -50,6 +50,7 @@ class package:
         self.isorphan = None
         self.req_by = ""
         self.dependencies = ""
+        self.conflict = None
         self.prop_setted = False
         # [0] = Install date, [1] = Build date
         self.dates = [None, None]
@@ -285,7 +286,13 @@ class database(dict):
     
     def set_pac_properties(self, pac):
         """Set the properties for the given pac"""
-        if pac.installed:
+        if pac.flag == 0x12:
+            raw_depends = self._get_raw_desc(pac, "depends")
+            pac.dependencies = self._get_dependencies(raw_depends)
+            pac.conflict = self._get_conflicts(raw_depends)
+            return
+            
+        elif pac.installed:
             raw_desc = self._get_raw_desc(pac, "desc")
             raw_depends = self._get_raw_desc(pac, "depends")
             raw_files = self._get_raw_desc(pac, "files")
@@ -295,7 +302,7 @@ class database(dict):
             pac.explicitly = self._get_reason(raw_desc)
             pac.size = self._get_size(raw_desc)
             pac.url = self._get_url(raw_desc)
-
+            
             pac.dependencies, pac.req_by = self._search_dependencies(pac)
             self._set_filelist(pac, raw_files)
             
@@ -305,6 +312,7 @@ class database(dict):
             
             pac.description = [ self._get_description(raw_desc), self._get_packager(raw_desc) ]
             pac.dependencies = self._get_dependencies(raw_depends)
+            pac.conflict = self._get_conflicts(raw_depends)
             pac.size = self._get_size(raw_desc)
             pac.url = self._get_url(raw_desc)
         
@@ -386,10 +394,16 @@ class database(dict):
     def _get_raw_desc(self, pac, desc_f):        
         global path_repo
         repo = pac.repo
-        if pac.installed:
+        if pac.repo == "foreigners":
             name_n_ver = pac.name + '-' + pac.inst_ver
             path = '/var/lib/pacman/local/%s/%s' %(name_n_ver, desc_f)
-        else:
+        elif pac.flag == 0x12:
+            name_n_ver = pac.name + '-' + pac.version
+            path = "%s/%s/%s/%s" %(path_repo, repo, name_n_ver, desc_f)
+        elif pac.installed:
+            name_n_ver = pac.name + '-' + pac.inst_ver
+            path = '/var/lib/pacman/local/%s/%s' %(name_n_ver, desc_f)
+        elif not pac.installed:
             name_n_ver = pac.name + '-' + pac.version
             path = "%s/%s/%s/%s" %(path_repo, repo, name_n_ver, desc_f)
 
@@ -544,11 +558,11 @@ class database(dict):
     
     def _get_conflicts(self, depends):
         try:
-            begin = c.index("%CONFLICTS%") + len("%CONFLICTS%")
+            begin = depends.index("%CONFLICTS%") + len("%CONFLICTS%")
         except (IndexError, ValueError):
             return
-        end = c.find("%", begin) - len("%")
-        conflitct = c[begin:end].strip().split("\n")
+        end = depends.find("%", begin) - len("%")
+        conflitct = depends[begin:end].strip().split("\n")
         conflitct = ", ".join(conflitct)
         
         return conflitct
@@ -566,8 +580,7 @@ class database(dict):
         except (ValueError, AttributeError):
             return
         return
-    #******************* Get info about package END ****************
-    
+    #******************* Get info about package END ****************    
     def set_orphans(self):
         """Set orphans pacs"""
 

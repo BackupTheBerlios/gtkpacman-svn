@@ -319,14 +319,31 @@ class database(dict):
         pac.prop_setted = True
     
     def _search_dependencies(self, pac):
+        def sep_strip(p):
+            # strip package name if separator is found
+            sep = None
+            ver = None
+            if '<=' in p:
+                p, sep, ver = p.partition('<=')
+            if '>=' in p:
+                p, sep, ver = p.partition('>=')
+            if '>' in p:
+                p, sep, ver = p.partition('>')
+            if '<' in p:
+                p, sep, ver = p.partition('<')
+            if '=' in p:
+                p, sep, ver = p.partition('=')
+                
+            return p, sep, ver
+        
         # Search in local repo for pac_name in descriptions files.
         # If found than pack.name is requied by pack_name
         deps_stack = []
-        deps_on = ''
+        deps_tmp = []
         deps = ''
         
         req_stack = []
-        req_by = ''
+        req_tmp = []
         req = ''
         
         # Get dependencies only from "pac"
@@ -334,52 +351,42 @@ class database(dict):
         pac_req_by = self._get_dependencies(pac_raw_req_by)
         
         for p in pac_req_by.split(','):
-            p = p.strip()
-            deps_stack.append(p)
+            p, sep, ver = sep_strip( p.strip() )
+            if sep:
+                deps_stack.append(p + sep + ver)
+            else:
+                deps_stack.append(p)
+                
+            deps_tmp.append(p)
         
         # Get required by
         for package in self["local"]:
-            sep = None
             raw_depends = self._get_raw_desc(package, "depends")
             depends_on = self._get_dependencies(raw_depends)
             for p in depends_on.split(','):
-                p = p.strip()
-                if '<=' in p:
-                    p, sep, ver = p.partition('<=')
-                if '>=' in p:
-                    p, sep, ver = p.partition('>=')
-                if '>' in p:
-                    p, sep, ver = p.partition('>')
-                if '<' in p:
-                    p, sep, ver = p.partition('<')
-                if '=' in p:
-                    p, sep, ver = p.partition('=')
-                if p == pac.name and package.name not in req_stack and package.name != pac.name:
+                p, sep, ver = sep_strip( p.strip() )
+                
+                if ( p == pac.name and package.name not in req_tmp and package.name != pac.name ):
                     if sep:
-                        req_stack.append(package.name + sep + ver)
+                        req_stack.append(package.name)
                     else:
                         req_stack.append(package.name)
+                        
+                    req_tmp.append(package.name)
             
             # Get dependencies
             req_by = self._get_req_by(raw_depends)
             for p in req_by.split(','):
-                p = p.strip()
-                if '<=' in p:
-                    p, sep, ver = p.partition('<=')
-                if '>=' in p:
-                    p, sep, ver = p.partition('>=')
-                if '>' in p:
-                    p, sep, ver = p.partition('>')
-                if '<' in p:
-                    p, sep, ver = p.partition('<')
-                if '=' in p:
-                    p, sep, ver = p.partition('=')
-                if p == pac.name and package.name not in deps_stack and package.name != pac.name:
+                p, sep, ver = sep_strip( p.strip() )
+                
+                if ( p == pac.name and package.name not in deps_tmp and package.name != pac.name ):
                     if sep:
-                        deps_stack.append(package.name + sep + ver)
+                        deps_stack.append(package.name)
                     else:
                         deps_stack.append(package.name)
-    
+                        
+                    deps_tmp.append(package.name)
+
         for dep_name in deps_stack:
             deps = deps + ", " + dep_name
         deps = deps[2:]
@@ -387,6 +394,8 @@ class database(dict):
         for req_name in req_stack:
             req = req + ", " + req_name
         req = req[2:]
+        
+        del deps_tmp, req_tmp
         
         return deps, req
     

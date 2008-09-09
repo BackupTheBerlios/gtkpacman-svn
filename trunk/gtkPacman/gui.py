@@ -35,6 +35,10 @@ from dialogs import holdpkg_dialog, choose_pkgbuild_dialog, change_user_dialog
 
 from models import installed_list, all_list, explicitly_list, search_list, file_list, orphan_list
 
+from os import chdir, geteuid, curdir
+from os.path import exists
+from pwd import getpwuid
+
 class gui:
     def __init__(self, fname, database, uid, icon):
 
@@ -61,7 +65,7 @@ class gui:
                   "make_pkg":       self.make_package,
                   "sum_txt_on_motion": self.sum_txt_on_motion}
         self.gld.signal_autoconnect(h_dict)
-
+    
         self.uid = uid
         self.fname = fname
         self.icon = icon
@@ -78,34 +82,50 @@ class gui:
         self._setup_files_tree()
         
         self._setup_log()
-        self._statusbar('Ready for your command')
-        #Check pacman version
-        self._pacman_ver_check()
-
         #Deactivate some widgets
         self.gld.get_widget("makepkg").set_sensitive(False)
-    
-    def _adjust_queues (self):
-        for name in self.queues["add"]:
-            if name == "x-server":
-                ind = self.queues["add"].index("x-server")
-                self.queues["add"][ind] = "x-org"
-            elif ">=" in name:
-                ind = self.queues["add"].index(name)
-                name = name.split(">=")[0]
-                self.queues["add"][ind] = name
-            continue
-
-    def _adjust_names(self, names):
-        for ind in range(len(names)):
-            if names[ind] == "x-server":
-                names[ind] = "xorg-server"
-            elif ">=" in names[ind]:
-                name = names[ind].split(">=")[0]
-                names[ind] = name
-            continue
-        return names
+        # Restore size
+        self._setup_size()
+        #Check pacman version
+        self._pacman_ver_check()
         
+        self._statusbar('Ready for your command')
+        
+    def _setup_size(self, state=False):
+
+        user_home_dir = getpwuid(geteuid())[-2]
+            
+        #state = bool, True = save, False = restore
+        if state:
+            # Save state
+            if exists(user_home_dir):
+                gtkpacman_conf_f = open( "%s/.gtkpacman" %user_home_dir, 'w')
+                
+                main_win_size = self.gld.get_widget("main_win").get_size()
+                hp_position = self.gld.get_widget("hpaned").get_position()
+                vp_position = self.gld.get_widget("vpaned").get_position()
+           
+                print main_win_size, hp_position, vp_position
+                
+                gtkpacman_conf_f.write("%s %s %s %s" %(main_win_size[0], main_win_size[1], hp_position, vp_position))
+                gtkpacman_conf_f.close()
+        else:
+            # Restore state
+            if exists(user_home_dir + "/.gtkpacman"):
+                # Get sizes form file ~/.gtkpacman if exists
+                gtkpacman_conf_f = open( "%s/.gtkpacman" %user_home_dir, 'r' )
+                size = gtkpacman_conf_f.readline().split(" ")
+                gtkpacman_conf_f.close()
+   
+                self.gld.get_widget("main_win").resize(int(size[0]), int(size[1]))
+                self.gld.get_widget("hpaned").set_position(int(size[2]))
+                self.gld.get_widget("vpaned").set_position(int(size[3]))
+            else:
+                # else ~/.gtkpacman don't exists, set delault size
+                self.gld.get_widget("main_win").resize(690, 490)
+                
+            self.gld.get_widget("main_win").show_all()
+                
     def _setup_pacs_tree(self):
         pacs_tree = self.gld.get_widget("pacs_tree")
         repos_tree = self.gld.get_widget("repos_tree")
@@ -291,7 +311,6 @@ class gui:
         self.queues["remove"] = []
         self._setup_log()
         self._pacman_ver_check()
-        #self._statusbar()
         self.gld.get_widget("main_win").set_sensitive(True)
         
     #----------------------------- Refresh End ---------------------------#
@@ -593,8 +612,6 @@ class gui:
             command_dlg.install('Sy')
         else:
             command_dlg.destroy()
-
-        #self.gld.get_widget("repos_tree").set_cursor_on_cell(0)
     
     def upgrade_system(self, widget, data=None):
         to_upgrade = []
@@ -671,9 +688,7 @@ class gui:
             command_dlg.destroy()            
     
     def make_package(self, widget):
-        from os import chdir, geteuid, curdir
         from os.path import dirname, abspath
-        from pwd import getpwuid
         
         dlg = choose_pkgbuild_dialog(self.gld.get_widget("main_win"), self.icon)
         fname = dlg.run()
@@ -758,8 +773,9 @@ class gui:
         return
     
     def quit(self, widget, data=None):
+        self._setup_size(True)
         main_quit()
-        return
+        return True
     
     def sum_txt_on_motion(self, widget, event, data=None):
         """ Change cursor when hovering over hyperlink

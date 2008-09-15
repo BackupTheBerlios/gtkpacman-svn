@@ -199,8 +199,13 @@ class database(dict):
             pacs.remove(".lastupdate")
         except ValueError:
             pass
-
-        date_file = open("%s/%s/.lastupdate" %(path, repo), 'r')
+        try:
+            date_file = open("%s/%s/.lastupdate" %(path, repo), 'r')
+        except IOError:
+            self.repos[repo] = 'uknown'
+            pacs.sort()
+            return pacs
+        
         date = int( date_file.readline() )
         date_file.close()
         

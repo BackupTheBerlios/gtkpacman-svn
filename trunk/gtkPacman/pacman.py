@@ -164,11 +164,15 @@ class database(dict):
         self.ver = stout.read().split('v')[1].split('-')[0].strip().split('.')
         
     def _get_log(self):
+        default_log_path = ( '/var/log/pacman.log' )
+        
         try:
             log_path = self.log.keys()[0]
         except IndexError:
-            self.log[None] = ["!! Can't find log path in /etc/pacman.conf"]
-            return
+            #self.log[None] = ["!! Can't find log path in /etc/pacman.conf"]
+            #return
+            self.log[default_log_path] = None
+            log_path = default_log_path
             
         try:
             log_file = open(log_path, 'r')

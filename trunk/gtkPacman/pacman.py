@@ -16,7 +16,7 @@
 #
 # gtkPacman is copyright (C)2005-2008 by Stefano Esposito
 
-import os, re, time
+import os, re, time, subprocess
 #from time import ctime
 
 path_repo = str()
@@ -160,8 +160,18 @@ class database(dict):
         return inst_pacs
 
     def _get_pacman_version (self):
-        [stin, stout] = os.popen2("pacman --version|grep Pacman")
-        self.ver = stout.read().split('v')[1].split('-')[0].strip().split('.')
+        global path_repo
+        
+        grep = subprocess.Popen(["pacman --version | grep Pacman"], shell=True,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+        (child_stdout, child_stdin) = (grep.stdout, grep.stdin)
+        
+        self.ver = grep.stdout.read().split('v')[1].split('-')[0].strip().split('.')
+        
+        if (self.ver[0] >= '3' and self.ver[1] >= '1'):
+            path_repo = "/var/lib/pacman/sync"
+        else:
+            path_repo = "/var/lib/pacman"
         
     def _get_log(self):
         default_log_path = ( '/var/log/pacman.log' )
@@ -186,16 +196,10 @@ class database(dict):
         self.log[log_path] = log
         
     def _get_repo_pacs(self, repo):
-        global path_repo
         pacs = None
-        #Grab all pacs in the col
-        if (self.ver[0] >= '3' and self.ver[1] >= '1'):
-            path_repo = path = "/var/lib/pacman/sync"
-        else:
-            path_repo = path = "/var/lib/pacman"
-        
+
         try:
-            pacs = os.listdir("%s/%s" %(path, repo))
+            pacs = os.listdir("%s/%s" %(path_repo, repo))
         except OSError:
             self.repos.pop(repo)
             return
@@ -204,7 +208,7 @@ class database(dict):
         except ValueError:
             pass
         try:
-            date_file = open("%s/%s/.lastupdate" %(path, repo), 'r')
+            date_file = open("%s/%s/.lastupdate" %(path_repo, repo), 'r')
         except IOError:
             self.repos[repo] = 'uknown'
             pacs.sort()
